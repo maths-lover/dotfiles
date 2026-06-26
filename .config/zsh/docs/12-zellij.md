@@ -7,6 +7,9 @@ the OS: persistent sessions, saved project layouts, and instant project switchin
 It is the equivalent of "Kitty sessions" in this setup. Config lives in
 `~/.config/zellij/`.
 
+> One-page key reference: `~/.config/zellij/CHEATSHEET.md`
+> (view with `bat ~/.config/zellij/CHEATSHEET.md`).
+
 ## Mental model
 
 ```
