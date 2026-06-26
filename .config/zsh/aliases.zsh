@@ -66,4 +66,5 @@ alias zjl='zellij list-sessions'
 alias zja='zellij attach'
 alias zjk='zellij kill-session'
 alias zjka='zellij kill-all-sessions'
+alias zjhelp='bat --style=plain "$XDG_CONFIG_HOME/zellij/CHEATSHEET.md" 2>/dev/null || cat "$XDG_CONFIG_HOME/zellij/CHEATSHEET.md"'
 # `zj` (function in functions.zsh) is the fuzzy project session switcher.
