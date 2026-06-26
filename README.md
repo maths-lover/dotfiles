@@ -3,7 +3,7 @@
 Personal macOS terminal configuration, managed with **GNU Stow**.
 
 A fast, hacker-flavored **zsh** setup built around **Homebrew**, **Starship**,
-**Ghostty**, **neovim**, and modern Rust/Go CLI tools — with vim mode, a custom
+**Ghostty**, **neovim**, and modern Rust/Go CLI tools - with vim mode, a custom
 prompt HUD, and a live light/dark colorscheme switcher.
 
 ## Layout
@@ -13,21 +13,22 @@ other file in `~/.config` (other apps, caches, state) untouched.
 
 ```
 dotfiles/
-├── install.sh            one-shot bootstrap (brew → stow → setup)
-├── .gitignore
-└── .config/
-    ├── Brewfile          every package / cask / font (declarative)
-    ├── starship.toml     the prompt
-    ├── ghostty/config    terminal emulator
-    └── zsh/              the shell config + docs + installer
+|-- install.sh            one-shot bootstrap (brew -> stow -> setup)
+|-- .gitignore
+`-- .config/
+    |-- Brewfile          every package / cask / font (declarative)
+    |-- starship.toml     the prompt
+    |-- ghostty/config    terminal emulator
+    |-- nvim/             neovim config + docs
+    `-- zsh/              the shell config + docs + installer
 ```
 
 After stow:
 
 ```
-~/.config/zsh/.zshrc      → ~/dotfiles/.config/zsh/.zshrc   (symlink)
-~/.config/starship.toml   → ~/dotfiles/.config/starship.toml (symlink)
-…                          (runtime files like plugins/ stay real, untracked)
+~/.config/zsh/.zshrc      -> ~/dotfiles/.config/zsh/.zshrc      (symlink)
+~/.config/starship.toml   -> ~/dotfiles/.config/starship.toml   (symlink)
+...                          (runtime files like plugins/ stay real, untracked)
 ```
 
 ## Install on a new machine
@@ -49,10 +50,14 @@ cd ~/dotfiles && stow --restow .   # re-link after adding new files
 git add -A && git commit           # commits are SSH-signed
 ```
 
-Edit configs in `~/.config/...` as usual — they're symlinks, so you're editing the
+Edit configs in `~/.config/...` as usual - they are symlinks, so you are editing the
 repo. New *files* need a `stow --restow .` to be linked.
 
 ## Documentation
 
-Full docs: **[`.config/zsh/docs/`](.config/zsh/docs/README.md)** — getting started,
-architecture, tools, keybindings, navigation, prompt, themes, fonts, troubleshooting.
+- **zsh / terminal**: [`.config/zsh/docs/`](.config/zsh/docs/README.md) - getting
+  started, architecture, tools, keybindings, navigation, prompt, themes, fonts,
+  troubleshooting.
+- **neovim**: [`.config/nvim/docs/`](.config/nvim/docs/README.md) - getting started,
+  architecture, keymaps, plugins, LSP & languages, completion, navigation, git,
+  theme sync, Neovide, troubleshooting.
