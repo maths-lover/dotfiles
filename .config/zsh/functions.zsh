@@ -86,3 +86,35 @@ zj() {
     zellij --layout coding --session "$name"      # create with the coding layout
   fi
 }
+
+# ff - find files by NAME (fd). Pattern is a regex; add a path to search elsewhere.
+#   ff config                 # files matching 'config' under cwd
+#   ff '\.lua$' ~/.config     # lua files under ~/.config (outside cwd)
+ff() { fd --type f --hidden --follow --exclude .git "$@" }
+
+# fdir - find directories by NAME (fd). `fd` itself is the tool; this is the
+# dir-only shortcut. Add a path to search outside cwd.
+#   fdir src                  # dirs matching 'src' under cwd
+#   fdir node_modules ~/code  # under ~/code
+fdir() { fd --type d --hidden --follow --exclude .git "$@" }
+
+# frg - live grep file CONTENTS with ripgrep, pick a match, open it in $EDITOR at
+# the line. Type to refine; results reload as you type. Optional initial query.
+#   frg               # start empty, type to search
+#   frg TODO          # start with 'TODO'
+frg() {
+  local rg='rg --column --line-number --no-heading --color=always --smart-case'
+  local out
+  out=$(
+    fzf --ansi --disabled --query "${1:-}" \
+        --bind "start:reload:$rg {q} || true" \
+        --bind "change:reload:sleep 0.1; $rg {q} || true" \
+        --delimiter : \
+        --preview 'bat --color=always --highlight-line {2} {1} 2>/dev/null' \
+        --preview-window 'right,60%,+{2}-/2' \
+        --header 'live grep -> open in editor at line'
+  ) || return
+  local file=${out%%:*}
+  local line=${${out#*:}%%:*}
+  [[ -n $file ]] && ${EDITOR} +"${line:-1}" -- "$file"
+}

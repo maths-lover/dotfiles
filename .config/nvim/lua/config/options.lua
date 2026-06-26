@@ -46,3 +46,8 @@ opt.completeopt = "menu,menuone,noselect"
 
 -- Diagnostics float/window look is configured in plugins/lsp.lua
 vim.o.background = "dark"       -- default; theme.lua overrides per active theme
+
+-- Per-project config: load a `.nvim.lua` from the project root when present.
+-- Lets each repo tweak LSP/formatters/settings for itself. nvim asks you to
+-- :trust the file the first time (safe). See docs/05-lsp-and-languages.md.
+vim.o.exrc = true

@@ -22,7 +22,7 @@ font-family-bold = "MonaspiceXe Nerd Font Mono"
 
 # -- Theme & colors ------------------------------------------------------------
 # Default scheme. Switch live with the `theme` shell command (theme list).
-theme = Rose Pine Dawn
+theme = TokyoNight Night
 background-opacity = 0.96
 background-blur = true
 # Brighten/dim if the opacity feels off:

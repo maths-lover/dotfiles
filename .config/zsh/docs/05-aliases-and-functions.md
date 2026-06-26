@@ -65,11 +65,15 @@ Defined in `aliases.zsh` and `functions.zsh`.
 | `mkcd` | `mkcd path/new` | `mkdir -p` then `cd` into it |
 | `up` | `up 3` | go up N directories |
 | `extract` | `extract file.tar.gz` | universal archive extractor |
+| `ff` | `ff <pat> [path]` | list files by name (fd); add a path to search outside cwd |
+| `fdir` | `fdir <pat> [path]` | list directories by name (fd) |
+| `frg` | `frg [query]` | live content search (rg+fzf), open the hit in neovim at the line |
 | `fcd` | `fcd` | fuzzy-pick a subdir (fd+fzf, tree preview) and cd |
 | `fe` | `fe` | fuzzy-pick a file, open in neovim |
 | `fkill` | `fkill [signal]` | fuzzy-pick process(es) and kill |
 | `fbr` | `fbr` | fuzzy-checkout a git branch (local or remote) |
 | `gclone` | `gclone <url>` | clone a repo then cd into it |
+| `zj` | `zj` (or Ctrl-f) | fuzzy project switcher -> zellij session |
 
 ---
 

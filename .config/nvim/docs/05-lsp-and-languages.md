@@ -74,6 +74,29 @@ A few servers have custom settings in `lua/plugins/lsp.lua`:
 Add more with `vim.lsp.config("<server>", { settings = {...} })`. This config uses
 the modern `vim.lsp.config` / `vim.lsp.enable` API (no deprecated calls).
 
+## Per-repo behavior (multiple projects)
+
+Two native layers handle "different repos behave differently":
+
+1. **Automatic roots.** Each server roots itself at the repo it finds (go.mod,
+   package.json, .git, etc.). Open files from two different repos and you get two
+   separate LSP clients, each scoped to its own repo. Check with `:LspInfo`
+   (shows `root_dir`) or `:checkhealth lsp`. Nothing to configure.
+
+2. **Project overrides via `exrc`.** `vim.o.exrc = true` (in `options.lua`) makes
+   nvim load a `.nvim.lua` from the project root when present. Put project-specific
+   settings there - indent, formatters, LSP tweaks. nvim asks you to `:trust` the
+   file once (a security prompt), then it loads automatically.
+
+   ```lua
+   -- <repo>/.nvim.lua  (example)
+   vim.opt_local.shiftwidth = 4          -- this project uses 4-space indent
+   vim.lsp.config("ts_ls", { settings = { ... } })  -- project-specific LSP tweak
+   ```
+
+   Manage trust with `:trust` / `:h trust`. There is a worked example in
+   `~/playground/projects/web-app/.nvim.lua`.
+
 ## Notes
 
 - `stylua` is a formatter; lspconfig also ships a `stylua --lsp` config, so it is
