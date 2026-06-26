@@ -130,6 +130,13 @@ _vi_cursor_init() { printf '\e[6 q' }                    # beam on each new prom
 add-zle-hook-widget keymap-select _vi_cursor_select
 add-zle-hook-widget line-init     _vi_cursor_init
 
+# Ctrl-f -> run the `zj` project session switcher (zoxide + fzf -> zellij).
+# Types the command and runs it, so the full-screen pickers behave normally.
+_zj_widget() { BUFFER="zj"; zle accept-line }
+zle -N _zj_widget
+bindkey -M viins '^F' _zj_widget
+bindkey -M vicmd '^F' _zj_widget
+
 # -- fzf integration (keybindings + completion). Needs fzf >= 0.48. ------------
 # Sourced BEFORE fzf-tab on purpose: fzf binds <Tab> to its own completion, then
 # fzf-tab (below) re-binds <Tab> and wins - so we keep fzf's Ctrl-R/Ctrl-T/Alt-C

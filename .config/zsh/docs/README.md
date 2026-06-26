@@ -16,6 +16,7 @@ to a topic.
 | 9 | [Fonts](09-fonts.md) | Monaspace Nerd Fonts |
 | 10 | [Troubleshooting](10-troubleshooting.md) | Common problems and fixes |
 | 11 | [Neovim](11-neovim.md) | Editor config: structure, theme-sync, languages, Neovide |
+| 12 | [Zellij](12-zellij.md) | Sessions, layouts, the `zj` project switcher |
 
 ---
 

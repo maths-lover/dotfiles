@@ -35,4 +35,6 @@ Full docs live in [`docs/`](docs/README.md):
 | 8  | [Git](docs/08-git.md) | gitsigns + lazygit |
 | 9  | [Theme sync](docs/09-theme-sync.md) | Following the OS colorscheme |
 | 10 | [Neovide](docs/10-neovide.md) | GUI settings |
-| 11 | [Troubleshooting](docs/11-troubleshooting.md) | Symptom -> fix |
+| 11 | [macOS integration](docs/11-macos-integration.md) | Open in apps, clipboard synergy |
+| 12 | [Notes](docs/12-notes.md) | markdown-oxide, render-markdown, obsidian |
+| 13 | [Troubleshooting](docs/13-troubleshooting.md) | Symptom -> fix |

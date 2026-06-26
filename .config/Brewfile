@@ -32,6 +32,7 @@ brew "jq"                  # JSON processor
 brew "yq"                  # YAML/JSON/XML processor
 brew "tealdeer"            # tldr - community man-page cheatsheets (fast, Rust)
 brew "httpie"              # human-friendly HTTP client
+brew "markdown-oxide"      # markdown LSP for notes (links, backlinks, daily notes)
 brew "zellij"              # terminal multiplexer (modern tmux)
 brew "neovim"              # nvim - the editor ($EDITOR)
 brew "stow"                # GNU Stow - symlink-manage these dotfiles

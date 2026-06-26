@@ -15,6 +15,8 @@
 | Neovide settings ignored | they only apply under Neovide (`vim.g.neovide` guard); in the terminal they are intentionally skipped |
 | `<A-...>` mappings do nothing in Neovide | left Option must map to Meta; set in `lua/config/neovide.lua` (already configured) |
 | Slow startup | `:Lazy profile` to find the culprit; most plugins are event/key-lazy by design |
+| markdown LSP not attaching | markdown_oxide needs a workspace root (a `.git`, `.obsidian`, or `.moxide.toml`); it will not attach to a rootless file in `/tmp`. It comes from Homebrew, not Mason |
+| `conceal_line` decoration provider error on some markdown | a known Neovim nightly (0.13-dev) treesitter quirk on large markdown files; non-fatal (editing works). Goes away on stable Neovim |
 
 ## Useful commands
 

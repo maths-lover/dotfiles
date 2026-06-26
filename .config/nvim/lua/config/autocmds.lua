@@ -44,3 +44,15 @@ vim.api.nvim_create_autocmd("FileType", {
   group = augroup("no_auto_comment"),
   callback = function() vim.opt_local.formatoptions:remove({ "o" }) end,
 })
+
+-- Prose-friendly settings for markdown notes
+vim.api.nvim_create_autocmd("FileType", {
+  group = augroup("markdown_prose"),
+  pattern = { "markdown" },
+  callback = function()
+    vim.opt_local.conceallevel = 2 -- let render-markdown/obsidian hide syntax
+    vim.opt_local.wrap = true
+    vim.opt_local.linebreak = true -- wrap at word boundaries
+    vim.opt_local.spell = true
+  end,
+})

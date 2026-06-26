@@ -60,3 +60,10 @@ alias ports='lsof -iTCP -sTCP:LISTEN -nP'
 
 # -- Eza tree alias for `tree` if you have the muscle memory --------------------
 alias tree='eza --tree --icons=auto --group-directories-first'
+
+# -- zellij (multiplexer / session management) ---------------------------------
+alias zjl='zellij list-sessions'
+alias zja='zellij attach'
+alias zjk='zellij kill-session'
+alias zjka='zellij kill-all-sessions'
+# `zj` (function in functions.zsh) is the fuzzy project session switcher.

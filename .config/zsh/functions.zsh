@@ -64,3 +64,25 @@ fbr() {
 gclone() {
   git clone "$1" && cd -- "$(basename "${1%.git}")"
 }
+
+# zj - fuzzy project switcher: pick a zoxide dir, then attach-or-create a named
+# zellij session running the `coding` layout. The core "jump between projects"
+# move. Bound to Ctrl-f (see .zshrc); also runnable as `zj`.
+zj() {
+  local dir name
+  dir=$(zoxide query -l | fzf --reverse --height=60% --border \
+        --header='jump to project -> zellij session' \
+        --preview 'eza --tree --level=2 --icons --color=always {} 2>/dev/null') || return
+  [[ -z $dir ]] && return
+  name=${dir:t}; name=${name//[._: ]/-}          # session name from dir basename
+  if [[ -n $ZELLIJ ]]; then
+    print -r -- "Already inside zellij - press Ctrl-o then w to switch sessions."
+    return 1
+  fi
+  builtin cd -- "$dir" || return
+  if zellij list-sessions -ns 2>/dev/null | grep -qx -- "$name"; then
+    zellij attach -- "$name"                      # resurrect/attach existing
+  else
+    zellij --layout coding --session "$name"      # create with the coding layout
+  fi
+}

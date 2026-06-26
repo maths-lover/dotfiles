@@ -84,16 +84,23 @@ return {
         settings = { basedpyright = { analysis = { typeCheckingMode = "standard" } } },
       })
 
+      -- markdown_oxide comes from Homebrew (not Mason); enable it explicitly so
+      -- it attaches to markdown files for notes (links, backlinks, daily notes).
+      if vim.fn.executable("markdown-oxide") == 1 then
+        vim.lsp.enable("markdown_oxide")
+      end
+
       -- Install servers + tools; mason-lspconfig auto-enables installed servers.
       require("mason-lspconfig").setup({
         ensure_installed = {
-          "lua_ls", "bashls", "marksman", "jsonls", "yamlls", "taplo",
+          "lua_ls", "bashls", "jsonls", "yamlls", "taplo",
           "basedpyright", "ruff", "ts_ls", "html", "cssls", "eslint",
           "gopls", "rust_analyzer", "clangd", "jdtls", "zls",
         },
         -- stylua is a formatter (installed below) but lspconfig ships a stylua
         -- "--lsp" config; exclude it so it isn't auto-started as a language server.
-        automatic_enable = { exclude = { "stylua" } },
+        -- marksman is excluded too: markdown_oxide (Homebrew) is the markdown LSP.
+        automatic_enable = { exclude = { "stylua", "marksman" } },
       })
       require("mason-tool-installer").setup({
         ensure_installed = {

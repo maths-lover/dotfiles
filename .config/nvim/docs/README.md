@@ -15,7 +15,9 @@ jump to a topic.
 | 8  | [Git](08-git.md) | gitsigns + lazygit |
 | 9  | [Theme sync](09-theme-sync.md) | Following the OS `theme` colorscheme switcher |
 | 10 | [Neovide](10-neovide.md) | GUI front-end settings |
-| 11 | [Troubleshooting](11-troubleshooting.md) | Common problems and fixes |
+| 11 | [macOS integration](11-macos-integration.md) | Open in apps, clipboard synergy |
+| 12 | [Notes](12-notes.md) | markdown-oxide, render-markdown, obsidian |
+| 13 | [Troubleshooting](13-troubleshooting.md) | Common problems and fixes |
 
 ---
 

@@ -51,4 +51,4 @@ variables documented at the Neovide site; the file is guarded by
 
 ---
 
-Next: [Troubleshooting](11-troubleshooting.md)
+Next: [macOS integration](11-macos-integration.md)

@@ -1,0 +1,43 @@
+// ~/.config/zellij/config.kdl - managed in dotfiles via stow.
+// Keybindings are left at zellij defaults:
+//   Ctrl p  pane mode      Ctrl t  tab mode       Ctrl n  resize
+//   Ctrl s  scroll/search  Ctrl o  session mode   Ctrl g  lock (pass keys to nvim)
+//   Ctrl q  quit           Alt n   new pane       Alt h/j/k/l  move focus
+//   Ctrl o then w          open the session manager (fuzzy switch/create)
+// Validate with: zellij setup --check
+
+theme "terminal"
+default_layout "default"
+default_shell "zsh"
+pane_frames true
+mouse_mode true
+copy_on_select true
+copy_command "pbcopy"            // yanks in zellij go to the macOS clipboard
+session_serialization true       // sessions persist and can be resurrected
+serialize_pane_viewport true
+scrollback_editor "nvim"
+scroll_buffer_size 50000
+
+ui {
+    pane_frames {
+        rounded_corners true
+    }
+}
+
+themes {
+    // Follow the terminal's 16 ANSI colors, so zellij tracks the `theme`
+    // switcher just like fzf/bat/eza. Indices 0-15 = the terminal palette.
+    terminal {
+        fg 7
+        bg 0
+        black 0
+        red 1
+        green 2
+        yellow 3
+        blue 4
+        magenta 5
+        cyan 6
+        white 7
+        orange 3
+    }
+}

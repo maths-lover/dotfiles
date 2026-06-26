@@ -1,0 +1,20 @@
+// coding layout - a project environment (the Kitty-sessions equivalent).
+// Left: editor (nvim, opens cwd via oil). Right column: a shell over lazygit.
+// Launched by the `zj` session switcher; panes inherit the project directory.
+layout {
+    pane split_direction="vertical" {
+        pane size="72%" {
+            command "nvim"
+            args "."
+            focus true
+            close_on_exit true
+        }
+        pane size="28%" split_direction="horizontal" {
+            pane name="shell"
+            pane name="git" {
+                command "lazygit"
+                close_on_exit true
+            }
+        }
+    }
+}
