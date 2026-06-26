@@ -1,4 +1,4 @@
--- lua/config/options.lua — vim.opt settings
+-- lua/config/options.lua - vim.opt settings
 local opt = vim.opt
 
 -- UI

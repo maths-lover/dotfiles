@@ -1,4 +1,4 @@
--- lua/config/keymaps.lua — general keymaps (plugin keymaps live with their specs)
+-- lua/config/keymaps.lua - general keymaps (plugin keymaps live with their specs)
 local map = vim.keymap.set
 
 -- Clear search highlight

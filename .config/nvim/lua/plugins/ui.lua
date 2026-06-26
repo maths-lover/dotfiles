@@ -1,4 +1,4 @@
--- lua/plugins/ui.lua — statusline, indent guides, icons
+-- lua/plugins/ui.lua - statusline, indent guides, icons
 return {
   { "nvim-tree/nvim-web-devicons", lazy = true },
 

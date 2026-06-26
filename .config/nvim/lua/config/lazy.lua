@@ -1,4 +1,4 @@
--- lua/config/lazy.lua — bootstrap lazy.nvim and load lua/plugins/*
+-- lua/config/lazy.lua - bootstrap lazy.nvim and load lua/plugins/*
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.uv.fs_stat(lazypath) then
   local out = vim.fn.system({

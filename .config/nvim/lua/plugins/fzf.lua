@@ -1,4 +1,4 @@
--- lua/plugins/fzf.lua — fzf-lua (matches your terminal fzf workflow)
+-- lua/plugins/fzf.lua - fzf-lua (matches your terminal fzf workflow)
 return {
   {
     "ibhagwan/fzf-lua",
@@ -21,7 +21,7 @@ return {
     },
     opts = {
       "default-title",
-      fzf_colors = true, -- derive colors from the colorscheme → matches theme
+      fzf_colors = true, -- derive colors from the colorscheme -> matches theme
       winopts = {
         height = 0.85,
         width = 0.85,

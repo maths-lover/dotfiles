@@ -1,4 +1,4 @@
--- lua/plugins/formatting.lua — conform.nvim (format on save + <leader>cf)
+-- lua/plugins/formatting.lua - conform.nvim (format on save + <leader>cf)
 return {
   {
     "stevearc/conform.nvim",

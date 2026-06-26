@@ -1,11 +1,11 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
-# ╭───────────────────────────────────────────────────────────────────────────╮
-# │  ☠  H4CKER HUD  —  no user/host, just signal.                              │
-# │  Left:  what + where + git intel + toolchain                              │
-# │  Right: live HUD  →  jobs · last-cmd time · RAM% · clock                   │
-# │  Needs a Nerd Font (MonaspiceNe). Colors follow the active theme.         │
-# ╰───────────────────────────────────────────────────────────────────────────╯
+# +---------------------------------------------------------------------------+
+# |  X  H4CKER HUD  -  no user/host, just signal.                              |
+# |  Left:  what + where + git intel + toolchain                              |
+# |  Right: live HUD  ->  jobs - last-cmd time - RAM% - clock                   |
+# |  Needs a Nerd Font (MonaspiceNe). Colors follow the active theme.         |
+# +---------------------------------------------------------------------------+
 add_newline = true
 command_timeout = 1000
 palette = 'hacker'
@@ -26,19 +26,19 @@ $line_break\
 right_format = """$jobs$cmd_duration${custom.ram_low}${custom.ram_mid}${custom.ram_high}$time"""
 
 # ANSI-relative palette: colors are named (not hex) so the prompt automatically
-# follows the active terminal theme — switch themes with `theme <name>` and the
+# follows the active terminal theme - switch themes with `theme <name>` and the
 # whole prompt recolors. Each role maps to a different ANSI slot for contrast.
 [palettes.hacker]
-green = "bright-green"   # frame · git added · prompt char
+green = "bright-green"   # frame - git added - prompt char
 neon  = "green"          # directory path
-mint  = "cyan"           # skull sigil · language versions
+mint  = "cyan"           # skull sigil - language versions
 lime  = "magenta"        # package version
 cyan  = "blue"           # docker context
-red   = "bright-red"     # git branch · errors
-amber = "yellow"         # git status · timing · jobs
-dim   = "bright-black"   # clock · secondary HUD text
+red   = "bright-red"     # git branch - errors
+amber = "yellow"         # git status - timing - jobs
+dim   = "bright-black"   # clock - secondary HUD text
 
-# ── Where ─────────────────────────────────────────────────────────────────────
+# -- Where ---------------------------------------------------------------------
 [directory]
 style = "bold neon"
 read_only = "  "
@@ -49,7 +49,7 @@ truncate_to_repo = true
 home_symbol = "~"
 format = '[ $path]($style)[$read_only]($read_only_style)'
 
-# ── Git intel ─────────────────────────────────────────────────────────────────
+# -- Git intel -----------------------------------------------------------------
 [git_branch]
 symbol = " "
 style = "bold red"
@@ -75,7 +75,7 @@ staged = '+'
 renamed = '»'
 deleted = '✘'
 
-# ── Toolchain (shown only in relevant projects) ───────────────────────────────
+# -- Toolchain (shown only in relevant projects) -------------------------------
 [nodejs]
 symbol = " "
 style = "bold mint"
@@ -110,7 +110,7 @@ style = "bold lime"
 format = '[( $symbol$version)]($style)'
 disabled = false
 
-# ── Line 2: exit code + prompt sigil ──────────────────────────────────────────
+# -- Line 2: exit code + prompt sigil ------------------------------------------
 [status]
 disabled = false
 symbol = '✘ '
@@ -124,7 +124,7 @@ success_symbol = '[λ](bold green)'    # INSERT mode, last cmd ok
 error_symbol   = '[λ](bold red)'      # INSERT mode, last cmd failed
 vimcmd_symbol  = '[Λ](bold amber)'    # NORMAL mode (capital Λ + block cursor)
 
-# ── Right HUD ─────────────────────────────────────────────────────────────────
+# -- Right HUD -----------------------------------------------------------------
 [jobs]
 symbol = '󰜎 '
 style = "bold amber"
@@ -136,7 +136,7 @@ min_time = 500
 style = "bold amber"
 format = '[󱎫 $duration]($style)  '
 
-# RAM gauge — color-shifts green→amber→red. The value (STARSHIP_RAM_PCT) is
+# RAM gauge - color-shifts green->amber->red. The value (STARSHIP_RAM_PCT) is
 # computed once per prompt by a zsh precmd hook in .zshrc; these three modules
 # just pick the color band. Exactly one fires per prompt.
 [custom.ram_low]
@@ -149,7 +149,7 @@ style = "bold green"
 format = '[$symbol$output]($style)  '
 
 [custom.ram_mid]
-description = "RAM usage 60–84% (amber)"
+description = "RAM usage 60-84% (amber)"
 when = 'p="${STARSHIP_RAM_PCT:-0}"; test "$p" -ge 60 && test "$p" -lt 85'
 command = 'echo "${STARSHIP_RAM_PCT:-0}%"'
 shell = ["sh", "--norc"]
@@ -158,7 +158,7 @@ style = "bold amber"
 format = '[$symbol$output]($style)  '
 
 [custom.ram_high]
-description = "RAM usage ≥ 85% (red)"
+description = "RAM usage >= 85% (red)"
 when = 'test "${STARSHIP_RAM_PCT:-0}" -ge 85'
 command = 'echo "${STARSHIP_RAM_PCT:-0}%"'
 shell = ["sh", "--norc"]

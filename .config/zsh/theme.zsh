@@ -1,4 +1,4 @@
-# ~/.config/zsh/theme.zsh — live colorscheme switcher for Ghostty + all CLI tools.
+# ~/.config/zsh/theme.zsh - live colorscheme switcher for Ghostty + all CLI tools.
 #
 # Everything in this setup (starship, fzf, bat, eza) is configured with ANSI
 # palette colors, so swapping the terminal's 16-color palette re-themes the whole
@@ -7,16 +7,16 @@
 # match too. Theme definitions are read straight from Ghostty's bundled themes,
 # so any of its 200+ themes (light or dark) works.
 
-# Friendly aliases → exact Ghostty theme names (so you can skip quoting spaces).
+# Friendly aliases -> exact Ghostty theme names (so you can skip quoting spaces).
 typeset -gA THEME_ALIASES=(
-  # ── dark ──
+  # -- dark --
   tokyonight     "TokyoNight Night"
   dracula        "Dracula"
   gruvbox        "Gruvbox Dark Hard"
   cyberpunk      "Cyberpunk"
   homebrew       "Homebrew"
   matrix         "Matrix"
-  # ── light ──
+  # -- light --
   gruvbox-light  "Gruvbox Light Hard"
   latte          "Catppuccin Latte"
   github-light   "GitHub Light Default"
@@ -61,9 +61,9 @@ theme() {
     ''|list|-l|--list)
       local cur="(none)"; [[ -f $_THEME_STATE ]] && cur=$(<$_THEME_STATE)
       print -P "%B Current theme:%b %F{green}$cur%f\n"
-      print -P "%F{green}● dark%f   ${THEME_DARK[*]}"
-      print -P "%F{yellow}○ light%f  ${THEME_LIGHT[*]}"
-      print -P "\n%BUsage%b  theme <name> · theme dark · theme light · theme toggle"
+      print -P "%F{green}* dark%f   ${THEME_DARK[*]}"
+      print -P "%F{yellow}o light%f  ${THEME_LIGHT[*]}"
+      print -P "\n%BUsage%b  theme <name> - theme dark - theme light - theme toggle"
       print -P "Any Ghostty theme name also works, e.g.  theme \"Rose Pine\""
       return 0 ;;
     toggle)
@@ -77,7 +77,7 @@ theme() {
 
   local name=${THEME_ALIASES[$cmd]:-$cmd} f
   if ! f=$(_theme_file "$cmd"); then
-    print -P "%F{red}theme:%f '$cmd' not found — run %Btheme list%b"; return 1
+    print -P "%F{red}theme:%f '$cmd' not found - run %Btheme list%b"; return 1
   fi
   _theme_emit_osc "$f"                       # recolor current window now
   print -r -- "$cmd" > "$_THEME_STATE"       # remember choice
@@ -92,7 +92,7 @@ theme() {
       print -r -- "theme = $name" >> "$gcfg"
     fi
   fi
-  print -P "%F{green}✓%f theme → %B$cmd%b  %F{8}($name)%f"
+  print -P "%F{green}+%f theme -> %B$cmd%b  %F{8}($name)%f"
 }
 
 # Tab-completion: friendly aliases + sub-commands.

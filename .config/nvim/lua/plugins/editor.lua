@@ -1,4 +1,4 @@
--- lua/plugins/editor.lua — editing ergonomics
+-- lua/plugins/editor.lua - editing ergonomics
 return {
   -- Keybinding hints
   {
@@ -23,7 +23,7 @@ return {
   -- Autopairs
   { "echasnovski/mini.pairs", event = "InsertEnter", opts = {} },
 
-  -- vim-surround (ys / cs / ds) — matches your zsh surround muscle memory
+  -- vim-surround (ys / cs / ds) - matches your zsh surround muscle memory
   { "kylechui/nvim-surround", event = "VeryLazy", opts = {} },
 
   -- Better a/i text objects

@@ -1,11 +1,11 @@
--- lua/config/theme.lua — keep neovim's colorscheme in sync with the OS `theme`
+-- lua/config/theme.lua - keep neovim's colorscheme in sync with the OS `theme`
 -- switcher. The zsh `theme` command writes the active theme name to
 -- ~/.config/zsh/.active-theme; we map it to a matching nvim colorscheme.
 local M = {}
 
 local state_file = vim.fn.expand("~/.config/zsh/.active-theme")
 
--- zsh theme alias → { nvim colorscheme, background }
+-- zsh theme alias -> { nvim colorscheme, background }
 local MAP = {
   tokyonight        = { "tokyonight-night", "dark" },
   ["tokyonight-day"] = { "tokyonight-day", "light" },
@@ -17,7 +17,7 @@ local MAP = {
   ["rose-pine"]     = { "rose-pine", "dark" },
   ["rose-pine-dawn"] = { "rose-pine-dawn", "light" },
   ["github-light"]  = { "rose-pine-dawn", "light" },
-  -- terminal-only neon/green themes → closest rich nvim scheme
+  -- terminal-only neon/green themes -> closest rich nvim scheme
   cyberpunk         = { "tokyonight-night", "dark" },
   homebrew          = { "tokyonight-night", "dark" },
   matrix            = { "tokyonight-night", "dark" },

@@ -1,4 +1,4 @@
--- lua/plugins/treesitter.lua — syntax-aware highlighting, indent, text objects
+-- lua/plugins/treesitter.lua - syntax-aware highlighting, indent, text objects
 return {
   {
     "nvim-treesitter/nvim-treesitter",

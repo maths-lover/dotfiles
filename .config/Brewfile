@@ -1,59 +1,59 @@
-# Brewfile — declarative list of everything this terminal setup needs.
+# Brewfile - declarative list of everything this terminal setup needs.
 # Usage: brew bundle --file ~/.config/Brewfile
 # Re-run any time; brew bundle is idempotent.
 
-# ── Taps ──────────────────────────────────────────────────────────────────────
+# -- Taps ----------------------------------------------------------------------
 # (nerd-font and ghostty casks live in homebrew/cask, no extra tap needed)
 
-# ── Prompt ────────────────────────────────────────────────────────────────────
+# -- Prompt --------------------------------------------------------------------
 brew "starship"            # cross-shell prompt
 
-# ── Core productivity (modern CLI replacements) ───────────────────────────────
-brew "ripgrep"             # rg   — fast grep
-brew "fd"                  # fd   — fast find
-brew "fzf"                 # fzf  — fuzzy finder
-brew "bat"                 # bat  — cat with syntax highlighting
-brew "eza"                 # eza  — modern ls
-brew "zoxide"              # z    — smarter cd
-brew "git-delta"           # delta — better git diffs
+# -- Core productivity (modern CLI replacements) -------------------------------
+brew "ripgrep"             # rg   - fast grep
+brew "fd"                  # fd   - fast find
+brew "fzf"                 # fzf  - fuzzy finder
+brew "bat"                 # bat  - cat with syntax highlighting
+brew "eza"                 # eza  - modern ls
+brew "zoxide"              # z    - smarter cd
+brew "git-delta"           # delta - better git diffs
 
-# ── Git tooling ───────────────────────────────────────────────────────────────
+# -- Git tooling ---------------------------------------------------------------
 brew "lazygit"             # TUI git client
 brew "gh"                  # GitHub CLI
 
-# ── System / monitoring ───────────────────────────────────────────────────────
+# -- System / monitoring -------------------------------------------------------
 brew "btop"                # resource monitor
 brew "dust"                # du, but intuitive
 brew "procs"               # ps replacement
 brew "fastfetch"           # system info splash
 
-# ── Dev extras ────────────────────────────────────────────────────────────────
+# -- Dev extras ----------------------------------------------------------------
 brew "jq"                  # JSON processor
 brew "yq"                  # YAML/JSON/XML processor
-brew "tealdeer"            # tldr — community man-page cheatsheets (fast, Rust)
+brew "tealdeer"            # tldr - community man-page cheatsheets (fast, Rust)
 brew "httpie"              # human-friendly HTTP client
 brew "zellij"              # terminal multiplexer (modern tmux)
-brew "neovim"              # nvim — the editor ($EDITOR)
-brew "stow"                # GNU Stow — symlink-manage these dotfiles
+brew "neovim"              # nvim - the editor ($EDITOR)
+brew "stow"                # GNU Stow - symlink-manage these dotfiles
 
-# ── Language toolchains (for neovim LSPs / formatters; clang via Xcode CLT) ────
-brew "node"                # JS/TS + many LSP servers (bashls, jsonls, yamlls, …)
+# -- Language toolchains (for neovim LSPs / formatters; clang via Xcode CLT) ----
+brew "node"                # JS/TS + many LSP servers (bashls, jsonls, yamlls, ...)
 brew "go"                  # gopls + gofumpt
 brew "rust"                # cargo/rustc/rustfmt (rust-analyzer via mason)
 brew "zig"                 # zig + zls (stable; matches Mason's zls version)
 brew "openjdk"             # JDK for jdtls (keg-only; PATH wired in .zprofile)
 
-# ── Zsh plugins (sourced manually from .zshrc) ────────────────────────────────
+# -- Zsh plugins (sourced manually from .zshrc) --------------------------------
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
 brew "zsh-completions"
 
-# ── Terminal emulator + GUI editor ────────────────────────────────────────────
+# -- Terminal emulator + GUI editor --------------------------------------------
 cask "ghostty"
 cask "neovide-app"             # GUI neovim front-end (for project work)
 
-# ── Fonts (already installed manually, listed for fresh-machine reproducibility)
+# -- Fonts (already installed manually, listed for fresh-machine reproducibility)
 cask "font-monaspice-nerd-font"   # Nerd-Font-patched Monaspace (note: "monaspice")
 
-# ── GUI Applications for Mac productivity in general ────────────────────────────────────────────
+# -- GUI Applications for Mac productivity in general --------------------------------------------
 cask "loop"

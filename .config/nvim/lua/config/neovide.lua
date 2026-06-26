@@ -1,4 +1,4 @@
--- lua/config/neovide.lua — GUI settings, applied only inside Neovide.
+-- lua/config/neovide.lua - GUI settings, applied only inside Neovide.
 if not vim.g.neovide then return end
 
 -- Font (Monaspace Nerd Font, same as the terminal)
@@ -28,7 +28,7 @@ vim.g.neovide_floating_blur_amount_x = 2.0
 vim.g.neovide_floating_blur_amount_y = 2.0
 vim.g.neovide_floating_shadow = true
 
--- macOS: left Option → Meta (so <A-…> mappings work), right Option for typing
+-- macOS: left Option -> Meta (so <A-...> mappings work), right Option for typing
 vim.g.neovide_input_macos_option_key_is_meta = "only_left"
 
 -- Native macOS clipboard shortcuts

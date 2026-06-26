@@ -4,7 +4,7 @@
 # Fallback so plugin paths resolve even in non-login interactive shells.
 export HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/opt/homebrew}"
 
-# ── History ───────────────────────────────────────────────────────────────────
+# -- History -------------------------------------------------------------------
 HISTFILE="${XDG_STATE_HOME:-$HOME/.local/state}/zsh/history"
 mkdir -p "${HISTFILE:h}"
 HISTSIZE=100000
@@ -17,7 +17,7 @@ setopt HIST_IGNORE_SPACE       # leading space hides a command from history
 setopt HIST_REDUCE_BLANKS
 setopt HIST_VERIFY             # expand !! etc. onto the line before running
 
-# ── Shell options ─────────────────────────────────────────────────────────────
+# -- Shell options -------------------------------------------------------------
 setopt AUTO_CD                 # `foo/` instead of `cd foo/`
 setopt AUTO_PUSHD              # cd pushes onto the dir stack
 setopt PUSHD_IGNORE_DUPS
@@ -27,7 +27,7 @@ setopt GLOB_DOTS              # globs match dotfiles too
 setopt INTERACTIVE_COMMENTS    # allow # comments in the prompt
 setopt NO_BEEP
 
-# ── Completion system ─────────────────────────────────────────────────────────
+# -- Completion system ---------------------------------------------------------
 # Add extra completion dirs to fpath BEFORE compinit.
 fpath=(
   "$HOMEBREW_PREFIX/share/zsh-completions"
@@ -58,10 +58,10 @@ zstyle ':fzf-tab:*' fzf-flags --height=60% --layout=reverse --border
 zstyle ':fzf-tab:*' use-fzf-default-opts yes
 zstyle ':fzf-tab:*' switch-group ',' '.'
 
-# ── Vim mode ──────────────────────────────────────────────────────────────────
+# -- Vim mode ------------------------------------------------------------------
 # Set before plugins so their widgets bind into the vi keymaps.
 bindkey -v
-export KEYTIMEOUT=1                                     # 10ms — snappy ESC, no lag
+export KEYTIMEOUT=1                                     # 10ms - snappy ESC, no lag
 
 # History prefix-search on arrows (works in insert & normal mode)
 autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
@@ -93,7 +93,7 @@ for km in viins vicmd; do
   bindkey -M $km '^[[F' end-of-line                     # End
 done
 
-# `v` in normal mode → edit the command line in $EDITOR (vim); also Ctrl-X Ctrl-E
+# `v` in normal mode -> edit the command line in $EDITOR (vim); also Ctrl-X Ctrl-E
 autoload -Uz edit-command-line
 zle -N edit-command-line
 bindkey -M vicmd 'v' edit-command-line
@@ -130,16 +130,16 @@ _vi_cursor_init() { printf '\e[6 q' }                    # beam on each new prom
 add-zle-hook-widget keymap-select _vi_cursor_select
 add-zle-hook-widget line-init     _vi_cursor_init
 
-# ── fzf integration (keybindings + completion). Needs fzf >= 0.48. ────────────
+# -- fzf integration (keybindings + completion). Needs fzf >= 0.48. ------------
 # Sourced BEFORE fzf-tab on purpose: fzf binds <Tab> to its own completion, then
-# fzf-tab (below) re-binds <Tab> and wins — so we keep fzf's Ctrl-R/Ctrl-T/Alt-C
+# fzf-tab (below) re-binds <Tab> and wins - so we keep fzf's Ctrl-R/Ctrl-T/Alt-C
 # but get fzf-tab's nicer in-place completion menu on <Tab>.
 command -v fzf >/dev/null && source <(fzf --zsh)
 export FZF_DEFAULT_COMMAND='fd --hidden --strip-cwd-prefix --exclude .git'
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 export FZF_ALT_C_COMMAND='fd --type d --hidden --strip-cwd-prefix --exclude .git'
 # Colors use ANSI palette indices (0-15) + -1 (terminal default) so fzf follows
-# whatever theme is active — see `theme`. 2=green 4=blue 5=magenta 6=cyan 8=gray.
+# whatever theme is active - see `theme`. 2=green 4=blue 5=magenta 6=cyan 8=gray.
 export FZF_DEFAULT_OPTS="
   --height 60% --layout reverse --border --info inline
   --preview-window 'right:55%:wrap'
@@ -150,8 +150,8 @@ export FZF_DEFAULT_OPTS="
 export FZF_CTRL_T_OPTS="--preview '[[ -d {} ]] && eza --tree --color=always {} || bat --color=always --style=numbers {}'"
 export FZF_ALT_C_OPTS="--preview 'eza --tree --color=always {}'"
 
-# ── Plugins (order matters!) ──────────────────────────────────────────────────
-# 1) fzf-tab — AFTER compinit & AFTER fzf (owns <Tab>), BEFORE widget-wrappers
+# -- Plugins (order matters!) --------------------------------------------------
+# 1) fzf-tab - AFTER compinit & AFTER fzf (owns <Tab>), BEFORE widget-wrappers
 [[ -f "$ZDOTDIR/plugins/fzf-tab/fzf-tab.plugin.zsh" ]] && \
   source "$ZDOTDIR/plugins/fzf-tab/fzf-tab.plugin.zsh"
 
@@ -161,32 +161,32 @@ export FZF_ALT_C_OPTS="--preview 'eza --tree --color=always {}'"
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#6c7086'
 
-# 3) syntax highlighting — MUST be sourced last
+# 3) syntax highlighting - MUST be sourced last
 [[ -f "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && \
   source "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
-# ── Tool integrations ─────────────────────────────────────────────────────────
-# zoxide — smarter cd (provides `z` and `zi`)
+# -- Tool integrations ---------------------------------------------------------
+# zoxide - smarter cd (provides `z` and `zi`)
 command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
 
-# bat theme — "ansi" makes bat use the terminal's 16-color palette, so its
+# bat theme - "ansi" makes bat use the terminal's 16-color palette, so its
 # syntax highlighting follows the active theme automatically (see `theme`).
 export BAT_THEME="ansi"
 
-# eza colors — ANSI SGR codes (3x/9x) so file/permission colors also follow the
+# eza colors - ANSI SGR codes (3x/9x) so file/permission colors also follow the
 # active theme. 34=dir 32=exec 36=symlink 33/31/32=read/write/exec perms 90=meta.
 export EZA_COLORS="da=90:di=34:ex=32:ln=36:ur=33:uw=31:ux=32:ue=32:gr=33:gw=31:gx=32:tr=33:tw=31:tx=32:su=35:sf=35:xa=90:lp=36:cc=35:sn=32:sb=32:uu=33:gu=33"
 
-# ── Colorscheme switcher (theme <name> | dark | light | toggle | list) ────────
+# -- Colorscheme switcher (theme <name> | dark | light | toggle | list) --------
 [[ -f "$ZDOTDIR/theme.zsh" ]] && source "$ZDOTDIR/theme.zsh"
 
-# ── Aliases & functions ───────────────────────────────────────────────────────
+# -- Aliases & functions -------------------------------------------------------
 [[ -f "$ZDOTDIR/aliases.zsh" ]]   && source "$ZDOTDIR/aliases.zsh"
 [[ -f "$ZDOTDIR/functions.zsh" ]] && source "$ZDOTDIR/functions.zsh"
 
-# ── Live RAM% for the prompt's color-shifting gauge ───────────────────────────
+# -- Live RAM% for the prompt's color-shifting gauge ---------------------------
 # Computed once per prompt and exported so starship's custom.ram_* modules
-# (green→amber→red) can read it without each recomputing. ~2ms via vm_stat.
+# (green->amber->red) can read it without each recomputing. ~2ms via vm_stat.
 _starship_ram_pct() {
   local total
   total=$(sysctl -n hw.memsize 2>/dev/null) || return
@@ -200,8 +200,8 @@ _starship_ram_pct() {
 autoload -Uz add-zsh-hook
 add-zsh-hook precmd _starship_ram_pct
 
-# ── Prompt (must be last so it isn't clobbered) ───────────────────────────────
+# -- Prompt (must be last so it isn't clobbered) -------------------------------
 command -v starship >/dev/null && eval "$(starship init zsh)"
 
-# ── Local machine overrides (not tracked) ─────────────────────────────────────
+# -- Local machine overrides (not tracked) -------------------------------------
 [[ -f "$ZDOTDIR/local.zsh" ]] && source "$ZDOTDIR/local.zsh"

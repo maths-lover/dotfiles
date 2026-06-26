@@ -1,4 +1,4 @@
--- lua/plugins/git.lua — gitsigns + lazygit (you already use lazygit in the shell)
+-- lua/plugins/git.lua - gitsigns + lazygit (you already use lazygit in the shell)
 return {
   {
     "lewis6991/gitsigns.nvim",

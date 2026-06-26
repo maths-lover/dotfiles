@@ -3,7 +3,7 @@ local function augroup(name)
   return vim.api.nvim_create_augroup("cfg_" .. name, { clear = true })
 end
 
--- Highlight yanked text (vim.hl.hl_op — current API; replaces vim.highlight.on_yank)
+-- Highlight yanked text (vim.hl.hl_op - current API; replaces vim.highlight.on_yank)
 vim.api.nvim_create_autocmd("TextYankPost", {
   group = augroup("yank_highlight"),
   callback = function() vim.hl.hl_op({ higroup = "IncSearch", timeout = 150 }) end,

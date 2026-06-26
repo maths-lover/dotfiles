@@ -1,4 +1,4 @@
--- lua/plugins/lsp.lua — Mason + LSP (modern vim.lsp.config / vim.lsp.enable API)
+-- lua/plugins/lsp.lua - Mason + LSP (modern vim.lsp.config / vim.lsp.enable API)
 return {
   {
     "neovim/nvim-lspconfig",

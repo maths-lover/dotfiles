@@ -1,4 +1,4 @@
--- lua/plugins/completion.lua — blink.cmp (fast, modern completion)
+-- lua/plugins/completion.lua - blink.cmp (fast, modern completion)
 return {
   {
     "saghen/blink.cmp",
