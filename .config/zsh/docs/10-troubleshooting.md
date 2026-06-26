@@ -16,6 +16,9 @@
 | Old `~/.zshrc` interfering | this setup uses `ZDOTDIR`; `~/.zshenv` must contain only the bootstrap, and there should be no `~/.zshrc` / `~/.zprofile` in `$HOME` |
 | `brew` / tools not on `PATH` in a new shell | `.zprofile` runs `brew shellenv` for login shells; start a login shell or `source ~/.config/zsh/.zprofile` |
 | Man pages don't open in neovim | `echo $MANPAGER` should be `nvim +Man!`; set in `.zshenv` when `nvim` is present |
+| Git asks for SSH key passphrase when committing | The key isn't in the agent. `~/.ssh/config` has `AddKeysToAgent`/`UseKeychain`, so `ssh-add --apple-use-keychain ~/.ssh/id_ed25519` once caches it in Keychain; afterwards any `ssh`/`git` use loads it automatically |
+| `ssh: Bad owner or permissions` | `chmod 700 ~/.ssh`; the tracked `~/.ssh/config` is a symlink into `~/dotfiles` — its repo file must not be group/world-writable |
+| Need a private/internal SSH host | add it to `~/.ssh/config.local` (git-ignored, machine-specific); it's `Include`d first so it overrides the global defaults |
 
 ## Useful diagnostics
 

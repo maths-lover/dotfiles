@@ -15,3 +15,8 @@
 .config/zsh/.active-theme
 .config/zsh/local.zsh
 .config/zsh/plugins/
+
+# ssh — track ONLY config; never private keys, known_hosts, or local overrides
+.ssh/*
+!.ssh/config
+.ssh/config.local
