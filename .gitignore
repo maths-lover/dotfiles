@@ -1,0 +1,17 @@
+# This repo only contains files we put here, so the ignore list is just a safety
+# net against runtime/state files ever landing under .config/zsh/ (they normally
+# live in ~/.config — a real dir — not in this repo).
+
+.DS_Store
+*.swp
+*.bak
+
+# zsh runtime / state / secrets / vendored (recreated by setup_zsh.sh)
+.config/zsh/.zcompdump*
+.config/zsh/.zcompcache/
+.config/zsh/.zsh_sessions/
+.config/zsh/cache/
+.config/zsh/backup-*/
+.config/zsh/.active-theme
+.config/zsh/local.zsh
+.config/zsh/plugins/
