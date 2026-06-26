@@ -16,3 +16,11 @@ export PATH="$HOME/.local/bin:$PATH"
 if [[ -d "$HOMEBREW_PREFIX/opt/openjdk/bin" ]]; then
   export PATH="$HOMEBREW_PREFIX/opt/openjdk/bin:$PATH"
 fi
+
+# ── SSH key into agent (so commit signing & ssh never re-prompt) ───────────────
+# Commit signing uses `ssh-keygen -Y sign`, which needs the key already in the
+# agent. This loads any key whose passphrase you've saved to the macOS Keychain
+# (seed it once with:  ssh-add --apple-use-keychain ~/.ssh/id_ed25519).
+if [[ "$OSTYPE" == darwin* ]] && command -v ssh-add >/dev/null 2>&1; then
+  ssh-add --apple-load-keychain 2>/dev/null
+fi
