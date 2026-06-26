@@ -1,0 +1,21 @@
+# Stow ignore-list — only ~/dotfiles/.config should be symlinked into $HOME.
+# NOTE: a custom .stow-local-ignore REPLACES stow's built-in defaults, so the
+# usual VCS/junk patterns are re-listed here.
+#
+# Patterns containing "/" are anchored to the repo root; bare patterns match any
+# path segment.
+
+# ── repo metadata (never link into $HOME) ──
+^/install\.sh$
+^/README\.md$
+^/LICENSE$
+^/\.git$
+^/\.gitignore$
+^/\.gitmodules$
+^/\.github$
+^/\.stow-local-ignore$
+
+# ── editor / OS junk (anywhere) ──
+\.DS_Store
+.+~
+\#.*\#
