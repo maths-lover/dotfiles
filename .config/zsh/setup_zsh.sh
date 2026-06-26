@@ -81,12 +81,6 @@ mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}/zsh" \
          "$HOME/.local/bin"
 ok "Runtime directories created"
 
-# ── 5b. Zig master (prebuilt nightly, via zigup → ~/.local/bin/zig) ───────────
-if command -v zigup >/dev/null 2>&1 && [[ ! -x "$HOME/.local/bin/zig" ]]; then
-  info "Installing zig master via zigup…"
-  zigup --path-link "$HOME/.local/bin/zig" master && ok "zig master installed"
-fi
-
 # ── 6. ~/.zshenv bootstrap (points zsh at ~/.config/zsh) ──────────────────────
 ZSHENV="$HOME/.zshenv"
 read -r -d '' BOOTSTRAP <<'EOF' || true

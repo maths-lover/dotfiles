@@ -40,7 +40,7 @@ brew "stow"                # GNU Stow — symlink-manage these dotfiles
 brew "node"                # JS/TS + many LSP servers (bashls, jsonls, yamlls, …)
 brew "go"                  # gopls + gofumpt
 brew "rust"                # cargo/rustc/rustfmt (rust-analyzer via mason)
-brew "zigup"               # zig version manager — `zigup master` fetches prebuilt nightlies
+brew "zig"                 # zig + zls (stable; matches Mason's zls version)
 brew "openjdk"             # JDK for jdtls (keg-only; PATH wired in .zprofile)
 
 # ── Zsh plugins (sourced manually from .zshrc) ────────────────────────────────
