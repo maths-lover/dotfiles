@@ -32,9 +32,14 @@ The bottom status bar shows the current mode's keys.
 | `h j k l` | move focus (or arrows) |
 | `x` | close pane |
 | `f` | fullscreen toggle |
-| `w` | floating pane toggle |
+| `w` | toggle floating panes (show/hide the floating layer) |
+| `e` | send focused pane to floating (or back to tiled) |
+| `i` | pin / unpin a floating pane (stays on top, always visible) |
 | `z` | hide/show pane frames |
 | `c` | rename pane |
+
+Floating workflow: `Alt f` (or `Ctrl p w`) shows the floating layer; `Ctrl p e`
+floats the current pane; `Ctrl p i` pins it so it stays visible over the others.
 
 ## Tabs  (`Ctrl t`, then)
 | Key | Action |
