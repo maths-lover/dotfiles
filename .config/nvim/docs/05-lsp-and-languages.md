@@ -97,6 +97,22 @@ Two native layers handle "different repos behave differently":
    Manage trust with `:trust` / `:h trust`. There is a worked example in
    `~/playground/projects/web-app/.nvim.lua`.
 
+## Working on several projects at once
+
+Because LSP roots per file (above), a Go project and a Python project can be open
+in the same Neovim and each gets its own correctly-rooted server. Two ways to
+organize that:
+
+- **One tab per project (one window).** `<leader>fp` (or `:Project`) picks a dir
+  from your zoxide history and opens it in a **new tab** with a tab-local cwd
+  (`:tcd`), so finding/grep/oil in that tab are scoped to that project. The
+  tabline shows each tab labeled by its project dir. Move between projects with
+  `]t` / `[t` (or `gt` / tab numbers); close one with `<leader>tx`.
+- **One window per project.** From the shell, `nvp` picks a project and opens it
+  in its own Neovide window (best isolation; switch with Cmd-\` / Mission Control).
+
+Verify isolation any time with `:LspInfo` - each client lists its own `root_dir`.
+
 ## Notes
 
 - `stylua` is a formatter; lspconfig also ships a `stylua --lsp` config, so it is

@@ -34,6 +34,17 @@ referenced below). Press `<leader>?` for buffer-local keymaps via which-key.
 | `<S-h>` | previous buffer |
 | `<leader>bd` | delete buffer |
 
+## Tabs / projects (multi-project workflow)
+
+| Key | Action |
+|-----|--------|
+| `<leader>fp` / `:Project` | open a project (zoxide pick) in a new tab, tab-scoped cwd |
+| `]t` / `[t` | next / previous tab (project) |
+| `<leader>tx` | close the current tab |
+| `gt` / `gT` / `1gt` | native: next / prev / go to tab N |
+
+See [LSP & languages](05-lsp-and-languages.md#working-on-several-projects-at-once).
+
 ## Editing
 
 | Key | Action |

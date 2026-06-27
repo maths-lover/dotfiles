@@ -24,6 +24,7 @@ return {
         { "<leader>o", group = "open (external)" },
         { "<leader>y", group = "yank/copy" },
         { "<leader>n", group = "notes" },
+        { "<leader>t", group = "tabs/projects" },
       },
     },
     keys = {

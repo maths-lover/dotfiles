@@ -87,6 +87,17 @@ zj() {
   fi
 }
 
+# nvp - open a project in its OWN Neovide window (one window per project). Pick a
+# dir from zoxide history; Neovide opens rooted there so its LSP/finders scope to
+# it. Use this to work on several projects side by side as separate windows.
+nvp() {
+  local dir
+  dir=$(zoxide query -l | fzf --reverse --height=60% --border \
+        --preview 'eza --tree --level=2 --icons --color=always {} 2>/dev/null' \
+        --header 'open project in Neovide (new window)') || return
+  [[ -n $dir ]] && (builtin cd -- "$dir" && neovide .)
+}
+
 # ff - find files by NAME (fd). Pattern is a regex; add a path to search elsewhere.
 #   ff config                 # files matching 'config' under cwd
 #   ff '\.lua$' ~/.config     # lua files under ~/.config (outside cwd)

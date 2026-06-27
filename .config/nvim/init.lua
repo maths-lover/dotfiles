@@ -9,8 +9,10 @@ vim.g.maplocalleader = "\\"
 require("config.options")
 require("config.keymaps")
 require("config.autocmds")
-require("config.neovide") -- self-guards; no-op outside Neovide
-require("config.lazy")    -- bootstraps lazy.nvim + loads lua/plugins/*
+require("config.tabline")  -- per-project tab labels
+require("config.neovide")  -- self-guards; no-op outside Neovide
+require("config.lazy")     -- bootstraps lazy.nvim + loads lua/plugins/*
+require("config.projects") -- multi-project: open a project per tab (<leader>fp)
 
 -- Apply the colorscheme synced to the OS theme (after colorschemes are loaded).
 require("config.theme").setup()
