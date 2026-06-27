@@ -2,6 +2,11 @@
 // Left: editor (nvim, opens cwd via oil). Right column: a shell over lazygit.
 // Launched by the `zj` session switcher; panes inherit the project directory.
 layout {
+    // Slim single-line bar at the top (session / tabs / mode), matching the
+    // compact default and nvim's single statusline.
+    pane size=1 borderless=true {
+        plugin location="zellij:compact-bar"
+    }
     pane split_direction="vertical" {
         pane size="72%" {
             command "nvim"

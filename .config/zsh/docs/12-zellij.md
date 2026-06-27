@@ -72,11 +72,20 @@ Add your own layouts as `~/.config/zellij/layouts/<name>.kdl` and launch with
 | `zjk` | kill a session |
 | `zjka` | kill all sessions |
 
-## Theme
+## Theme & aesthetics (matched to Neovim)
 
 A custom `terminal` theme in `config.kdl` maps to the terminal's 16 ANSI colors, so
 zellij follows the `theme` switcher (see [Themes](08-themes.md)) just like fzf, bat,
 and eza. Clipboard yanks use `pbcopy` (macOS).
+
+The chrome is tuned to match the Neovim UI:
+- `pane_frames` with `rounded_corners` - mirrors nvim's rounded window/float borders.
+- `simplified_ui true` - flat bars (no powerline arrows), matching the flat lualine.
+- `default_layout "compact"` - a single slim bar, like nvim's one statusline (the
+  `coding` layout used by `zj` carries the same compact bar).
+
+So across the terminal, zellij, and Neovim you get one consistent look: rounded
+borders, flat themed bars, and colors that all follow the active `theme`.
 
 ## Optional: auto-start
 

@@ -413,9 +413,10 @@ web_client {
 // Options:
 //   - true
 //   - false (Default)
-// 
-// simplified_ui true
- 
+//
+// Flat bars (no powerline/segment arrows) to match the flat lualine statusline.
+simplified_ui true
+
 // Enable OSC8 hyperlink output
 // Options:
 //   - true (Default)
@@ -454,8 +455,8 @@ default_shell "zsh"
  
 // The name of the default layout to load on startup
 // Default: "default"
-// 
-default_layout "default"
+// Using the single-line compact bar (one bar, like nvim's single statusline).
+default_layout "compact"
  
 // The folder in which Zellij will look for layouts
 // (Requires restart)
