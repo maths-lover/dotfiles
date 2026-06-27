@@ -455,8 +455,10 @@ default_shell "zsh"
  
 // The name of the default layout to load on startup
 // Default: "default"
-// Using the single-line compact bar (one bar, like nvim's single statusline).
-default_layout "compact"
+// "default" keeps the status-bar that shows keybinding hints (helpful while
+// learning). simplified_ui makes it flat. Switch to "compact" later for a
+// single minimal bar once you know the keys.
+default_layout "default"
  
 // The folder in which Zellij will look for layouts
 // (Requires restart)

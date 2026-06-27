@@ -81,11 +81,15 @@ and eza. Clipboard yanks use `pbcopy` (macOS).
 The chrome is tuned to match the Neovim UI:
 - `pane_frames` with `rounded_corners` - mirrors nvim's rounded window/float borders.
 - `simplified_ui true` - flat bars (no powerline arrows), matching the flat lualine.
-- `default_layout "compact"` - a single slim bar, like nvim's one statusline (the
-  `coding` layout used by `zj` carries the same compact bar).
+- `default_layout "default"` - keeps the bottom status-bar that shows the keybinding
+  hints (handy while learning). The `coding` layout (used by `zj`) shows the same
+  tab-bar + status-bar.
 
 So across the terminal, zellij, and Neovim you get one consistent look: rounded
 borders, flat themed bars, and colors that all follow the active `theme`.
+
+Want a single minimal bar (no hints) once you know the keys? Set
+`default_layout "compact"` in `config.kdl`. The keys are always in `zjhelp`.
 
 ## Optional: auto-start
 
