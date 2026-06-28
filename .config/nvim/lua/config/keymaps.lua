@@ -50,10 +50,33 @@ map("n", "N", "Nzzzv")
 -- Paste over selection without yanking it
 map("x", "<leader>p", [["_dP]], { desc = "Paste (keep register)" })
 
--- Diagnostics navigation
+-- Move by screen line when wrapping (counts still move by file line: 5j works)
+map({ "n", "x" }, "j", "v:count == 0 ? 'gj' : 'j'", { expr = true, desc = "Down (screen line)" })
+map({ "n", "x" }, "k", "v:count == 0 ? 'gk' : 'k'", { expr = true, desc = "Up (screen line)" })
+
+-- Diagnostics navigation (all severities, then error- and warning-specific)
+local S = vim.diagnostic.severity
 map("n", "[d", function() vim.diagnostic.jump({ count = -1 }) end, { desc = "Prev diagnostic" })
 map("n", "]d", function() vim.diagnostic.jump({ count = 1 }) end, { desc = "Next diagnostic" })
+map("n", "]e", function() vim.diagnostic.jump({ count = 1, severity = S.ERROR }) end, { desc = "Next error" })
+map("n", "[e", function() vim.diagnostic.jump({ count = -1, severity = S.ERROR }) end, { desc = "Prev error" })
+map("n", "]w", function() vim.diagnostic.jump({ count = 1, severity = S.WARN }) end, { desc = "Next warning" })
+map("n", "[w", function() vim.diagnostic.jump({ count = -1, severity = S.WARN }) end, { desc = "Prev warning" })
 map("n", "<leader>e", vim.diagnostic.open_float, { desc = "Line diagnostics" })
+
+-- Make treesitter motions (]f [f ]a [a ]c [c ...) repeatable with ; and , -
+-- and fold the builtin f/t/F/T into the same repeat so ; , stay useful for them.
+-- Deferred so it runs after treesitter (a start plugin) has loaded.
+vim.schedule(function()
+  local ok, tsrepeat = pcall(require, "nvim-treesitter.textobjects.repeatable_move")
+  if not ok then return end
+  map({ "n", "x", "o" }, ";", tsrepeat.repeat_last_move_next, { desc = "Repeat move (forward)" })
+  map({ "n", "x", "o" }, ",", tsrepeat.repeat_last_move_previous, { desc = "Repeat move (backward)" })
+  map({ "n", "x", "o" }, "f", tsrepeat.builtin_f_expr, { expr = true })
+  map({ "n", "x", "o" }, "F", tsrepeat.builtin_F_expr, { expr = true })
+  map({ "n", "x", "o" }, "t", tsrepeat.builtin_t_expr, { expr = true })
+  map({ "n", "x", "o" }, "T", tsrepeat.builtin_T_expr, { expr = true })
+end)
 
 -- Open in external macOS apps (the download-report -> Excel move)
 map("n", "<leader>oo", function() vim.ui.open(vim.fn.expand("%:p")) end, { desc = "Open file in default app" })
