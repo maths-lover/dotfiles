@@ -458,7 +458,7 @@ default_shell "zsh"
 // "default" keeps the status-bar that shows keybinding hints (helpful while
 // learning). simplified_ui makes it flat. Switch to "compact" later for a
 // single minimal bar once you know the keys.
-default_layout "default"
+default_layout "compact"
  
 // The folder in which Zellij will look for layouts
 // (Requires restart)
