@@ -272,7 +272,8 @@ command -v starship >/dev/null && eval "$(starship init zsh)"
 # -- Local machine overrides (not tracked) -------------------------------------
 [[ -f "$ZDOTDIR/local.zsh" ]] && source "$ZDOTDIR/local.zsh"
 
-# -- Startup greeting: a random xkcd comic as an inline image (Ghostty only) ----
-# Fetched/rendered in the BACKGROUND so the shell is instant; painted above the
-# prompt when ready. Disable in local.zsh with XKCD_NO_GREETING=1.
-_xkcd_async_start
+# -- Startup greeting -----------------------------------------------------------
+# Bare Ghostty: a random xkcd comic (inline image, fetched in the background so
+# the shell stays instant). zellij: a fastfetch splash, once per session.
+# Disable in local.zsh with XKCD_NO_GREETING=1.
+_startup_greeting

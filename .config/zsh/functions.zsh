@@ -263,36 +263,36 @@ _xkcd_ready() {
   unset _XKCD_FILE _XKCD_FD
 }
 
-# _xkcd_async_start - kick off a random comic in the BACKGROUND so the shell is
-# instant; it is painted above the prompt the moment it is ready (see above).
-# Bare Ghostty gets a real kitty-graphics image; zellij (no graphics protocol)
-# gets ANSI block art, shown only in the FIRST pane of a session so the 3-pane
-# `coding` layout does not show it thrice. Interactive only, never over SSH/tmux;
-# silent if offline. Disable with XKCD_NO_GREETING=1 in local.zsh.
-_xkcd_async_start() {
+# _startup_greeting - shell-open greeting.
+#   * bare Ghostty: a random xkcd comic as a real kitty-graphics image, fetched
+#     in the BACKGROUND and painted above the prompt when ready (see _xkcd_ready)
+#     so the shell stays instant.
+#   * zellij: cannot show images, so greet with a fastfetch splash instead - once
+#     per session (marker keyed by the session name) so the 3-pane `coding`
+#     layout does not repeat it.
+# Interactive only, never over SSH/tmux; silent if offline. Disable by setting
+# XKCD_NO_GREETING=1 in local.zsh.
+_startup_greeting() {
   [[ -o interactive ]] || return
   [[ -z ${XKCD_NO_GREETING:-} ]] || return
   [[ -z ${SSH_TTY:-} && -z ${SSH_CONNECTION:-} ]] || return
-  command -v chafa >/dev/null && command -v jq >/dev/null || return
 
-  local fmt
   if [[ -n ${ZELLIJ:-} ]]; then
-    # Once per zellij session (marker keyed by session name).
-    local marker="${TMPDIR:-/tmp}/.xkcd-zellij-${ZELLIJ_SESSION_NAME:-default}"
+    command -v fastfetch >/dev/null || return
+    local marker="${TMPDIR:-/tmp}/.zellij-greeting-${ZELLIJ_SESSION_NAME:-default}"
     [[ -e $marker ]] && return
     : >| "$marker"
-    fmt=symbols
-  elif [[ ${TERM_PROGRAM:-} == ghostty || -n ${GHOSTTY_RESOURCES_DIR:-} ]]; then
-    [[ -z ${TMUX:-} ]] || return     # tmux also eats the graphics protocol
-    fmt=kitty
-  else
+    fastfetch
     return
   fi
 
+  # Bare Ghostty only (the graphics protocol does not survive tmux either).
+  [[ ${TERM_PROGRAM:-} == ghostty || -n ${GHOSTTY_RESOURCES_DIR:-} ]] || return
+  [[ -z ${TMUX:-} ]] || return
+  command -v chafa >/dev/null && command -v jq >/dev/null || return
   _XKCD_FILE=$(mktemp -t xkcd.XXXXXX) || return
-  # Render to the file in a background job (no tty there, so the format is forced
-  # explicitly). The process-substitution fd hits EOF when the job ends; ZLE then
-  # calls _xkcd_ready to paint it above the prompt.
-  exec {_XKCD_FD}< <(_xkcd_print random --format "$fmt" >| "$_XKCD_FILE" 2>/dev/null)
+  # Background render; the process-substitution fd hits EOF when done and ZLE
+  # calls _xkcd_ready to paint the image above the prompt.
+  exec {_XKCD_FD}< <(_xkcd_print random --format kitty >| "$_XKCD_FILE" 2>/dev/null)
   zle -F "$_XKCD_FD" _xkcd_ready
 }
