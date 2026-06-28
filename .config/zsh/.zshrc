@@ -273,5 +273,6 @@ command -v starship >/dev/null && eval "$(starship init zsh)"
 [[ -f "$ZDOTDIR/local.zsh" ]] && source "$ZDOTDIR/local.zsh"
 
 # -- Startup greeting: a random xkcd comic as an inline image (Ghostty only) ----
-# Sourced after local.zsh so it can be disabled there with XKCD_NO_GREETING=1.
-_xkcd_greeting
+# Fetched/rendered in the BACKGROUND so the shell is instant; painted above the
+# prompt when ready. Disable in local.zsh with XKCD_NO_GREETING=1.
+_xkcd_async_start

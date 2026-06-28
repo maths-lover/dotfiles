@@ -200,17 +200,15 @@ frg() {
   [[ -n $file ]] && ${EDITOR} +"${line:-1}" -- "$file"
 }
 
-# xkcd - show a comic inline using the terminal's image protocol (Ghostty/kitty
-# graphics via chafa; falls back to sixel/ANSI elsewhere). Needs curl, jq, chafa.
-#   xkcd            # random comic
-#   xkcd 327        # comic #327
-#   xkcd latest     # newest comic
-# Tune the size with XKCD_SIZE (default 60x24), e.g.  XKCD_SIZE=80x30 xkcd
-xkcd() {
+# _xkcd_print - fetch a comic and emit title + inline image + alt to stdout.
+# $1 = selector (random|latest|N); remaining args are passed to chafa (the async
+# path forces --format kitty since a background job has no tty to auto-detect).
+_xkcd_print() {
   command -v jq >/dev/null && command -v chafa >/dev/null || {
     print -u2 "xkcd: needs jq and chafa"; return 1
   }
-  local sel="${1:-random}" meta
+  local sel="${1:-random}"; shift
+  local meta
   if [[ $sel == latest ]]; then
     meta=$(curl -fsm5 https://xkcd.com/info.0.json) || return 1
   elif [[ $sel == random ]]; then
@@ -229,19 +227,49 @@ xkcd() {
   # print -r (raw) so a title/alt containing % or \ is never mis-rendered.
   local cyan=$'\e[1;36m' dim=$'\e[90m' rst=$'\e[0m'
   print -r -- "${cyan}xkcd #${n}: ${title}${rst}"
-  chafa --size "${XKCD_SIZE:-60x24}" "$tmp"
+  chafa "$@" --size "${XKCD_SIZE:-60x24}" "$tmp"
   print -r -- "${dim}${alt}${rst}"
   rm -f "$tmp"
 }
 
-# _xkcd_greeting - a random comic on a fresh Ghostty shell. Interactive only, not
-# inside zellij/tmux (graphics do not pass cleanly through them) or over SSH.
-# Fails silently if offline. Disable by setting XKCD_NO_GREETING=1 in local.zsh.
-_xkcd_greeting() {
+# xkcd - show a comic inline (Ghostty/kitty graphics via chafa, auto-detected;
+# sixel/ANSI fallback elsewhere). Needs curl, jq, chafa.
+#   xkcd            # random comic
+#   xkcd 327        # comic #327
+#   xkcd latest     # newest comic
+# Tune the size with XKCD_SIZE (default 60x24), e.g.  XKCD_SIZE=80x30 xkcd
+xkcd() { _xkcd_print "${1:-random}"; }
+
+# _xkcd_ready - ZLE fd-watcher callback: the background render has finished, so
+# paint the comic above the prompt. `zle -I` tells ZLE we produced output, so it
+# tidies up and redraws the prompt (and any typed text) below the image.
+_xkcd_ready() {
+  local fd=$1
+  zle -F "$fd"          # unregister this watcher (fires once)
+  exec {fd}<&-          # close the fd
+  if [[ -s ${_XKCD_FILE:-} ]]; then
+    zle -I
+    print -r -- ""
+    command cat -- "$_XKCD_FILE"
+  fi
+  command rm -f -- "${_XKCD_FILE:-}"
+  unset _XKCD_FILE _XKCD_FD
+}
+
+# _xkcd_async_start - kick off a random comic in the BACKGROUND so the shell is
+# instant; it is painted above the prompt the moment it is ready (see above).
+# Ghostty-only, interactive, not in zellij/tmux or over SSH; silent if offline.
+# Disable with XKCD_NO_GREETING=1 in local.zsh.
+_xkcd_async_start() {
   [[ -o interactive ]] || return
   [[ -z ${XKCD_NO_GREETING:-} ]] || return
   [[ $TERM_PROGRAM == ghostty || -n ${GHOSTTY_RESOURCES_DIR:-} ]] || return
   [[ -z ${ZELLIJ:-} && -z ${TMUX:-} && -z ${SSH_TTY:-} && -z ${SSH_CONNECTION:-} ]] || return
   command -v chafa >/dev/null && command -v jq >/dev/null || return
-  xkcd random 2>/dev/null
+  _XKCD_FILE=$(mktemp -t xkcd.XXXXXX) || return
+  # Render to the file in a background job. The process-substitution fd hits EOF
+  # (becomes readable) when the job ends; ZLE then calls _xkcd_ready. Force kitty
+  # format - a background job has no tty for chafa to query.
+  exec {_XKCD_FD}< <(_xkcd_print random --format kitty >| "$_XKCD_FILE" 2>/dev/null)
+  zle -F "$_XKCD_FD" _xkcd_ready
 }
