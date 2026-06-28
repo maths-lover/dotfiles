@@ -232,13 +232,20 @@ _xkcd_print() {
   rm -f "$tmp"
 }
 
-# xkcd - show a comic inline (Ghostty/kitty graphics via chafa, auto-detected;
-# sixel/ANSI fallback elsewhere). Needs curl, jq, chafa.
+# xkcd - show a comic inline. In bare Ghostty chafa auto-detects kitty graphics
+# (a real image); inside zellij (which cannot pass the graphics protocol) it
+# falls back to ANSI block art. Needs curl, jq, chafa.
 #   xkcd            # random comic
 #   xkcd 327        # comic #327
 #   xkcd latest     # newest comic
 # Tune the size with XKCD_SIZE (default 60x24), e.g.  XKCD_SIZE=80x30 xkcd
-xkcd() { _xkcd_print "${1:-random}"; }
+xkcd() {
+  if [[ -n ${ZELLIJ:-} ]]; then
+    _xkcd_print "${1:-random}" --format symbols
+  else
+    _xkcd_print "${1:-random}"
+  fi
+}
 
 # _xkcd_ready - ZLE fd-watcher callback: the background render has finished, so
 # paint the comic above the prompt. `zle -I` tells ZLE we produced output, so it
@@ -258,18 +265,34 @@ _xkcd_ready() {
 
 # _xkcd_async_start - kick off a random comic in the BACKGROUND so the shell is
 # instant; it is painted above the prompt the moment it is ready (see above).
-# Ghostty-only, interactive, not in zellij/tmux or over SSH; silent if offline.
-# Disable with XKCD_NO_GREETING=1 in local.zsh.
+# Bare Ghostty gets a real kitty-graphics image; zellij (no graphics protocol)
+# gets ANSI block art, shown only in the FIRST pane of a session so the 3-pane
+# `coding` layout does not show it thrice. Interactive only, never over SSH/tmux;
+# silent if offline. Disable with XKCD_NO_GREETING=1 in local.zsh.
 _xkcd_async_start() {
   [[ -o interactive ]] || return
   [[ -z ${XKCD_NO_GREETING:-} ]] || return
-  [[ $TERM_PROGRAM == ghostty || -n ${GHOSTTY_RESOURCES_DIR:-} ]] || return
-  [[ -z ${ZELLIJ:-} && -z ${TMUX:-} && -z ${SSH_TTY:-} && -z ${SSH_CONNECTION:-} ]] || return
+  [[ -z ${SSH_TTY:-} && -z ${SSH_CONNECTION:-} ]] || return
   command -v chafa >/dev/null && command -v jq >/dev/null || return
+
+  local fmt
+  if [[ -n ${ZELLIJ:-} ]]; then
+    # Once per zellij session (marker keyed by session name).
+    local marker="${TMPDIR:-/tmp}/.xkcd-zellij-${ZELLIJ_SESSION_NAME:-default}"
+    [[ -e $marker ]] && return
+    : >| "$marker"
+    fmt=symbols
+  elif [[ ${TERM_PROGRAM:-} == ghostty || -n ${GHOSTTY_RESOURCES_DIR:-} ]]; then
+    [[ -z ${TMUX:-} ]] || return     # tmux also eats the graphics protocol
+    fmt=kitty
+  else
+    return
+  fi
+
   _XKCD_FILE=$(mktemp -t xkcd.XXXXXX) || return
-  # Render to the file in a background job. The process-substitution fd hits EOF
-  # (becomes readable) when the job ends; ZLE then calls _xkcd_ready. Force kitty
-  # format - a background job has no tty for chafa to query.
-  exec {_XKCD_FD}< <(_xkcd_print random --format kitty >| "$_XKCD_FILE" 2>/dev/null)
+  # Render to the file in a background job (no tty there, so the format is forced
+  # explicitly). The process-substitution fd hits EOF when the job ends; ZLE then
+  # calls _xkcd_ready to paint it above the prompt.
+  exec {_XKCD_FD}< <(_xkcd_print random --format "$fmt" >| "$_XKCD_FILE" 2>/dev/null)
   zle -F "$_XKCD_FD" _xkcd_ready
 }
