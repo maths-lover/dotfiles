@@ -49,6 +49,21 @@ alias gwip='git add -A && git commit --no-verify -m "WIP"'
 alias gunwip='git reset --soft HEAD~1'
 alias lg='lazygit'
 
+# -- Python via uv (projects, venvs, tools) ------------------------------------
+# uv is the single entry point: `uv init` a project, `uv add`/`uv remove` deps,
+# `uv run` to run inside the project venv, `uv sync` to match the lockfile.
+# Editor LSPs (basedpyright, ruff) are installed once with `uv tool install`.
+alias uvr='uv run'               # run a command in the project venv
+alias uva='uv add'               # add a dependency
+alias uvrm='uv remove'           # remove a dependency
+alias uvs='uv sync'              # sync the venv to uv.lock
+alias uvl='uv lock'              # update the lockfile
+alias uvpy='uv python'           # manage Python versions (install/list/pin)
+alias uvt='uv tool'              # manage global tools (install/list/upgrade)
+alias venv='uv venv'             # create a .venv in the current dir
+# `py` runs the project venv's python in a uv project, else system python3 (fn
+# in functions.zsh so arguments like `py script.py` are passed through correctly).
+
 # -- Modern tool shortcuts (own names; no incompatible shadowing) ---------------
 alias top='btop'                 # btop is interactive; safe at the prompt
 alias cls='clear'

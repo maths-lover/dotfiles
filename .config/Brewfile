@@ -38,6 +38,7 @@ brew "neovim"              # nvim - the editor ($EDITOR)
 brew "stow"                # GNU Stow - symlink-manage these dotfiles
 
 # -- Language toolchains (for neovim LSPs / formatters; clang via Xcode CLT) ----
+brew "uv"                  # Python: versions, venvs, projects, and `uv tool` LSPs
 brew "node"                # JS/TS + many LSP servers (bashls, jsonls, yamlls, ...)
 brew "go"                  # gopls + gofumpt
 brew "rust"                # cargo/rustc/rustfmt (rust-analyzer via mason)

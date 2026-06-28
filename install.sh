@@ -48,4 +48,15 @@ fi
 info "Running setup_zsh.sh..."
 "$HOME/.config/zsh/setup_zsh.sh"
 
+# 6. Python toolchain via uv (uv itself comes from the Brewfile in step 5).
+#    A managed interpreter + the editor LSPs as global, self-contained tools.
+#    These are uv-managed (not brew/Mason), so they live here, not the Brewfile.
+if command -v uv >/dev/null 2>&1; then
+  info "Setting up uv Python toolchain (interpreter + ty + ruff + debugpy)..."
+  uv python install 3.13
+  uv tool install ty             # type checker + LSP (Astral; replaces pyright)
+  uv tool install ruff           # linter + import sorting LSP (format via conform)
+  uv tool install debugpy        # provides debugpy-adapter for nvim-dap debugging
+fi
+
 printf '\n%sDone.%s  Start a new shell:  exec zsh\n' "$bold" "$reset"

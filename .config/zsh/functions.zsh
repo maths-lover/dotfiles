@@ -125,6 +125,16 @@ gclone() {
   git clone "$1" && cd -- "$(basename "${1%.git}")"
 }
 
+# py - run python from the project's uv venv when in a uv project (or an active
+# venv), otherwise the system python3. Args pass through:  py, py script.py, etc.
+py() {
+  if [[ -n $VIRTUAL_ENV || -f pyproject.toml || -f uv.lock || -f .python-version ]]; then
+    uv run python "$@"
+  else
+    python3 "$@"
+  fi
+}
+
 # zj - fuzzy project switcher: pick a zoxide dir, then attach-or-create a named
 # zellij session running the `coding` layout. The core "jump between projects"
 # move. Bound to Ctrl-f (see .zshrc); also runnable as `zj`.
