@@ -199,3 +199,49 @@ frg() {
   local line=${${out#*:}%%:*}
   [[ -n $file ]] && ${EDITOR} +"${line:-1}" -- "$file"
 }
+
+# xkcd - show a comic inline using the terminal's image protocol (Ghostty/kitty
+# graphics via chafa; falls back to sixel/ANSI elsewhere). Needs curl, jq, chafa.
+#   xkcd            # random comic
+#   xkcd 327        # comic #327
+#   xkcd latest     # newest comic
+# Tune the size with XKCD_SIZE (default 60x24), e.g.  XKCD_SIZE=80x30 xkcd
+xkcd() {
+  command -v jq >/dev/null && command -v chafa >/dev/null || {
+    print -u2 "xkcd: needs jq and chafa"; return 1
+  }
+  local sel="${1:-random}" meta
+  if [[ $sel == latest ]]; then
+    meta=$(curl -fsm5 https://xkcd.com/info.0.json) || return 1
+  elif [[ $sel == random ]]; then
+    local latest
+    latest=$(curl -fsm5 https://xkcd.com/info.0.json | jq -r .num) || return 1
+    meta=$(curl -fsm5 "https://xkcd.com/$(( RANDOM % latest + 1 ))/info.0.json") || return 1
+  else
+    meta=$(curl -fsm5 "https://xkcd.com/${sel}/info.0.json") || return 1
+  fi
+  [[ -n $meta ]] || return 1
+  local img title alt n
+  img=$(jq -r .img  <<<"$meta"); title=$(jq -r .title <<<"$meta")
+  alt=$(jq -r .alt  <<<"$meta"); n=$(jq -r .num   <<<"$meta")
+  local tmp; tmp=$(mktemp) || return 1
+  curl -fsm10 -o "$tmp" "$img" || { rm -f "$tmp"; return 1; }
+  # print -r (raw) so a title/alt containing % or \ is never mis-rendered.
+  local cyan=$'\e[1;36m' dim=$'\e[90m' rst=$'\e[0m'
+  print -r -- "${cyan}xkcd #${n}: ${title}${rst}"
+  chafa --size "${XKCD_SIZE:-60x24}" "$tmp"
+  print -r -- "${dim}${alt}${rst}"
+  rm -f "$tmp"
+}
+
+# _xkcd_greeting - a random comic on a fresh Ghostty shell. Interactive only, not
+# inside zellij/tmux (graphics do not pass cleanly through them) or over SSH.
+# Fails silently if offline. Disable by setting XKCD_NO_GREETING=1 in local.zsh.
+_xkcd_greeting() {
+  [[ -o interactive ]] || return
+  [[ -z ${XKCD_NO_GREETING:-} ]] || return
+  [[ $TERM_PROGRAM == ghostty || -n ${GHOSTTY_RESOURCES_DIR:-} ]] || return
+  [[ -z ${ZELLIJ:-} && -z ${TMUX:-} && -z ${SSH_TTY:-} && -z ${SSH_CONNECTION:-} ]] || return
+  command -v chafa >/dev/null && command -v jq >/dev/null || return
+  xkcd random 2>/dev/null
+}

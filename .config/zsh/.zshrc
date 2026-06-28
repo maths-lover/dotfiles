@@ -271,3 +271,7 @@ command -v starship >/dev/null && eval "$(starship init zsh)"
 
 # -- Local machine overrides (not tracked) -------------------------------------
 [[ -f "$ZDOTDIR/local.zsh" ]] && source "$ZDOTDIR/local.zsh"
+
+# -- Startup greeting: a random xkcd comic as an inline image (Ghostty only) ----
+# Sourced after local.zsh so it can be disabled there with XKCD_NO_GREETING=1.
+_xkcd_greeting

@@ -30,6 +30,7 @@ brew "fastfetch"           # system info splash
 # -- Dev extras ----------------------------------------------------------------
 brew "jq"                  # JSON processor
 brew "yq"                  # YAML/JSON/XML processor
+brew "chafa"               # render images in the terminal (Ghostty kitty proto)
 brew "tealdeer"            # tldr - community man-page cheatsheets (fast, Rust)
 brew "httpie"              # human-friendly HTTP client
 brew "markdown-oxide"      # markdown LSP for notes (links, backlinks, daily notes)
