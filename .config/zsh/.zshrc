@@ -191,21 +191,80 @@ export EZA_COLORS="da=90:di=34:ex=32:ln=36:ur=33:uw=31:ux=32:ue=32:gr=33:gw=31:g
 [[ -f "$ZDOTDIR/aliases.zsh" ]]   && source "$ZDOTDIR/aliases.zsh"
 [[ -f "$ZDOTDIR/functions.zsh" ]] && source "$ZDOTDIR/functions.zsh"
 
-# -- Live RAM% for the prompt's color-shifting gauge ---------------------------
-# Computed once per prompt and exported so starship's custom.ram_* modules
-# (green->amber->red) can read it without each recomputing. ~2ms via vm_stat.
-_starship_ram_pct() {
-  local total
-  total=$(sysctl -n hw.memsize 2>/dev/null) || return
-  export STARSHIP_RAM_PCT=$(vm_stat 2>/dev/null | awk -v total="$total" '
+# -- Prompt companion (mood engine) --------------------------------------------
+# Drives the starship "companion" prompt (see starship.toml): a kaomoji whose
+# face, sigil, colour and one-line aside react to the last command, vim mode,
+# background jobs, the hour, and idle time. Sets STARSHIP_MOOD/FACE/SIGIL/SAY;
+# starship's custom.* modules render them. About 8ms per prompt.
+zmodload zsh/datetime
+autoload -Uz add-zsh-hook
+
+typeset -gi _cmp_start=0 _cmp_last=0
+typeset -g  _cmp_mood=ok _cmp_face='(ᵔ◡ᵔ)' _cmp_sigil='λ' _cmp_say=''
+
+# _cmp_set <mood> <face> <sigil> <say> - remember + export the current mood.
+_cmp_set() {
+  _cmp_mood=$1 _cmp_face=$2 _cmp_sigil=$3 _cmp_say=$4
+  STARSHIP_MOOD=$1 STARSHIP_FACE=$2 STARSHIP_SIGIL=$3 STARSHIP_SAY=$4
+  export STARSHIP_MOOD STARSHIP_FACE STARSHIP_SIGIL STARSHIP_SAY
+}
+
+# Used memory as a percentage (~2ms via vm_stat); feeds the right-side cow.
+_cmp_ram() {
+  local total; total=$(sysctl -n hw.memsize 2>/dev/null) || { echo 0; return; }
+  vm_stat 2>/dev/null | awk -v total="$total" '
     /page size of/          {ps=$8}
     /Pages active/          {gsub(/\./,"",$3); a=$3}
     /Pages wired down/      {gsub(/\./,"",$4); w=$4}
     /occupied by compressor/{gsub(/\./,"",$5); c=$5}
-    END {if (total>0 && ps>0) printf "%d", ((a+w+c)*ps/total)*100; else print 0}')
+    END {if (total>0 && ps>0) printf "%d", ((a+w+c)*ps/total)*100; else print 0}'
 }
-autoload -Uz add-zsh-hook
-add-zsh-hook precmd _starship_ram_pct
+
+_cmp_preexec() { _cmp_start=$EPOCHSECONDS }
+
+_cmp_precmd() {
+  local code=$?
+  local now=$EPOCHSECONDS dur=0 idle=0 hour njobs
+  (( _cmp_start )) && dur=$(( now - _cmp_start )); _cmp_start=0
+  (( _cmp_last )) && idle=$(( now - _cmp_last )); _cmp_last=$now
+  hour=${(%):-%D{%H}}; njobs=${#jobstates}
+
+  # priority: error > slow > root > busy > night > idle > ok
+  if   (( code != 0 ));    then _cmp_set err   '(╯°□°)╯' 'ϟ' "oof, that exited ${code} -"
+  elif (( dur >= 3 ));     then _cmp_set slow  '( ·_·;)' '~' "phew, ${dur}s -"
+  elif (( EUID == 0 ));    then _cmp_set root  '(ÒﾛÓ)'   '#' "careful, you're root -"
+  elif (( njobs > 0 ));    then _cmp_set busy  '(⌐■_■)'  '&' "${njobs} job(s) cooking -"
+  elif (( 10#$hour < 6 )); then _cmp_set night '( ˘_˘ )' '*' "burning the midnight oil -"
+  elif (( idle >= 300 ));  then _cmp_set idle  '(ᴗ‿ᴗ)'   'z' "...zzz, oh hi -"
+  else                          _cmp_set ok    '(ᵔ◡ᵔ)'   'λ' ''
+  fi
+
+  # Right-side cow's water-bottle RAM gauge: a jar whose level tracks used memory
+  # plus the percentage. The numeric % also drives the colour band in
+  # starship.toml; the clock there is the built-in $time module.
+  local ram; ram=$(_cmp_ram)
+  local lv=$(( ram * 8 / 100 )); (( lv > 8 )) && lv=8
+  local jar=("▁" "▂" "▃" "▄" "▅" "▆" "▇" "█" "█")  # 0..8 eighths (1-indexed)
+  STARSHIP_RAM_PCT=$ram
+  STARSHIP_RAM_GAUGE="╢${jar[lv + 1]}╟ ${ram}%"
+  export STARSHIP_RAM_PCT STARSHIP_RAM_GAUGE
+}
+add-zsh-hook preexec _cmp_preexec
+add-zsh-hook precmd  _cmp_precmd
+
+# Vim NORMAL gets its own face/sigil; INSERT restores the command's base mood.
+# No reset-prompt here: starship's own keymap hook issues the single redraw
+# (it preserves and chains this widget). Calling reset-prompt here too would
+# fire it twice and erase the previous prompts.
+_cmp_keymap() {
+  if [[ $KEYMAP == vicmd ]]; then
+    STARSHIP_MOOD=vim STARSHIP_FACE='(¬‿¬)' STARSHIP_SIGIL='Λ' STARSHIP_SAY=''
+  else
+    STARSHIP_MOOD=$_cmp_mood STARSHIP_FACE=$_cmp_face STARSHIP_SIGIL=$_cmp_sigil STARSHIP_SAY=$_cmp_say
+  fi
+  export STARSHIP_MOOD STARSHIP_FACE STARSHIP_SIGIL STARSHIP_SAY
+}
+add-zle-hook-widget keymap-select _cmp_keymap
 
 # -- Prompt (must be last so it isn't clobbered) -------------------------------
 command -v starship >/dev/null && eval "$(starship init zsh)"
