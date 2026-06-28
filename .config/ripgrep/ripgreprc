@@ -1,0 +1,23 @@
+# ripgrep config - loaded via RIPGREP_CONFIG_PATH (set in .zshenv).
+# Applies to every `rg` invocation, including the `frg` live-grep function and
+# fzf integrations. Comments and flags here are plain ASCII.
+
+# Don't dump very long lines to the terminal; show a short preview instead.
+--max-columns=150
+--max-columns-preview
+
+# Custom 'web' type so `rg -tweb` searches html/css/js (and .map etc).
+--type-add
+web:*.{html,css,js}*
+
+# Search hidden files/dirs (dotfiles) by default...
+--hidden
+# ...but never descend into .git.
+--glob=!.git/*
+
+# Case-insensitive unless the pattern contains an uppercase letter.
+--smart-case
+
+# Line numbers without color, but bold so they stand out.
+--colors=line:none
+--colors=line:style:bold

@@ -20,3 +20,6 @@ export VISUAL="$EDITOR"
 export PAGER="${PAGER:-less}"
 export LESS="-R"            # render colors/ANSI in less
 export LANG="${LANG:-en_US.UTF-8}"
+
+# Point ripgrep at its config (max-columns, smart-case, hidden, custom types).
+export RIPGREP_CONFIG_PATH="$XDG_CONFIG_HOME/ripgrep/ripgreprc"

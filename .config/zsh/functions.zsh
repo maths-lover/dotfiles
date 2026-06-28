@@ -32,6 +32,48 @@ extract() {
   esac
 }
 
+# lsarchive - peek inside an archive without extracting:  lsarchive foo.tar.zst
+lsarchive() {
+  if [[ -z "$1" || ! -f "$1" ]]; then echo "usage: lsarchive <archive>"; return 1; fi
+  case "${1:l}" in
+    *.tar.bz2|*.tbz2|*.tar.bz) tar -tjf "$1" ;;
+    *.tar.gz|*.tgz)            tar -tzf "$1" ;;
+    *.tar.xz|*.txz)            tar -tJf "$1" ;;
+    *.tar.zst|*.tzst)          tar --zstd -tf "$1" ;;
+    *.tar)                     tar -tf "$1" ;;
+    *.zip|*.jar|*.war|*.ear)   unzip -l "$1" ;;
+    *.rar)                     unrar l "$1" ;;
+    *.7z)                      7z l "$1" ;;
+    *.gz)                      gzip -l "$1" ;;
+    *.xz)                      xz -l "$1" ;;
+    *) echo "lsarchive: don't know how to list '$1'"; return 1 ;;
+  esac
+}
+
+# archive - create a compressed archive; format inferred from the name:
+#   archive out.tar.zst src/ notes.md      # zstd: fast + good ratio
+#   archive backup.tar.xz project/         # xz: best ratio
+#   archive bundle.zip a b c               # zip
+archive() {
+  if (( $# < 2 )); then
+    echo "usage: archive <name.{tar.gz,tar.bz2,tar.xz,tar.zst,tar,zip,7z}> <files...>"
+    return 1
+  fi
+  local name="$1"; shift
+  local f
+  for f in "$@"; do [[ -e "$f" ]] || { echo "archive: '$f' not found"; return 1; }; done
+  case "${name:l}" in
+    *.tar.gz|*.tgz)   tar -czf  "$name" "$@" ;;
+    *.tar.bz2|*.tbz2) tar -cjf  "$name" "$@" ;;
+    *.tar.xz|*.txz)   tar -cJf  "$name" "$@" ;;
+    *.tar.zst|*.tzst) tar --zstd -cf "$name" "$@" ;;
+    *.tar)            tar -cf   "$name" "$@" ;;
+    *.zip)            zip -r -9 "$name" "$@" ;;
+    *.7z)             7z a -mx=9 "$name" "$@" ;;
+    *) echo "archive: unsupported extension for '$name'"; return 1 ;;
+  esac && { echo "created: $name"; ls -lh -- "$name"; }
+}
+
 # fcd - fuzzy-find a directory (under cwd) and cd into it
 fcd() {
   local dir
@@ -58,6 +100,24 @@ fbr() {
   local branch
   branch=$(git branch --all | grep -v HEAD | sed 's/^[* ]*//;s#remotes/[^/]*/##' \
            | sort -u | fzf) && git switch "$(echo "$branch" | sed 's#^remotes/[^/]*/##')"
+}
+
+# fglog - browse the commit log with fzf; preview shows the diff, Enter pages it.
+fglog() {
+  git log --graph --color=always \
+      --format="%C(auto)%h%d %s %C(black)%C(bold)%cr" "$@" \
+    | fzf --ansi --no-sort --reverse --tiebreak=index \
+        --preview 'grep -o "[a-f0-9]\{7,\}" <<< {} | head -1 | xargs -I% git show --color=always %' \
+        --bind 'enter:execute(grep -o "[a-f0-9]\{7,\}" <<< {} | head -1 | xargs -I% git show --color=always % | less -R)'
+}
+
+# fgst - browse stashes with fzf; preview the diff, print the chosen stash.
+fgst() {
+  local stash
+  stash=$(git stash list \
+          | fzf --reverse --preview 'cut -d: -f1 <<< {} | xargs git stash show -p --color=always' \
+          | cut -d: -f1)
+  [[ -n "$stash" ]] && git stash show -p "$stash"
 }
 
 # gclone - clone a repo and cd into it

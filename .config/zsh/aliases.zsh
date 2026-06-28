@@ -38,6 +38,15 @@ alias gpl='git pull'
 alias gf='git fetch --all --prune'
 alias gl='git log --oneline --graph --decorate -20'
 alias gla='git log --oneline --graph --decorate --all'
+# Safe force-push (refuses if it would clobber commits you haven't seen).
+alias gpf='git push --force-with-lease'
+# Publish the current branch and set its upstream in one go.
+alias gpc='git push --set-upstream origin "$(git symbolic-ref --short HEAD)"'
+# Switch to the repo's real default branch (reads origin/HEAD).
+alias gswm='git switch "$(basename "$(git symbolic-ref --quiet refs/remotes/origin/HEAD || echo main)")"'
+# Quick WIP checkpoint (skips hooks) and its undo (uncommit, keep changes staged).
+alias gwip='git add -A && git commit --no-verify -m "WIP"'
+alias gunwip='git reset --soft HEAD~1'
 alias lg='lazygit'
 
 # -- Modern tool shortcuts (own names; no incompatible shadowing) ---------------
