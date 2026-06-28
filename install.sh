@@ -59,4 +59,14 @@ if command -v uv >/dev/null 2>&1; then
   uv tool install debugpy        # provides debugpy-adapter for nvim-dap debugging
 fi
 
+# 7. IINA: read our high-quality mpv config from ~/.config/mpv (advanced
+#    settings). IINA itself comes from the Brewfile cask in step 5.
+if [[ -d /Applications/IINA.app ]]; then
+  info "Configuring IINA to use ~/.config/mpv ..."
+  defaults write com.colliderli.iina enableAdvancedSettings -bool true
+  defaults write com.colliderli.iina useUserDefinedConfDir -bool true
+  defaults write com.colliderli.iina userDefinedConfDir -string "$HOME/.config/mpv"
+  mkdir -p "$HOME/.local/state/mpv/watch_later"
+fi
+
 printf '\n%sDone.%s  Start a new shell:  exec zsh\n' "$bold" "$reset"

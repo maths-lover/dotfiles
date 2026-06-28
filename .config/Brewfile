@@ -60,3 +60,4 @@ cask "font-monaspice-nerd-font"   # Nerd-Font-patched Monaspace (note: "monaspic
 
 # -- GUI Applications for Mac productivity in general --------------------------------------------
 cask "loop"
+cask "iina"                    # modern media player (mpv core); config in .config/mpv
