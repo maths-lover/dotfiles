@@ -135,25 +135,52 @@ py() {
   fi
 }
 
-# zj - fuzzy project switcher: pick a zoxide dir, then attach-or-create a named
-# zellij session running the `coding` layout. The core "jump between projects"
-# move. Bound to Ctrl-f (see .zshrc); also runnable as `zj`.
+# zj - fuzzy project switcher (zoxide + fzf). The "jump between projects" move;
+# bound to Ctrl-f (see .zshrc). herdr uses ONE server with a workspace per
+# project, so inside herdr this focuses the project's workspace (creating it with
+# the coding layout - editor left, shell over lazygit on the right - if missing).
+# Outside herdr it just launches/attaches herdr rooted at the project.
 zj() {
   local dir name
   dir=$(zoxide query -l | fzf --reverse --height=60% --border \
-        --header='jump to project -> zellij session' \
+        --header='jump to project -> herdr workspace' \
         --preview 'eza --tree --level=2 --icons --color=always {} 2>/dev/null') || return
   [[ -z $dir ]] && return
-  name=${dir:t}; name=${name//[._: ]/-}          # session name from dir basename
-  if [[ -n $ZELLIJ ]]; then
-    print -r -- "Already inside zellij - press Ctrl-o then w to switch sessions."
-    return 1
+  name=${dir:t}; name=${name//[._: ]/-}          # workspace label from basename
+
+  # Outside herdr: launch/attach with the first pane rooted at the project.
+  if [[ -z ${HERDR_ENV:-} ]]; then
+    builtin cd -- "$dir" || return
+    herdr
+    return
   fi
-  builtin cd -- "$dir" || return
-  if zellij list-sessions -ns 2>/dev/null | grep -qx -- "$name"; then
-    zellij attach -- "$name"                      # resurrect/attach existing
-  else
-    zellij --layout coding --session "$name"      # create with the coding layout
+
+  command -v jq >/dev/null || { print -u2 "zj: needs jq inside herdr"; return 1; }
+
+  # Focus an existing workspace with this label if there is one.
+  local existing
+  existing=$(herdr workspace list 2>/dev/null \
+    | jq -r --arg l "$name" 'first(.result.workspaces[] | select(.label==$l) | .workspace_id) // empty')
+  if [[ -n $existing ]]; then
+    herdr workspace focus "$existing" >/dev/null 2>&1
+    return
+  fi
+
+  # Build a new workspace with the coding layout.
+  local create root right bot
+  create=$(herdr workspace create --cwd "$dir" --label "$name" --focus 2>/dev/null)
+  root=$(jq -r '.result.root_pane.pane_id // empty' <<<"$create")
+  [[ -z $root ]] && { print -u2 "zj: could not create workspace"; return 1; }
+  right=$(herdr pane split "$root" --direction right --ratio 0.28 --cwd "$dir" --no-focus 2>/dev/null \
+          | jq -r '.result.pane_id // empty')
+  [[ -n $right ]] && bot=$(herdr pane split "$right" --direction down --ratio 0.5 --cwd "$dir" --no-focus 2>/dev/null \
+          | jq -r '.result.pane_id // empty')
+  sleep 0.5                                       # let the new panes' shells start
+  herdr pane send-text "$root" "nvim ." >/dev/null 2>&1
+  herdr pane send-keys "$root" enter    >/dev/null 2>&1
+  if [[ -n $bot ]]; then
+    herdr pane send-text "$bot" "lazygit" >/dev/null 2>&1
+    herdr pane send-keys "$bot" enter     >/dev/null 2>&1
   fi
 }
 
@@ -232,15 +259,18 @@ _xkcd_print() {
   rm -f "$tmp"
 }
 
-# xkcd - show a comic inline. In bare Ghostty chafa auto-detects kitty graphics
-# (a real image); inside zellij (which cannot pass the graphics protocol) it
-# falls back to ANSI block art. Needs curl, jq, chafa.
+# xkcd - show a comic inline. herdr forwards kitty graphics (we enable
+# experimental.kitty_graphics), so it gets a real image; bare Ghostty auto-
+# detects kitty too; zellij (no graphics protocol) falls back to ANSI block art.
+# Needs curl, jq, chafa.
 #   xkcd            # random comic
 #   xkcd 327        # comic #327
 #   xkcd latest     # newest comic
 # Tune the size with XKCD_SIZE (default 60x24), e.g.  XKCD_SIZE=80x30 xkcd
 xkcd() {
-  if [[ -n ${ZELLIJ:-} ]]; then
+  if [[ -n ${HERDR_ENV:-} ]]; then
+    _xkcd_print "${1:-random}" --format kitty
+  elif [[ -n ${ZELLIJ:-} ]]; then
     _xkcd_print "${1:-random}" --format symbols
   else
     _xkcd_print "${1:-random}"
@@ -267,32 +297,37 @@ _xkcd_ready() {
 #   * bare Ghostty: a random xkcd comic as a real kitty-graphics image, fetched
 #     in the BACKGROUND and painted above the prompt when ready (see _xkcd_ready)
 #     so the shell stays instant.
-#   * zellij: cannot show images, so greet with a fastfetch splash instead - once
-#     per session (marker keyed by the session name) so the 3-pane `coding`
-#     layout does not repeat it.
+#   * herdr: once per workspace (marker keyed by HERDR_WORKSPACE_ID, so the
+#     coding layout's extra panes do not repeat it). Defaults to a fastfetch
+#     splash; set HERDR_GREETING_IMAGE=1 (after confirming kitty graphics work in
+#     herdr via `xkcd`) to get the image instead.
 # Interactive only, never over SSH/tmux; silent if offline. Disable by setting
 # XKCD_NO_GREETING=1 in local.zsh.
+_xkcd_bg_image() {   # start the async background image render (used in 2 places)
+  command -v chafa >/dev/null && command -v jq >/dev/null || return
+  _XKCD_FILE=$(mktemp -t xkcd.XXXXXX) || return
+  exec {_XKCD_FD}< <(_xkcd_print random --format kitty >| "$_XKCD_FILE" 2>/dev/null)
+  zle -F "$_XKCD_FD" _xkcd_ready
+}
 _startup_greeting() {
   [[ -o interactive ]] || return
   [[ -z ${XKCD_NO_GREETING:-} ]] || return
   [[ -z ${SSH_TTY:-} && -z ${SSH_CONNECTION:-} ]] || return
 
-  if [[ -n ${ZELLIJ:-} ]]; then
-    command -v fastfetch >/dev/null || return
-    local marker="${TMPDIR:-/tmp}/.zellij-greeting-${ZELLIJ_SESSION_NAME:-default}"
+  if [[ -n ${HERDR_ENV:-} ]]; then
+    local marker="${TMPDIR:-/tmp}/.herdr-greeting-${HERDR_WORKSPACE_ID:-default}"
     [[ -e $marker ]] && return
     : >| "$marker"
-    fastfetch
+    if [[ -n ${HERDR_GREETING_IMAGE:-} ]]; then
+      _xkcd_bg_image
+    else
+      command -v fastfetch >/dev/null && fastfetch
+    fi
     return
   fi
 
   # Bare Ghostty only (the graphics protocol does not survive tmux either).
   [[ ${TERM_PROGRAM:-} == ghostty || -n ${GHOSTTY_RESOURCES_DIR:-} ]] || return
   [[ -z ${TMUX:-} ]] || return
-  command -v chafa >/dev/null && command -v jq >/dev/null || return
-  _XKCD_FILE=$(mktemp -t xkcd.XXXXXX) || return
-  # Background render; the process-substitution fd hits EOF when done and ZLE
-  # calls _xkcd_ready to paint the image above the prompt.
-  exec {_XKCD_FD}< <(_xkcd_print random --format kitty >| "$_XKCD_FILE" 2>/dev/null)
-  zle -F "$_XKCD_FD" _xkcd_ready
+  _xkcd_bg_image
 }

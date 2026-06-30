@@ -73,7 +73,7 @@ Defined in `aliases.zsh` and `functions.zsh`.
 | `fkill` | `fkill [signal]` | fuzzy-pick process(es) and kill |
 | `fbr` | `fbr` | fuzzy-checkout a git branch (local or remote) |
 | `gclone` | `gclone <url>` | clone a repo then cd into it |
-| `zj` | `zj` (or Ctrl-f) | fuzzy project switcher -> zellij session |
+| `zj` | `zj` (or Ctrl-f) | fuzzy project switcher -> herdr workspace |
 | `nvp` | `nvp` | fuzzy-pick a project, open it in its own Neovide window |
 
 ---

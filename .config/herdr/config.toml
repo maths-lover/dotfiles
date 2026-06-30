@@ -1,0 +1,29 @@
+# herdr config - overrides on top of `herdr --default-config`.
+# Apply to a running server with:  herdr server reload-config
+# (kitty_graphics and other [experimental] keys are startup-only -> full restart).
+
+# First-run setup already done.
+onboarding = false
+
+[terminal]
+# Interactive panes use zsh; shell_mode "auto" = login shells on macOS, so
+# ~/.zprofile (PATH, brew, ssh-agent, uv tools) is sourced in every pane.
+default_shell = "zsh"
+
+[theme]
+# Follow the host terminal's ANSI palette, so the live `theme <name>` switcher
+# (which sets ANSI colors via OSC) recolors herdr too - same trick as eza/bat/fzf.
+name = "terminal"
+
+[experimental]
+# Pass the Kitty graphics protocol through to panes, so inline images work
+# (the xkcd greeting, image previews, etc.). Requires a kitty-capable outer
+# terminal - Ghostty qualifies.
+kitty_graphics = true
+
+# Pop lazygit in a temporary pane (closes when you quit lazygit). prefix+g is
+# taken by "goto", so this uses prefix+alt+g.
+[[keys.command]]
+key = "prefix+alt+g"
+type = "pane"
+command = "lazygit"

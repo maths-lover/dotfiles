@@ -53,7 +53,7 @@ Add your own alias by editing `THEME_ALIASES` in `theme.zsh`.
 
 - Live switching recolors the **current** window only; other open windows update
   when they next launch (they read the persisted Ghostty config).
-- Inside `tmux`/`zellij`, OSC sequences may need passthrough to reach the terminal.
+- Inside a multiplexer (`tmux`/`herdr`), OSC sequences may need passthrough to reach the terminal. herdr's `theme = "terminal"` follows the host palette.
 
 ---
 
