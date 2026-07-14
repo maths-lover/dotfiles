@@ -284,12 +284,23 @@ _startup_greeting
 # on the LEFT of the prompt, because zle reset-prompt reliably repaints the left
 # (right-aligned content is NOT redrawn dependably, especially inside herdr):
 #   * dir peeker  - mostly watches the path, glances at you, blinks
-#   * companion face (the status emoji) - looks at you, darts its eyes, blinks;
-#     only animated in the idle "ok" mood so it never masks an error/slow face.
+#   * companion face (the status emoji) - animates IN-CHARACTER per mood: the
+#     ok face darts its eyes, the err face rages/shakes, slow sweats, busy's
+#     shades glint, night yawns, idle dozes, root glares, vim smirks. Each mood
+#     has its own frame set below (all the same length so one shared index
+#     drives them). Frames are width-stable so the prompt never jitters.
 # Runs ONLY while idle at an empty prompt (never while typing or during a
 # command). Toggle per shell with `anim on|off`; disable with PROMPT_ANIM=off.
-typeset -ga _anim_peek=( "◑ᴗ◑" "◑ᴗ◑" "◑ᴗ◑" "◑ᴗ◑" "⊙ᴗ⊙" "◑ᴗ◑" "◑ᴗ◑" "˘ᴗ˘" )
-typeset -ga _anim_face=( "(◕‿◕)" "(◕‿◕)" "(◔‿◔)" "(◕‿◕)" "(◑‿◑)" "(◕‿◕)" "(◕‿◕)" "(-‿-)" )
+typeset -ga _anim_peek=(  "◑ᴗ◑"   "◑ᴗ◑"   "◑ᴗ◑"   "◑ᴗ◑"   "⊙ᴗ⊙"   "◑ᴗ◑"   "◑ᴗ◑"   "˘ᴗ˘"    )
+# Per-mood face frames (selected at tick time by _anim_<mood>). Keep all length 8.
+typeset -ga _anim_ok=(    "(◕‿◕)"  "(◕‿◕)"  "(◔‿◔)"  "(◕‿◕)"  "(◑‿◑)"  "(◕‿◕)"  "(◕‿◕)"  "(-‿-)"  )
+typeset -ga _anim_err=(   "(╯°□°)╯" "(╯°□°)╯" "(╯>□<)╯" "(╯°□°)╯" "(╯ಠ□ಠ)╯" "(╯°□°)╯" "(╯>□<)╯" "(╯°□°)╯" )
+typeset -ga _anim_slow=(  "( ·_·;)" "( ·_·;)" "( -_·;)" "( ·_·;)" "( ·_-;)" "( ·_·;)" "( -_-;)" "( ·_·;)" )
+typeset -ga _anim_busy=(  "(⌐■_■)" "(⌐■_■)" "(⌐□_■)" "(⌐■_□)" "(⌐■_■)" "(⌐■_■)" "(⌐□_■)" "(⌐■_■)" )
+typeset -ga _anim_night=( "( ˘_˘ )" "( ˘_˘ )" "( -_- )" "( ˘_˘ )" "( ˘o˘ )" "( ˘_˘ )" "( -_- )" "( ˘_˘ )" )
+typeset -ga _anim_idle=(  "(ᴗ‿ᴗ)"  "(ᴗ‿ᴗ)"  "(-‿-)"  "(ᴗ‿ᴗ)"  "(◡‿◡)"  "(ᴗ‿ᴗ)"  "(-‿-)"  "(ᴗ‿ᴗ)"  )
+typeset -ga _anim_root=(  "(ÒﾛÓ)"  "(ÒﾛÓ)"  "(ÓﾛÒ)"  "(ÒﾛÓ)"  "(ÒﾛÓ)"  "(ÒﾛÓ)"  "(ÓﾛÒ)"  "(ÒﾛÓ)"  )
+typeset -ga _anim_vim=(   "(¬‿¬)"  "(¬‿¬)"  "(¬_¬)"  "(¬‿¬)"  "(¬‿¬)"  "(¬‿¬)"  "(-‿-)"  "(¬‿¬)"  )
 typeset -gi _anim_i=1 _anim_fd=0
 export STARSHIP_PEEK=${_anim_peek[1]}
 
@@ -301,9 +312,13 @@ _anim_tick() {
   (( _anim_i = _anim_i % ${#_anim_peek} + 1 ))
   STARSHIP_PEEK=${_anim_peek[_anim_i]}
   export STARSHIP_PEEK
-  # Animate the companion face only when idle-ok, so moods stay readable.
-  if [[ ${_cmp_mood:-ok} == ok ]]; then
-    STARSHIP_FACE=${_anim_face[_anim_i]}
+  # Animate the face in-character for the CURRENT mood (vim NORMAL wins).
+  local mood=${_cmp_mood:-ok}
+  [[ $KEYMAP == vicmd ]] && mood=vim
+  local vn=_anim_$mood
+  local -a frames=( "${(@P)vn}" )
+  if (( ${#frames} )); then
+    STARSHIP_FACE=${frames[_anim_i]}
     export STARSHIP_FACE
   fi
   zle reset-prompt
