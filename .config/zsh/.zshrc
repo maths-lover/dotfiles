@@ -200,7 +200,7 @@ zmodload zsh/datetime
 autoload -Uz add-zsh-hook
 
 typeset -gi _cmp_start=0 _cmp_last=0
-typeset -g  _cmp_mood=ok _cmp_face='(ᵔ◡ᵔ)' _cmp_sigil='λ' _cmp_say=''
+typeset -g  _cmp_mood=ok _cmp_face='(◕‿◕)' _cmp_sigil='λ' _cmp_say=''
 
 # _cmp_set <mood> <face> <sigil> <say> - remember + export the current mood.
 _cmp_set() {
@@ -236,7 +236,7 @@ _cmp_precmd() {
   elif (( njobs > 0 ));    then _cmp_set busy  '(⌐■_■)'  '&' "${njobs} job(s) cooking -"
   elif (( 10#$hour < 6 )); then _cmp_set night '( ˘_˘ )' '*' "burning the midnight oil -"
   elif (( idle >= 300 ));  then _cmp_set idle  '(ᴗ‿ᴗ)'   'z' "...zzz, oh hi -"
-  else                          _cmp_set ok    '(ᵔ◡ᵔ)'   'λ' ''
+  else                          _cmp_set ok    '(◕‿◕)'   'λ' ''
   fi
 
   # Right-side cow's water-bottle RAM gauge: a jar whose level tracks used memory
@@ -280,16 +280,18 @@ _startup_greeting
 
 # -- Idle prompt animation (smooth) --------------------------------------------
 # A background timer nudges a ZLE fd-watcher a few times a second; each tick
-# advances the animated glyphs and redraws the prompt. The dir peeker mostly
-# watches the path (glancing at you now and then + blinking); the status cow
-# faces you and darts its eyes. Runs ONLY while idle at an empty prompt - never
-# while typing or while a command runs (the whole prompt re-renders each tick,
-# so the cow's clock ticks live too). Toggle per shell with `anim on|off`, or
-# disable everywhere with PROMPT_ANIM=off in local.zsh.
+# advances the animated glyphs and redraws the prompt. Both animated glyphs live
+# on the LEFT of the prompt, because zle reset-prompt reliably repaints the left
+# (right-aligned content is NOT redrawn dependably, especially inside herdr):
+#   * dir peeker  - mostly watches the path, glances at you, blinks
+#   * companion face (the status emoji) - looks at you, darts its eyes, blinks;
+#     only animated in the idle "ok" mood so it never masks an error/slow face.
+# Runs ONLY while idle at an empty prompt (never while typing or during a
+# command). Toggle per shell with `anim on|off`; disable with PROMPT_ANIM=off.
 typeset -ga _anim_peek=( "◑ᴗ◑" "◑ᴗ◑" "◑ᴗ◑" "◑ᴗ◑" "⊙ᴗ⊙" "◑ᴗ◑" "◑ᴗ◑" "˘ᴗ˘" )
-typeset -ga _anim_cow=(  "(◕ᴥ◕)" "(◐ᴥ◐)" "(◕ᴥ◕)" "(◑ᴥ◑)" "(◕ᴥ◕)" "(◕ᴥ◕)" "(-ᴥ-)" "(◕ᴥ◕)" )
+typeset -ga _anim_face=( "(◕‿◕)" "(◕‿◕)" "(◔‿◔)" "(◕‿◕)" "(◑‿◑)" "(◕‿◕)" "(◕‿◕)" "(-‿-)" )
 typeset -gi _anim_i=1 _anim_fd=0
-export STARSHIP_PEEK=${_anim_peek[1]} STARSHIP_COW=${_anim_cow[1]}
+export STARSHIP_PEEK=${_anim_peek[1]}
 
 _anim_tick() {
   local discard
@@ -298,8 +300,12 @@ _anim_tick() {
   [[ -n $BUFFER ]] && return                              # never animate while typing
   (( _anim_i = _anim_i % ${#_anim_peek} + 1 ))
   STARSHIP_PEEK=${_anim_peek[_anim_i]}
-  STARSHIP_COW=${_anim_cow[_anim_i]}
-  export STARSHIP_PEEK STARSHIP_COW
+  export STARSHIP_PEEK
+  # Animate the companion face only when idle-ok, so moods stay readable.
+  if [[ ${_cmp_mood:-ok} == ok ]]; then
+    STARSHIP_FACE=${_anim_face[_anim_i]}
+    export STARSHIP_FACE
+  fi
   zle reset-prompt
 }
 _anim_start() {
