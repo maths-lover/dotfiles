@@ -277,3 +277,45 @@ command -v starship >/dev/null && eval "$(starship init zsh)"
 # the shell stays instant). herdr: a fastfetch splash, once per workspace.
 # Disable in local.zsh with XKCD_NO_GREETING=1.
 _startup_greeting
+
+# -- Idle prompt animation (smooth) --------------------------------------------
+# A background timer nudges a ZLE fd-watcher a few times a second; each tick
+# advances the animated glyphs and redraws the prompt. The dir peeker mostly
+# watches the path (glancing at you now and then + blinking); the status cow
+# faces you and darts its eyes. Runs ONLY while idle at an empty prompt - never
+# while typing or while a command runs (the whole prompt re-renders each tick,
+# so the cow's clock ticks live too). Toggle per shell with `anim on|off`, or
+# disable everywhere with PROMPT_ANIM=off in local.zsh.
+typeset -ga _anim_peek=( "◑ᴗ◑" "◑ᴗ◑" "◑ᴗ◑" "◑ᴗ◑" "⊙ᴗ⊙" "◑ᴗ◑" "◑ᴗ◑" "˘ᴗ˘" )
+typeset -ga _anim_cow=(  "(◕ᴥ◕)" "(◐ᴥ◐)" "(◕ᴥ◕)" "(◑ᴥ◑)" "(◕ᴥ◕)" "(◕ᴥ◕)" "(-ᴥ-)" "(◕ᴥ◕)" )
+typeset -gi _anim_i=1 _anim_fd=0
+export STARSHIP_PEEK=${_anim_peek[1]} STARSHIP_COW=${_anim_cow[1]}
+
+_anim_tick() {
+  local discard
+  IFS= read -u "$1" -k 1 discard 2>/dev/null || return   # consume the trigger byte
+  while read -u "$1" -t 0 -k 1 discard 2>/dev/null; do :; done  # drain any backlog
+  [[ -n $BUFFER ]] && return                              # never animate while typing
+  (( _anim_i = _anim_i % ${#_anim_peek} + 1 ))
+  STARSHIP_PEEK=${_anim_peek[_anim_i]}
+  STARSHIP_COW=${_anim_cow[_anim_i]}
+  export STARSHIP_PEEK STARSHIP_COW
+  zle reset-prompt
+}
+_anim_start() {
+  [[ -o interactive && ${PROMPT_ANIM:-on} != off ]] || return
+  (( _anim_fd )) && return
+  exec {_anim_fd}< <(while :; do print; sleep 0.3; done)  # ~3 fps ticker
+  zle -F "$_anim_fd" _anim_tick
+}
+_anim_stop() { (( _anim_fd )) && { zle -F "$_anim_fd" 2>/dev/null; exec {_anim_fd}<&-; _anim_fd=0; }; }
+# `anim [on|off]` - toggle animation in the current shell (no arg = toggle).
+anim() {
+  case ${1:-toggle} in
+    off) _anim_stop; print "prompt animation off" ;;
+    on)  _anim_start; print "prompt animation on" ;;
+    *)   (( _anim_fd )) && { _anim_stop; print "prompt animation off"; } || { _anim_start; print "prompt animation on"; } ;;
+  esac
+}
+add-zsh-hook zshexit _anim_stop
+_anim_start
