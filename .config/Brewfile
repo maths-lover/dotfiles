@@ -58,6 +58,9 @@ cask "neovide-app"             # GUI neovim front-end (for project work)
 # -- Fonts (already installed manually, listed for fresh-machine reproducibility)
 cask "font-monaspice-nerd-font"   # Nerd-Font-patched Monaspace (note: "monaspice")
 
-# -- GUI Applications for Mac productivity in general --------------------------------------------
+# -- GUI Applications for Mac productivity in general --------------------------
 cask "loop"
 cask "iina"                    # modern media player (mpv core); config in .config/mpv
+
+# -- Developer tools -----------------------------------------------------------
+cask "podman-desktop"
