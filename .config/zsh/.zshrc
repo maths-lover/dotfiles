@@ -278,65 +278,8 @@ command -v starship >/dev/null && eval "$(starship init zsh)"
 # Disable in local.zsh with XKCD_NO_GREETING=1.
 _startup_greeting
 
-# -- Idle prompt animation (smooth) --------------------------------------------
-# A background timer nudges a ZLE fd-watcher a few times a second; each tick
-# advances the animated glyphs and redraws the prompt. Both animated glyphs live
-# on the LEFT of the prompt, because zle reset-prompt reliably repaints the left
-# (right-aligned content is NOT redrawn dependably, especially inside herdr):
-#   * dir peeker  - mostly watches the path, glances at you, blinks
-#   * companion face (the status emoji) - animates IN-CHARACTER per mood: the
-#     ok face darts its eyes, the err face rages/shakes, slow sweats, busy's
-#     shades glint, night yawns, idle dozes, root glares, vim smirks. Each mood
-#     has its own frame set below (all the same length so one shared index
-#     drives them). Frames are width-stable so the prompt never jitters.
-# Runs ONLY while idle at an empty prompt (never while typing or during a
-# command). Toggle per shell with `anim on|off`; disable with PROMPT_ANIM=off.
-typeset -ga _anim_peek=(  "◑ᴗ◑"   "◑ᴗ◑"   "◑ᴗ◑"   "◑ᴗ◑"   "⊙ᴗ⊙"   "◑ᴗ◑"   "◑ᴗ◑"   "˘ᴗ˘"    )
-# Per-mood face frames (selected at tick time by _anim_<mood>). Keep all length 8.
-typeset -ga _anim_ok=(    "(◕‿◕)"  "(◕‿◕)"  "(◔‿◔)"  "(◕‿◕)"  "(◑‿◑)"  "(◕‿◕)"  "(◕‿◕)"  "(-‿-)"  )
-typeset -ga _anim_err=(   "(╯°□°)╯" "(╯°□°)╯" "(╯>□<)╯" "(╯°□°)╯" "(╯ಠ□ಠ)╯" "(╯°□°)╯" "(╯>□<)╯" "(╯°□°)╯" )
-typeset -ga _anim_slow=(  "( ·_·;)" "( ·_·;)" "( -_·;)" "( ·_·;)" "( ·_-;)" "( ·_·;)" "( -_-;)" "( ·_·;)" )
-typeset -ga _anim_busy=(  "(⌐■_■)" "(⌐■_■)" "(⌐□_■)" "(⌐■_□)" "(⌐■_■)" "(⌐■_■)" "(⌐□_■)" "(⌐■_■)" )
-typeset -ga _anim_night=( "( ˘_˘ )" "( ˘_˘ )" "( -_- )" "( ˘_˘ )" "( ˘o˘ )" "( ˘_˘ )" "( -_- )" "( ˘_˘ )" )
-typeset -ga _anim_idle=(  "(ᴗ‿ᴗ)"  "(ᴗ‿ᴗ)"  "(-‿-)"  "(ᴗ‿ᴗ)"  "(◡‿◡)"  "(ᴗ‿ᴗ)"  "(-‿-)"  "(ᴗ‿ᴗ)"  )
-typeset -ga _anim_root=(  "(ÒﾛÓ)"  "(ÒﾛÓ)"  "(ÓﾛÒ)"  "(ÒﾛÓ)"  "(ÒﾛÓ)"  "(ÒﾛÓ)"  "(ÓﾛÒ)"  "(ÒﾛÓ)"  )
-typeset -ga _anim_vim=(   "(¬‿¬)"  "(¬‿¬)"  "(¬_¬)"  "(¬‿¬)"  "(¬‿¬)"  "(¬‿¬)"  "(-‿-)"  "(¬‿¬)"  )
-typeset -gi _anim_i=1 _anim_fd=0
-export STARSHIP_PEEK=${_anim_peek[1]}
-
-_anim_tick() {
-  local discard
-  IFS= read -u "$1" -k 1 discard 2>/dev/null || return   # consume the trigger byte
-  while read -u "$1" -t 0 -k 1 discard 2>/dev/null; do :; done  # drain any backlog
-  [[ -n $BUFFER ]] && return                              # never animate while typing
-  (( _anim_i = _anim_i % ${#_anim_peek} + 1 ))
-  STARSHIP_PEEK=${_anim_peek[_anim_i]}
-  export STARSHIP_PEEK
-  # Animate the face in-character for the CURRENT mood (vim NORMAL wins).
-  local mood=${_cmp_mood:-ok}
-  [[ $KEYMAP == vicmd ]] && mood=vim
-  local vn=_anim_$mood
-  local -a frames=( "${(@P)vn}" )
-  if (( ${#frames} )); then
-    STARSHIP_FACE=${frames[_anim_i]}
-    export STARSHIP_FACE
-  fi
-  zle reset-prompt
-}
-_anim_start() {
-  [[ -o interactive && ${PROMPT_ANIM:-on} != off ]] || return
-  (( _anim_fd )) && return
-  exec {_anim_fd}< <(while :; do print; sleep 0.3; done)  # ~3 fps ticker
-  zle -F "$_anim_fd" _anim_tick
-}
-_anim_stop() { (( _anim_fd )) && { zle -F "$_anim_fd" 2>/dev/null; exec {_anim_fd}<&-; _anim_fd=0; }; }
-# `anim [on|off]` - toggle animation in the current shell (no arg = toggle).
-anim() {
-  case ${1:-toggle} in
-    off) _anim_stop; print "prompt animation off" ;;
-    on)  _anim_start; print "prompt animation on" ;;
-    *)   (( _anim_fd )) && { _anim_stop; print "prompt animation off"; } || { _anim_start; print "prompt animation on"; } ;;
-  esac
-}
-add-zsh-hook zshexit _anim_stop
-_anim_start
+# -- Static prompt peeker ------------------------------------------------------
+# The dir peeker is a fixed glyph (no animation). The companion face is set
+# per-mood by _cmp_set / _cmp_keymap above. (Idle animation was removed - the
+# background ticker + zle reset-prompt interfered with shell usability.)
+export STARSHIP_PEEK="◑ᴗ◑"

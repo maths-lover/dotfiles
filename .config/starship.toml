@@ -20,11 +20,9 @@ command_timeout = 500
 palette = 'companion'
 
 # Line 1: companion + peeker + pwd/git, then $fill pushes the status HUD (RAM
-# water-bottle gauge + clock + cow) to the right edge. The HUD lives HERE (not in
-# right_format/RPROMPT) so it shares the same redraw as the rest of the prompt -
-# which is what lets the idle animation refresh the cow, not just the peeker.
-# Parts are coloured separately: muted brackets/tail, RAM-banded gauge, dim
-# clock, cyan cow (eyes go red and X-shaped when memory is critical).
+# water-bottle gauge + clock + cow) to the right edge. Parts are coloured
+# separately: muted brackets/tail, RAM-banded gauge, dim clock, cyan cow (eyes
+# go red and X-shaped when memory is critical).
 format = """
 ${custom.face_ok}${custom.face_err}${custom.face_slow}${custom.face_busy}${custom.face_night}${custom.face_idle}${custom.face_root}${custom.face_vim}\
 [ ](muted)${custom.say}\
@@ -248,8 +246,8 @@ shell = ["sh", "--norc"]
 style = "cow"
 format = '[$output]($style)'
 
-# Animated dir peeker (glyph set by the zsh idle-animation loop; default looks
-# toward the path). Same colour as the path so peeker + pwd read as one unit.
+# Dir peeker (static glyph set by .zshrc, default looks toward the path).
+# Same colour as the path so peeker + pwd read as one unit.
 [custom.peek]
 when = true
 command = 'printf "%s" "${STARSHIP_PEEK:-◑ᴗ◑}"'
