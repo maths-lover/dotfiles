@@ -58,6 +58,9 @@ ok "Homebrew ready ($BREW)"
 # -- 3. Packages, plugins, Ghostty, fonts (via Brewfile) -----------------------
 if [[ -f "$BREWFILE" ]]; then
   info "Installing everything from $BREWFILE ..."
+  # Homebrew >= 6 requires third-party taps to be trusted before install;
+  # the Brewfile pulls krunkit (podman libkrun provider) from this tap.
+  brew trust libkrun/krun 2>/dev/null || true
   brew bundle --file "$BREWFILE"
   ok "Brewfile installed"
 else

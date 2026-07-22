@@ -4,6 +4,7 @@
 
 # -- Taps ----------------------------------------------------------------------
 # (nerd-font and ghostty casks live in homebrew/cask, no extra tap needed)
+tap "libkrun/krun"         # krunkit for podman's libkrun provider (trusted in setup_zsh.sh)
 
 # -- Prompt --------------------------------------------------------------------
 brew "starship"            # cross-shell prompt
@@ -35,6 +36,7 @@ brew "tealdeer"            # tldr - community man-page cheatsheets (fast, Rust)
 brew "httpie"              # human-friendly HTTP client
 brew "markdown-oxide"      # markdown LSP for notes (links, backlinks, daily notes)
 brew "herdr"               # agent multiplexer (sessions, workspaces, panes, agent-state)
+brew "pi-coding-agent"     # pi - minimal coding agent harness (pi.dev)
 brew "neovim"              # nvim - the editor ($EDITOR)
 brew "stow"                # GNU Stow - symlink-manage these dotfiles
 
@@ -63,4 +65,11 @@ cask "loop"
 cask "iina"                    # modern media player (mpv core); config in .config/mpv
 
 # -- Developer tools -----------------------------------------------------------
+# Containers: podman 6 defaults to the libkrun provider and needs krunkit,
+# which lives in the libkrun/krun tap (not homebrew-core).
+brew "podman"              # container engine CLI + podman machine
+brew "krunkit"             # libkrun VM launcher for podman machine
+brew "kind"                # Kubernetes-in-Docker(/Podman) clusters
+brew "kubernetes-cli"      # kubectl
+brew "docker-compose"      # compose (works with podman's docker socket)
 cask "podman-desktop"
