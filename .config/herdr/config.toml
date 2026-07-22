@@ -27,3 +27,6 @@ kitty_graphics = true
 key = "prefix+alt+g"
 type = "pane"
 command = "lazygit"
+
+[ui]
+agent_panel_sort = "spaces"
