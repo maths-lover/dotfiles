@@ -21,15 +21,26 @@ return {
     version = "*",
     ft = "markdown",
     dependencies = { "nvim-lua/plenary.nvim" },
-    opts = {
-      workspaces = {
-        -- Point this at your real Obsidian vault if you have one.
-        { name = "notes", path = "~/notes" },
-      },
-      -- render-markdown.nvim handles the visual rendering.
-      ui = { enable = false },
-      legacy_commands = false,
-    },
+    opts = function()
+      -- One workspace per vault under ~/Documents/Vaults; the active one is
+      -- picked from the buffer's path. Falls back to ~/notes on machines
+      -- without a Vaults dir (obsidian.nvim errors if no workspace resolves).
+      local workspaces = {}
+      for _, dir in ipairs(vim.fn.glob("~/Documents/Vaults/*/", true, true)) do
+        local path = dir:gsub("/$", "")
+        table.insert(workspaces, { name = vim.fs.basename(path), path = path })
+      end
+      if #workspaces == 0 then
+        vim.fn.mkdir(vim.fn.expand("~/notes"), "p")
+        workspaces = { { name = "notes", path = "~/notes" } }
+      end
+      return {
+        workspaces = workspaces,
+        -- render-markdown.nvim handles the visual rendering.
+        ui = { enable = false },
+        legacy_commands = false,
+      }
+    end,
     keys = {
       { "<leader>nn", "<cmd>Obsidian new<cr>", desc = "New note" },
       { "<leader>ns", "<cmd>Obsidian search<cr>", desc = "Search notes" },
