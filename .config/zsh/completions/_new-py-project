@@ -1,0 +1,13 @@
+#compdef new-py-project
+# Completion for new-py-project. Lives in $ZDOTDIR/completions (on fpath).
+
+_new-py-project() {
+  _arguments -s \
+    '(-h --help)'{-h,--help}'[show help]' \
+    '--python[Python version for the venv]:version:(3.10 3.11 3.12 3.13)' \
+    '--no-git[skip git init / initial commit]' \
+    '--no-bootstrap[skip venv build, dep install, pre-commit]' \
+    '1:project name:'
+}
+
+_new-py-project "$@"

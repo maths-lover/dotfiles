@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+# new-py-project — scaffold a consistent Python project.
+#
+# Creates a uv + ruff + pytest + pre-commit project with a src/ layout, a
+# direnv .envrc (auto-venv via `layout uv`), a git repo, and an initial commit.
+#
+# Usage:
+#   new-py-project <name> [--python X.Y] [--no-git] [--no-bootstrap]
+#
+# Options:
+#   --python X.Y     Python version for the venv (default: 3.12)
+#   --no-git         Skip git init / initial commit
+#   --no-bootstrap   Skip venv build, dep install, and pre-commit install
+#   -h, --help       Show this help
+
+set -euo pipefail
+
+die()  { printf '\033[31merror:\033[0m %s\n' "$1" >&2; exit 1; }
+info() { printf '\033[36m::\033[0m %s\n' "$1"; }
+usage() { sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+
+[[ $# -ge 1 ]] || usage 1
+
+NAME=""
+PYVER="3.12"
+DO_GIT=1
+DO_BOOTSTRAP=1
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)      usage 0;;
+    --python)       PYVER="${2:?--python needs a value}"; shift 2;;
+    --no-git)       DO_GIT=0; shift;;
+    --no-bootstrap) DO_BOOTSTRAP=0; shift;;
+    -*)             die "unknown flag: $1";;
+    *)              [[ -z "$NAME" ]] || die "unexpected argument: $1"; NAME="$1"; shift;;
+  esac
+done
+
+[[ -n "$NAME" ]] || usage 1
+
+# package name: lowercase, non-alnum -> underscore
+PKG="$(printf '%s' "$NAME" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/_/g; s/^_+|_+$//g')"
+[[ -n "$PKG" ]] || die "could not derive a package name from '$NAME'"
+
+[[ -e "$NAME" ]] && die "'$NAME' already exists"
+info "creating project '$NAME' (package: $PKG, python: $PYVER)"
+mkdir -p "$NAME"/{src/"$PKG",tests}
+cd "$NAME"
+
+# --- .envrc ---------------------------------------------------------------
+cat > .envrc <<EOF
+# Auto-managed by direnv. Run \`direnv allow\` once to approve.
+layout uv ${PYVER}
+export PYTHONPATH="\$PWD/src"
+dotenv_if_exists .env
+EOF
+
+# --- .gitignore -----------------------------------------------------------
+cat > .gitignore <<'EOF'
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+.env
+.DS_Store
+EOF
+
+# --- pyproject.toml -------------------------------------------------------
+cat > pyproject.toml <<EOF
+[project]
+name = "${PKG}"
+version = "0.1.0"
+description = "${NAME}"
+readme = "README.md"
+requires-python = ">=${PYVER}"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/${PKG}"]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6", "pre-commit>=3"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+EOF
+
+# --- pre-commit -----------------------------------------------------------
+cat > .pre-commit-config.yaml <<'EOF'
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+        args: [--maxkb=2048]
+EOF
+
+# --- source + tests -------------------------------------------------------
+cat > "src/${PKG}/__init__.py" <<EOF
+__version__ = "0.1.0"
+EOF
+
+cat > tests/test_smoke.py <<EOF
+import ${PKG}
+
+
+def test_import():
+    assert ${PKG}.__version__
+EOF
+
+# --- README ---------------------------------------------------------------
+cat > README.md <<EOF
+# ${NAME}
+
+## Setup
+\`\`\`bash
+direnv allow          # builds .venv via uv, activates on cd
+uv sync               # install deps (incl. dev group)
+pre-commit install    # enable lint/format on commit
+pytest                # run tests
+\`\`\`
+
+## Layout
+\`\`\`
+src/${PKG}/    library code
+tests/         pytest suite
+\`\`\`
+EOF
+
+# --- bootstrap ------------------------------------------------------------
+if [[ "$DO_BOOTSTRAP" -eq 1 ]]; then
+  info "building venv + installing dev deps (uv)"
+  direnv allow . >/dev/null 2>&1 || true
+  uv venv --python "$PYVER" .venv >/dev/null 2>&1 || uv venv .venv >/dev/null 2>&1
+  uv sync >/dev/null 2>&1 || uv pip install --quiet pytest ruff pre-commit
+fi
+
+if [[ "$DO_GIT" -eq 1 ]]; then
+  info "initializing git"
+  git init -q
+  [[ "$DO_BOOTSTRAP" -eq 1 ]] && ./.venv/bin/pre-commit install >/dev/null 2>&1 || true
+  git add -A
+  git commit -qm "scaffold: ${NAME}" || true
+fi
+
+printf '\033[32m✓ done.\033[0m  cd %s\n' "$NAME"
