@@ -30,6 +30,7 @@ setopt NO_BEEP
 # -- Completion system ---------------------------------------------------------
 # Add extra completion dirs to fpath BEFORE compinit.
 fpath=(
+  "$ZDOTDIR/completions"
   "$HOMEBREW_PREFIX/share/zsh-completions"
   "$HOMEBREW_PREFIX/share/zsh/site-functions"
   $fpath
@@ -175,6 +176,10 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#6c7086'
 # -- Tool integrations ---------------------------------------------------------
 # zoxide - smarter cd (provides `z` and `zi`)
 command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
+
+# direnv - per-directory env (.envrc): auto-load/unload venvs & vars on cd.
+# Hook runs on every prompt; must come after cd tooling (zoxide) above.
+command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 
 # bat theme - "ansi" makes bat use the terminal's 16-color palette, so its
 # syntax highlighting follows the active theme automatically (see `theme`).
