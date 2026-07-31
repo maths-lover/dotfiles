@@ -15,11 +15,20 @@ default_shell = "zsh"
 # (which sets ANSI colors via OSC) recolors herdr too - same trick as eza/bat/fzf.
 name = "terminal"
 
+auto_switch = false
 [experimental]
 # Pass the Kitty graphics protocol through to panes, so inline images work
 # (the xkcd greeting, image previews, etc.). Requires a kitty-capable outer
 # terminal - Ghostty qualifies.
 kitty_graphics = true
+
+switch_ascii_input_source_in_prefix = false
+[keys]
+# Prefix to enter prefix mode. Default is ctrl+b; remapped to ctrl+space -
+# ergonomic (thumb+pinky, no letter reach) and, unlike ctrl+a, it doesn't
+# collide with this setup's shell keys (ctrl+a/e/k/u/w/y editing, ctrl+f=zj,
+# ctrl+t=fzf, ctrl+r=atuin). Reliable fallback if you dislike chords: ctrl+o.
+prefix = "ctrl+space"
 
 # Pop lazygit in a temporary pane (closes when you quit lazygit). prefix+g is
 # taken by "goto", so this uses prefix+alt+g.
@@ -30,3 +39,7 @@ command = "lazygit"
 
 [ui]
 agent_panel_sort = "spaces"
+
+show_agent_labels_on_pane_borders = true
+[ui.toast]
+delivery = "system"

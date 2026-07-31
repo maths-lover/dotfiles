@@ -4,7 +4,7 @@ View any time:  hh   (or: bat ~/.config/herdr/CHEATSHEET.md)
 
 herdr is an agent multiplexer: ONE persistent server, a WORKSPACE per project,
 TABS for contexts, PANES for terminals. Coding agents (Claude Code, etc.) report
-their state in the sidebar. Prefix is Ctrl-b (tmux-style); the whole UI is also
+their state in the sidebar. Prefix is Ctrl-Space (tmux-style); the whole UI is also
 clickable with the mouse.
 
 ## Start / leave
@@ -12,12 +12,12 @@ clickable with the mouse.
 |----|-----|
 | Jump to a project (zoxide+fzf -> workspace) | `zj`  (or Ctrl-f) |
 | Launch / attach | `herdr`  (alias `hd`) |
-| Detach (everything keeps running) | `Ctrl-b q` |
+| Detach (everything keeps running) | `Ctrl-Space q` |
 | List workspaces | `hl` |
 | Status (client + server) | `hs` |
 | Stop the server (ends everything) | `hstop` |
 
-## Prefix mode: press Ctrl-b, then a key
+## Prefix mode: press Ctrl-Space, then a key
 
 ### Workspaces (one per project)
 | Key | Action |
