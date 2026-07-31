@@ -140,8 +140,9 @@ bindkey -M vicmd '^F' _zj_widget
 
 # -- fzf integration (keybindings + completion). Needs fzf >= 0.48. ------------
 # Sourced BEFORE fzf-tab on purpose: fzf binds <Tab> to its own completion, then
-# fzf-tab (below) re-binds <Tab> and wins - so we keep fzf's Ctrl-R/Ctrl-T/Alt-C
-# but get fzf-tab's nicer in-place completion menu on <Tab>.
+# fzf-tab (below) re-binds <Tab> and wins - so we keep fzf's Ctrl-T/Alt-C but
+# get fzf-tab's nicer in-place completion menu on <Tab>. Ctrl-R is later
+# re-bound to atuin (see Tool integrations), replacing fzf's history widget.
 command -v fzf >/dev/null && source <(fzf --zsh)
 export FZF_DEFAULT_COMMAND='fd --hidden --strip-cwd-prefix --exclude .git'
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
@@ -180,6 +181,17 @@ command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
 # direnv - per-directory env (.envrc): auto-load/unload venvs & vars on cd.
 # Hook runs on every prompt; must come after cd tooling (zoxide) above.
 command -v direnv >/dev/null && eval "$(direnv hook zsh)"
+
+# atuin - shell history search on Ctrl-R (replaces fzf's history widget; fzf
+# keeps Ctrl-T/Alt-C). ATUIN_NOBIND stops atuin from grabbing extra keys (it
+# otherwise steals `?` for its AI feature and `/` in vi-cmd mode); we bind only
+# Ctrl-R and leave the arrow keys / j / k on up-line-or-beginning-search above.
+if command -v atuin >/dev/null; then
+  export ATUIN_NOBIND=true
+  eval "$(atuin init zsh)"
+  bindkey -M viins '^R' atuin-search-viins
+  bindkey -M vicmd '^R' atuin-search-vicmd
+fi
 
 # bat theme - "ansi" makes bat use the terminal's 16-color palette, so its
 # syntax highlighting follows the active theme automatically (see `theme`).

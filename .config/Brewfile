@@ -16,6 +16,7 @@ brew "fzf"                 # fzf  - fuzzy finder
 brew "bat"                 # bat  - cat with syntax highlighting
 brew "eza"                 # eza  - modern ls
 brew "zoxide"              # z    - smarter cd
+brew "atuin"               # atuin - magical shell history (Ctrl-R)
 brew "git-delta"           # delta - better git diffs
 
 # -- Git tooling ---------------------------------------------------------------
