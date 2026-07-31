@@ -40,7 +40,7 @@ instant `ESC`. Two cues show the mode:
 
 | Cue | Insert | Normal |
 |-----|--------|--------|
-| Prompt symbol | `λ` | `Λ` |
+| Prompt symbol | `` | `` |
 | Cursor shape | beam | block |
 
 ### Normal mode (`vicmd`)
@@ -77,7 +77,7 @@ instant `ESC`. Two cues show the mode:
 | `Ctrl-T` | fuzzy file picker (inserts path) |
 | `Alt-C` | fuzzy `cd` into a subdirectory |
 
-> The mode indicator (`λ`/`Λ`) is driven by Starship; the cursor shape by a
+> The mode indicator (`` insert / `` normal; `` visual, `` replace) is driven by Starship; the cursor shape by a
 > `zle-keymap-select` hook that chains cleanly with Starship's own hook.
 
 ---

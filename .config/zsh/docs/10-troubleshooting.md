@@ -7,7 +7,7 @@
 | Boxes / missing glyphs in the prompt | Terminal font must be a Monaspice **Nerd Font** — check `ghostty/config`, reinstall with `brew bundle --file ~/.config/Brewfile` |
 | `theme` says "not found" | `theme list` to see valid names; use an alias or the exact Ghostty theme name (quote spaces) |
 | Theme didn't change in another window | OSC only recolors the current window; new windows pick it up from the persisted config |
-| RAM gauge stuck / wrong | It's computed by `_starship_ram_pct` (precmd) → `STARSHIP_RAM_PCT`; ensure that hook still loads in `.zshrc` |
+| RAM % not showing in the prompt | It's starship's built-in `[memory_usage]` module, shown **only when RAM > 75%** (tune `threshold` in `starship.toml`) — no shell hook involved |
 | Slow startup | Profile with `for i in 1 2 3; do time zsh -ic exit; done` — usually a plugin or a heavy `local.zsh` |
 | Completion missing after installing a tool | `rm ~/.cache/zsh/zcompdump-*; exec zsh` |
 | `cat` / `ls` misbehaving in a pasted script | bypass the alias: `\cat`, `command ls` |

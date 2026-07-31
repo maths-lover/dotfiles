@@ -1,263 +1,253 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
-# +---------------------------------------------------------------------------+
-# |  THE COMPANION  -  a kaomoji that narrates your shell.                     |
-# |  Its face, sigil, colour and one-line aside react to the last command,     |
-# |  vim mode, background jobs, the hour, and idle time.                        |
-# |                                                                           |
-# |  State is computed once per prompt by a zsh hook (see .zshrc, the          |
-# |  "Prompt companion" section) and passed in via four env vars:              |
-# |    STARSHIP_MOOD  - one of: ok err slow busy night idle root vim           |
-# |    STARSHIP_FACE  - the kaomoji to show                                     |
-# |    STARSHIP_SIGIL - the prompt character                                    |
-# |    STARSHIP_SAY   - the optional aside (empty = silent)                     |
-# |  One face_* and one sigil_* module fires per prompt, matching the mood.     |
-# |  Colours are palette roles mapped to ANSI slots, so the prompt follows      |
-# |  the active terminal theme (switch with `theme`). Needs a Nerd Font.        |
-# +---------------------------------------------------------------------------+
+# Tidy two-line prompt: FULL path + Nerd Font icons. Colours are ANSI palette
+# roles (never hex) so the prompt follows the active terminal theme - see
+# docs/07-prompt.md and the `theme` switcher. Needs a Nerd Font (Ghostty uses
+# MonaspiceNe); every glyph below is verified present in that font.
+#
+# Local:   ~/dotfiles/.config/nvim   main !1 +5 -2   3.12             14:22
+# SSH:    me@server 10.0.0.9   ~/src   main  ...
+#         
+#
+# Prompt char by vim mode:  INSERT (green ok / red err) -  NORMAL -
+#  VISUAL -  REPLACE (best-effort in zsh).
+
 add_newline = true
 command_timeout = 500
-palette = 'companion'
+palette = 'theme'
 
-# Line 1: companion + peeker + pwd/git, then $fill pushes the status HUD (RAM
-# water-bottle gauge + clock + cow) to the right edge. Parts are coloured
-# separately: muted brackets/tail, RAM-banded gauge, dim clock, cyan cow (eyes
-# go red and X-shaped when memory is critical).
 format = """
-${custom.face_ok}${custom.face_err}${custom.face_slow}${custom.face_busy}${custom.face_night}${custom.face_idle}${custom.face_root}${custom.face_vim}\
-[ ](muted)${custom.say}\
-[ ｢](muted)${custom.peek}[｣ ](muted)$directory$git_branch$git_status\
-$fill\
-[< ](muted)${custom.gauge_low}${custom.gauge_mid}${custom.gauge_high}[ ](muted)$time[ >](muted)[─](muted)${custom.cow_ok}${custom.cow_crit}
-${custom.sigil_ok}${custom.sigil_err}${custom.sigil_slow}${custom.sigil_busy}${custom.sigil_night}${custom.sigil_idle}${custom.sigil_root}${custom.sigil_vim}[ ](muted)"""
+$username$hostname$localip\
+$directory\
+$git_branch$git_commit$git_status$git_metrics$git_state\
+$golang$rust$python$nodejs$zig$java$c$lua$ruby$php\
+$direnv$container$docker_context$kubernetes\
+$sudo$memory_usage$cmd_duration$jobs$status
+$character"""
 
-[fill]
-symbol = " "
+right_format = "$time"
+
+# ANSI palette roles -> follow the terminal theme (see docs/08-themes.md).
+[palettes.theme]
+ok    = "bright-green"
+err   = "bright-red"
+warn  = "bright-yellow"
+vim   = "bright-magenta"
+muted = "bright-black"
+dir   = "bright-blue"
+git   = "bright-purple"
+info  = "bright-cyan"
+
+# Prompt character, distinct glyph per vim keymap (colour via palette roles).
+[character]
+success_symbol        = "[](bold ok)"
+error_symbol          = "[](bold err)"
+vimcmd_symbol         = "[](bold vim)"
+vimcmd_visual_symbol  = "[](bold warn)"
+vimcmd_replace_symbol = "[](bold err)"
+vimcmd_replace_one_symbol = "[](bold err)"
+
+# -- Identity: only over SSH (user@host + LAN IP); username also shows as root -
+[username]
+show_always = false
+style_user = "bold warn"
+style_root = "bold err"
+format = "[$user]($style)"
+
+[hostname]
+ssh_only = true
+style = "bold info"
+format = "[@$hostname]($style) "
+
+[localip]
+disabled = false
+ssh_only = true
+style = "muted"
+format = "[$localipv4]($style) "
+
+# Full path, always: no truncation, not clipped to the repo root, ~ for $HOME.
+[directory]
+truncation_length = 0
+truncate_to_repo = false
+truncation_symbol = ""
+home_symbol = "~"
+style = "bold dir"
+read_only = " 󰌾"
+read_only_style = "bold err"
+format = "[ ]($style)[$path]($style)([$read_only]($read_only_style))"
+
+[git_branch]
+symbol = ""
+style = "bold git"
+format = "[ $symbol $branch]($style)"
+
+# Short hash (+ tag) - only on a detached HEAD.
+[git_commit]
+only_detached = true
+tag_disabled = false
+tag_symbol = "  "
+commit_hash_length = 7
+style = "muted"
+format = '[ \($hash$tag\)]($style)'
+
+[git_status]
+style = "bold err"
+format = "([ $all_status$ahead_behind]($style))"
+modified   = "!$count"
+staged     = "+$count"
+untracked  = "?$count"
+stashed    = "*$count"
+deleted    = "x$count"
+renamed    = "»$count"
+conflicted = "=$count"
+ahead    = "$count"
+behind   = "$count"
+diverged = "$ahead_count $behind_count"
+
+# Diff line counts: +added (green) / -deleted (red), only when non-zero.
+[git_metrics]
+disabled = false
+added_style = "bold ok"
+deleted_style = "bold err"
+format = "([ +$added]($added_style))([ -$deleted]($deleted_style))"
+
+# In-progress git op: rebase / merge / cherry-pick / bisect (+ step count).
+[git_state]
+style = "bold warn"
+format = "[ $state( $progress_current/$progress_total)]($style)"
+rebase = "rebase"
+merge = "merge"
+revert = "revert"
+cherry_pick = "cherry"
+bisect = "bisect"
+am = "am"
+am_or_rebase = "am/rebase"
+
+# -- Languages: coloured icon + muted version, only inside a matching project --
+[golang]
+symbol = ""
+version_format = "$raw"
+style = "info"
+format = "[ $symbol ]($style)[$version](muted)"
+
+[rust]
+symbol = "󱘗"
+version_format = "$raw"
+style = "info"
+format = "[ $symbol ]($style)[$version](muted)"
+
+[python]
+symbol = ""
+version_format = "$raw"
+style = "info"
+format = "[ $symbol ]($style)[$version](muted)[ ($virtualenv)](muted)"
+
+[nodejs]
+symbol = ""
+version_format = "$raw"
+style = "info"
+format = "[ $symbol ]($style)[$version](muted)"
+
+[zig]
+symbol = ""
+version_format = "$raw"
+style = "info"
+format = "[ $symbol ]($style)[$version](muted)"
+
+[java]
+symbol = ""
+version_format = "$raw"
+style = "info"
+format = "[ $symbol ]($style)[$version](muted)"
+
+[c]
+symbol = ""
+version_format = "$raw"
+style = "info"
+format = "[ $symbol ]($style)[$version](muted)"
+
+[lua]
+symbol = ""
+version_format = "$raw"
+style = "info"
+format = "[ $symbol ]($style)[$version](muted)"
+
+[ruby]
+symbol = ""
+version_format = "$raw"
+style = "info"
+format = "[ $symbol ]($style)[$version](muted)"
+
+[php]
+symbol = ""
+version_format = "$raw"
+style = "info"
+format = "[ $symbol ]($style)[$version](muted)"
+
+# -- Env / infra: direnv, container, docker context, kube context -------------
+[direnv]
+disabled = false
+symbol = ""
+style = "info"
+format = "[ $symbol]($style)"
+
+[container]
+symbol = ""
+style = "warn"
+format = "[ $symbol ]($style)[$name](muted)"
+
+[docker_context]
+symbol = ""
+only_with_files = true
+style = "info"
+format = "[ $symbol ]($style)[$context](muted)"
+
+[kubernetes]
+disabled = false
+symbol = "󱃾"
+style = "info"
+format = "[ $symbol ]($style)[$context](muted)"
+
+# -- Transients: sudo, memory (>75%), duration, jobs, exit status -------------
+[sudo]
+disabled = false
+symbol = ""
+style = "warn"
+format = "[ $symbol]($style)"
+
+[memory_usage]
+disabled = false
+threshold = 75
+symbol = "󰍛"
+style = "warn"
+format = "[ $symbol $ram_pct]($style)"
+
+[cmd_duration]
+min_time = 2000
+style = "warn"
+format = "[  $duration]($style)"
+
+[jobs]
+number_threshold = 1
+symbol = ""
+style = "info"
+format = "[ $symbol $number]($style)"
+
+# Exit status: per-pipe codes + signal names (SIGINT, ...), only on failure.
+[status]
+disabled = false
+pipestatus = true
+pipestatus_separator = " | "
+recognize_signal_code = true
+map_symbol = false
+symbol = ""
+signal_symbol = ""
+style = "bold err"
+format = "[ $symbol $common_meaning$signal_name$maybe_int]($style)"
+pipestatus_format = "[$pipestatus]($style)"
 
 [time]
 disabled = false
 time_format = "%H:%M"
-style = "clock"
-format = '[$time]($style)'
-
-# ANSI-relative roles: each maps to a named ANSI slot, which IS the active
-# theme's colour. Retune any role here (e.g. ok = "bright-green") to taste.
-[palettes.companion]
-ok    = "green"
-err   = "red"
-slow  = "yellow"
-busy  = "cyan"
-night = "bright-blue"
-idle  = "blue"
-root  = "bright-red"
-vim   = "purple"
-muted = "bright-black"
-path  = "cyan"
-branch = "yellow"
-dirty = "red"
-# right prompt (cow) roles
-ram_ok   = "green"
-ram_warn = "yellow"
-ram_crit = "red"
-clock    = "blue"
-cow      = "cyan"
-
-# -- Where / git (the narration tail) ------------------------------------------
-[directory]
-style = "bold path"
-truncation_length = 2
-truncate_to_repo = true
-truncation_symbol = "…/"
-home_symbol = "~"
-read_only = "  "
-read_only_style = "bold dirty"
-format = '[$path]($style)[$read_only]($read_only_style)'
-
-[git_branch]
-symbol = ""
-style = "branch"
-format = '[ on ](muted)[$branch]($style)'
-
-[git_status]
-style = "dirty"
-format = '[ $all_status$ahead_behind]($style)'
-modified = "!"
-staged = "+"
-untracked = "?"
-stashed = "*"
-deleted = "x"
-renamed = "»"
-conflicted = "="
-ahead = "^${count}"
-behind = "v${count}"
-diverged = "^${ahead_count}v${behind_count}"
-
-# -- The aside (only renders when STARSHIP_SAY is non-empty) --------------------
-[custom.say]
-when = 'test -n "${STARSHIP_SAY:-}"'
-command = 'printf "%s" "${STARSHIP_SAY}"'
-shell = ["sh", "--norc"]
-style = "italic muted"
-format = '[$output]($style)'
-
-# -- Faces: one per mood, gated on STARSHIP_MOOD; colour comes from the role ---
-[custom.face_ok]
-when = 'test "${STARSHIP_MOOD:-ok}" = ok'
-command = 'printf "%s" "${STARSHIP_FACE:-(ᵔ◡ᵔ)}"'
-shell = ["sh", "--norc"]
-style = "bold ok"
-format = '[$output]($style)'
-
-[custom.face_err]
-when = 'test "${STARSHIP_MOOD:-ok}" = err'
-command = 'printf "%s" "${STARSHIP_FACE:-(╯°□°)╯}"'
-shell = ["sh", "--norc"]
-style = "bold err"
-format = '[$output]($style)'
-
-[custom.face_slow]
-when = 'test "${STARSHIP_MOOD:-ok}" = slow'
-command = 'printf "%s" "${STARSHIP_FACE:-( ·_·;)}"'
-shell = ["sh", "--norc"]
-style = "bold slow"
-format = '[$output]($style)'
-
-[custom.face_busy]
-when = 'test "${STARSHIP_MOOD:-ok}" = busy'
-command = 'printf "%s" "${STARSHIP_FACE:-(⌐■_■)}"'
-shell = ["sh", "--norc"]
-style = "bold busy"
-format = '[$output]($style)'
-
-[custom.face_night]
-when = 'test "${STARSHIP_MOOD:-ok}" = night'
-command = 'printf "%s" "${STARSHIP_FACE:-( ˘_˘ )}"'
-shell = ["sh", "--norc"]
-style = "bold night"
-format = '[$output]($style)'
-
-[custom.face_idle]
-when = 'test "${STARSHIP_MOOD:-ok}" = idle'
-command = 'printf "%s" "${STARSHIP_FACE:-(ᴗ‿ᴗ)}"'
-shell = ["sh", "--norc"]
-style = "bold idle"
-format = '[$output]($style)'
-
-[custom.face_root]
-when = 'test "${STARSHIP_MOOD:-ok}" = root'
-command = 'printf "%s" "${STARSHIP_FACE:-(ÒﾛÓ)}"'
-shell = ["sh", "--norc"]
-style = "bold root"
-format = '[$output]($style)'
-
-[custom.face_vim]
-when = 'test "${STARSHIP_MOOD:-ok}" = vim'
-command = 'printf "%s" "${STARSHIP_FACE:-(¬‿¬)}"'
-shell = ["sh", "--norc"]
-style = "bold vim"
-format = '[$output]($style)'
-
-# -- Sigils: one per mood; glyph from the hook, colour from the role ----------
-[custom.sigil_ok]
-when = 'test "${STARSHIP_MOOD:-ok}" = ok'
-command = 'printf "%s" "${STARSHIP_SIGIL:-λ}"'
-shell = ["sh", "--norc"]
-style = "bold ok"
-format = '[$output]($style)'
-
-[custom.sigil_err]
-when = 'test "${STARSHIP_MOOD:-ok}" = err'
-command = 'printf "%s" "${STARSHIP_SIGIL:-ϟ}"'
-shell = ["sh", "--norc"]
-style = "bold err"
-format = '[$output]($style)'
-
-[custom.sigil_slow]
-when = 'test "${STARSHIP_MOOD:-ok}" = slow'
-command = 'printf "%s" "${STARSHIP_SIGIL:-~}"'
-shell = ["sh", "--norc"]
-style = "bold slow"
-format = '[$output]($style)'
-
-[custom.sigil_busy]
-when = 'test "${STARSHIP_MOOD:-ok}" = busy'
-command = 'printf "%s" "${STARSHIP_SIGIL:-&}"'
-shell = ["sh", "--norc"]
-style = "bold busy"
-format = '[$output]($style)'
-
-[custom.sigil_night]
-when = 'test "${STARSHIP_MOOD:-ok}" = night'
-command = 'printf "%s" "${STARSHIP_SIGIL:-*}"'
-shell = ["sh", "--norc"]
-style = "bold night"
-format = '[$output]($style)'
-
-[custom.sigil_idle]
-when = 'test "${STARSHIP_MOOD:-ok}" = idle'
-command = 'printf "%s" "${STARSHIP_SIGIL:-z}"'
-shell = ["sh", "--norc"]
-style = "bold idle"
-format = '[$output]($style)'
-
-[custom.sigil_root]
-when = 'test "${STARSHIP_MOOD:-ok}" = root'
-command = 'printf "%s" "${STARSHIP_SIGIL:-#}"'
-shell = ["sh", "--norc"]
-style = "bold root"
-format = '[$output]($style)'
-
-[custom.sigil_vim]
-when = 'test "${STARSHIP_MOOD:-ok}" = vim'
-command = 'printf "%s" "${STARSHIP_SIGIL:-Λ}"'
-shell = ["sh", "--norc"]
-style = "bold vim"
-format = '[$output]($style)'
-
-# -- Right-side cow: the water-bottle gauge (jar + %), colour-banded by RAM. -----
-# Exactly one gauge_* fires per prompt (RAM-band trick); the clock is $time and
-# the bubble/tail are muted literals in right_format above.
-[custom.gauge_low]
-when = 'test "${STARSHIP_RAM_PCT:-0}" -lt 60'
-command = 'printf "%s" "${STARSHIP_RAM_GAUGE:-?}"'
-shell = ["sh", "--norc"]
-style = "bold ram_ok"
-format = '[$output]($style)'
-
-[custom.gauge_mid]
-when = 'p="${STARSHIP_RAM_PCT:-0}"; test "$p" -ge 60 && test "$p" -lt 85'
-command = 'printf "%s" "${STARSHIP_RAM_GAUGE:-?}"'
-shell = ["sh", "--norc"]
-style = "bold ram_warn"
-format = '[$output]($style)'
-
-[custom.gauge_high]
-when = 'test "${STARSHIP_RAM_PCT:-0}" -ge 85'
-command = 'printf "%s" "${STARSHIP_RAM_GAUGE:-?}"'
-shell = ["sh", "--norc"]
-style = "bold ram_crit"
-format = '[$output]($style)'
-
-# The cow face: cyan normally, red with X eyes when memory is critical (>=85%).
-[custom.cow_ok]
-when = 'test "${STARSHIP_RAM_PCT:-0}" -lt 85'
-command = 'printf "%s" "${STARSHIP_COW:-(◕ᴥ◕)}"'
-shell = ["sh", "--norc"]
-style = "cow"
-format = '[$output]($style)'
-
-# Dir peeker (static glyph set by .zshrc, default looks toward the path).
-# Same colour as the path so peeker + pwd read as one unit.
-[custom.peek]
-when = true
-command = 'printf "%s" "${STARSHIP_PEEK:-◑ᴗ◑}"'
-shell = ["sh", "--norc"]
-style = "bold path"
-format = '[$output]($style)'
-
-[custom.cow_crit]
-when = 'test "${STARSHIP_RAM_PCT:-0}" -ge 85'
-command = 'printf "(✘ᴥ✘)"'
-shell = ["sh", "--norc"]
-style = "bold ram_crit"
-format = '[$output]($style)'
+style = "muted"
+format = "[ $time]($style)"

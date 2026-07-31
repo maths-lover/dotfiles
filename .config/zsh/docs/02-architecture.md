@@ -77,7 +77,7 @@ Re-link after adding a **new** file: `cd ~/dotfiles && stow --restow .`
 
 Inside `.zshrc`, the load sequence is: options & history → completion → vim mode &
 keybindings → fzf integration → plugins → tool integrations (zoxide, bat, eza) →
-`theme.zsh` → `aliases.zsh` → `functions.zsh` → RAM hook → Starship → `local.zsh`.
+`theme.zsh` → `aliases.zsh` → `functions.zsh` → Starship → `local.zsh`.
 
 ## Customization
 
