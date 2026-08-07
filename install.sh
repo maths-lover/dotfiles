@@ -9,8 +9,25 @@
 set -euo pipefail
 DOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
+# Module selector:  ./install.sh        -> everything (includes the pi module)
+#                   ./install.sh pi     -> ONLY the pi agent module, nothing else
+MODULE="${1:-all}"
+
 bold=$(tput bold 2>/dev/null || true); reset=$(tput sgr0 2>/dev/null || true)
 info() { printf '%s==>%s %s\n' "$bold" "$reset" "$*"; }
+
+# pi agent — its own stow package (pi/), kept separate from the root dotfiles so
+# it can be installed on its own. ~/.pi/agent stays a REAL directory: it also
+# holds auth.json (secrets), the model cache, trust.json and session history,
+# all of which are intentionally NOT tracked in this repo.
+setup_pi() {
+  info "Setting up pi agent module (stow package: pi)..."
+  # pi runtime is declared in .config/Brewfile (installed by `brew bundle` in the
+  # full run). Ensure it exists here too so `./install.sh pi` is self-contained.
+  command -v pi >/dev/null 2>&1 || brew install pi-coding-agent
+  mkdir -p "$HOME/.pi/agent"
+  stow -d "$DOT" -t "$HOME" --restow pi
+}
 
 [[ "$(uname -s)" == "Darwin" ]] || { echo "macOS only."; exit 1; }
 
@@ -25,6 +42,14 @@ eval "$([ -x /opt/homebrew/bin/brew ] && /opt/homebrew/bin/brew shellenv || /usr
 # 2. GNU Stow
 command -v stow >/dev/null 2>&1 || { info "Installing stow..."; brew install stow; }
 
+# pi-only install: Homebrew + stow are all it needs. Do just the pi module and
+# stop — no zsh/tools/fonts/IINA/etc.
+if [[ "$MODULE" == "pi" ]]; then
+  setup_pi
+  printf '\n%spi module installed.%s  Config symlinked into ~/.pi/agent (secrets/sessions left untouched).\n' "$bold" "$reset"
+  exit 0
+fi
+
 # 3. Pre-create real dirs that MUST NOT be folded into the repo by stow.
 #    (If ~/.ssh didn't exist, stow would symlink the whole dir into the repo and
 #    your private keys would resolve inside the dotfiles repo - never that.)
@@ -36,6 +61,9 @@ mkdir -p "$HOME/.config"
 #    files stay put as real files)
 info "Stowing dotfiles -> \$HOME..."
 stow -d "$DOT" -t "$HOME" --restow .
+
+# 4b. pi agent — separate stow package (see setup_pi above).
+setup_pi
 
 # config.local holds private ssh hosts and is git-ignored; seed an empty one so
 # the `Include` in ~/.ssh/config resolves cleanly.

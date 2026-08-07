@@ -1,0 +1,15 @@
+{
+  "lastChangelogVersion": "0.83.0",
+  "theme": "light/dark",
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-opus-4-8",
+  "defaultThinkingLevel": "max",
+  "showHardwareCursor": false,
+  "warnings": {
+    "anthropicExtraUsage": false
+  },
+  "treeFilterMode": "default",
+  "terminal": {
+    "showTerminalProgress": true
+  }
+}

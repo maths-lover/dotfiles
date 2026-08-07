@@ -9,6 +9,9 @@
 ^/install\.sh$
 ^/README\.md$
 ^/LICENSE$
+
+# ── pi agent is its own stow package (installed separately) ──
+^/pi$
 ^/\.git$
 ^/\.gitignore$
 ^/\.gitmodules$

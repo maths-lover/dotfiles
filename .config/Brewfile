@@ -37,7 +37,7 @@ brew "tealdeer"            # tldr - community man-page cheatsheets (fast, Rust)
 brew "httpie"              # human-friendly HTTP client
 brew "markdown-oxide"      # markdown LSP for notes (links, backlinks, daily notes)
 brew "herdr"               # agent multiplexer (sessions, workspaces, panes, agent-state)
-brew "pi-coding-agent"     # pi - minimal coding agent harness (pi.dev)
+brew "pi-coding-agent"     # pi - coding agent harness (pi.dev); runtime for the pi/ stow module
 brew "neovim"              # nvim - the editor ($EDITOR)
 brew "stow"                # GNU Stow - symlink-manage these dotfiles
 

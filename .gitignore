@@ -20,3 +20,11 @@
 .ssh/*
 !.ssh/config
 .ssh/config.local
+
+# pi agent — safety net: never track secrets, machine state, caches or session
+# history even if the whole agent dir is ever copied under pi/.
+pi/.pi/agent/auth.json
+pi/.pi/agent/trust.json
+pi/.pi/agent/models-store.json
+pi/.pi/agent/sessions/
+pi/.pi/agent/saved-sessions/
