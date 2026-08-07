@@ -28,3 +28,7 @@ pi/.pi/agent/trust.json
 pi/.pi/agent/models-store.json
 pi/.pi/agent/sessions/
 pi/.pi/agent/saved-sessions/
+# installed-extension deps / build junk (extensions dir is a folded symlink, so
+# anything pi drops there lands in the repo — keep vendored/generated bits out)
+pi/.pi/agent/**/node_modules/
+pi/.pi/agent/**/*.log
