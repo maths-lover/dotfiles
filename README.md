@@ -71,10 +71,18 @@ Secrets and machine state stay untracked and are **never** moved into the repo:
 symlinked into it.
 
 ```sh
-./install.sh pi     # set up ONLY the pi agent module (brew + stow + link)
+./install.sh pi     # set up ONLY the pi agent module (stow + pi runtime + link)
 ./install.sh        # full machine setup, which includes the pi module
 cd ~/dotfiles && stow --restow pi   # re-link after adding pi files
 ```
+
+**Cross-platform:** the full `./install.sh` is macOS-only (casks, fonts, IINA),
+but `./install.sh pi` runs on **macOS and Linux**. It installs `stow`
+(brew / apt / dnf / pacman / zypper) and the pi runtime (Homebrew
+`pi-coding-agent`, or `npm i -g @earendil-works/pi-coding-agent` where only Node
+is present), then symlinks the config. Note: the cockpit editor's clipboard
+paste uses macOS `pbpaste`, so `p`/`P` from the system clipboard is mac-only;
+everything else works on Linux.
 
 ## Documentation
 

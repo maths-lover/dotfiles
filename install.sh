@@ -16,39 +16,74 @@ MODULE="${1:-all}"
 bold=$(tput bold 2>/dev/null || true); reset=$(tput sgr0 2>/dev/null || true)
 info() { printf '%s==>%s %s\n' "$bold" "$reset" "$*"; }
 
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# Make an already-installed Homebrew visible (macOS or Linuxbrew); no-op if absent.
+for _b in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+  [ -x "$_b" ] && eval "$("$_b" shellenv)" && break
+done
+
+# On macOS, guarantee Homebrew (used for everything). No-op on Linux.
+ensure_brew_mac() {
+  [[ "$(uname -s)" == "Darwin" ]] || return 0
+  have brew && return 0
+  info "Installing Homebrew..."
+  NONINTERACTIVE=1 /bin/bash -c \
+    "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  eval "$([ -x /opt/homebrew/bin/brew ] && /opt/homebrew/bin/brew shellenv || /usr/local/bin/brew shellenv)"
+}
+
+# Cross-platform installers for the pi module's two needs (stow + pi runtime).
+ensure_stow() {
+  have stow && return 0
+  info "Installing GNU stow..."
+  if   have brew;    then brew install stow
+  elif have apt-get; then sudo apt-get update -qq && sudo apt-get install -y stow
+  elif have dnf;     then sudo dnf install -y stow
+  elif have pacman;  then sudo pacman -S --noconfirm stow
+  elif have zypper;  then sudo zypper install -y stow
+  else echo "Please install GNU stow, then re-run."; exit 1; fi
+}
+ensure_pi() {
+  have pi && return 0
+  info "Installing pi (pi-coding-agent)..."
+  if   have brew; then brew install pi-coding-agent                    # macOS + Linuxbrew (homebrew-core)
+  elif have npm;  then npm install -g @earendil-works/pi-coding-agent  # any OS with Node.js
+  else echo "pi not installed: install Homebrew or Node.js (npm), then re-run './install.sh pi'."; fi
+}
+
 # pi agent — its own stow package (pi/), kept separate from the root dotfiles so
-# it can be installed on its own. ~/.pi/agent stays a REAL directory: it also
-# holds auth.json (secrets), the model cache, trust.json and session history,
-# all of which are intentionally NOT tracked in this repo.
+# it can be installed on its own, on macOS OR Linux. ~/.pi/agent stays a REAL
+# directory: it also holds auth.json (secrets), the model cache, trust.json and
+# session history, all intentionally NOT tracked in this repo.
 setup_pi() {
   info "Setting up pi agent module (stow package: pi)..."
-  # pi runtime is declared in .config/Brewfile (installed by `brew bundle` in the
-  # full run). Ensure it exists here too so `./install.sh pi` is self-contained.
-  command -v pi >/dev/null 2>&1 || brew install pi-coding-agent
+  ensure_brew_mac      # macOS: guarantees brew; Linux: no-op
+  ensure_stow          # brew / apt / dnf / pacman / zypper
+  ensure_pi            # brew (homebrew-core) or npm (@earendil-works/pi-coding-agent)
   mkdir -p "$HOME/.pi/agent"
   stow -d "$DOT" -t "$HOME" --restow pi
 }
 
-[[ "$(uname -s)" == "Darwin" ]] || { echo "macOS only."; exit 1; }
-
-# 1. Homebrew
-if ! command -v brew >/dev/null 2>&1; then
-  info "Installing Homebrew..."
-  NONINTERACTIVE=1 /bin/bash -c \
-    "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-fi
-eval "$([ -x /opt/homebrew/bin/brew ] && /opt/homebrew/bin/brew shellenv || /usr/local/bin/brew shellenv)"
-
-# 2. GNU Stow
-command -v stow >/dev/null 2>&1 || { info "Installing stow..."; brew install stow; }
-
-# pi-only install: Homebrew + stow are all it needs. Do just the pi module and
-# stop — no zsh/tools/fonts/IINA/etc.
-if [[ "$MODULE" == "pi" ]]; then
+# The pi module is cross-platform, so handle it BEFORE the macOS-only full setup.
+if [[ "${MODULE}" == "pi" ]]; then
   setup_pi
   printf '\n%spi module installed.%s  Config symlinked into ~/.pi/agent (secrets/sessions left untouched).\n' "$bold" "$reset"
   exit 0
 fi
+
+# ---- Everything below (full machine setup) is macOS-only ----
+[[ "$(uname -s)" == "Darwin" ]] || {
+  echo "Full install is macOS-only (Homebrew casks, fonts, IINA, defaults writes)."
+  echo "For pi config on Linux, run:  ./install.sh pi"
+  exit 1
+}
+
+# 1. Homebrew
+ensure_brew_mac
+
+# 2. GNU Stow
+command -v stow >/dev/null 2>&1 || { info "Installing stow..."; brew install stow; }
 
 # 3. Pre-create real dirs that MUST NOT be folded into the repo by stow.
 #    (If ~/.ssh didn't exist, stow would symlink the whole dir into the repo and
