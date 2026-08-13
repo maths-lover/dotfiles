@@ -6,21 +6,22 @@ Prefer modern CLI tools over the classic ones. Use the modern tool when it is
 installed; fall back to the classic equivalent only when the modern one is
 missing.
 
-| Task | Prefer | Instead of | Example |
-|------|--------|-----------|---------|
-| Search file contents | `rg` (ripgrep) | `grep`, `egrep` | `rg -n 'pattern' src/` |
-| Find files/dirs | `fd` | `find` | `fd -e ts cockpit` |
-| List a directory | `eza` | `ls` | `eza -la --git` |
-| View a file for humans | `bat` | `cat` | `bat -pp file` |
-| Disk usage | `dust` | `du` | `dust -d 2` |
-| Processes | `procs` | `ps` | `procs firefox` |
-| View diffs | `delta` | `diff` | `git -c core.pager=delta diff` |
-| JSON | `jq` | manual parsing | `jq '.key' file.json` |
-| YAML / XML / TOML | `yq` | manual parsing | `yq '.key' file.yaml` |
-| Fuzzy pick | `fzf` | manual selection | `... \| fzf` |
+| Task                   | Prefer         | Instead of       | Example                |
+| ---------------------- | -------------- | ---------------- | ---------------------- |
+| Search file contents   | `rg` (ripgrep) | `grep`, `egrep`  | `rg -n 'pattern' src/` |
+| Find files/dirs        | `fd`           | `find`           | `fd -e ts cockpit`     |
+| View a file for humans | `bat`          | `cat`            | `bat -pp file`         |
+| JSON                   | `jq`           | manual parsing   | `jq '.key' file.json`  |
+| YAML / XML / TOML      | `yq`           | manual parsing   | `yq '.key' file.yaml`  |
+| Fuzzy pick             | `fzf`          | manual selection | `... \| fzf`           |
 
 Plain `cat`/`ls` inside pipes or scripts is fine; the preferences above are
 about the tool I reach for when doing the work myself.
+
+Skip tools that emit icons, colors, or unicode bars/box-drawing in their output
+(`eza --icons`, `dust`, `procs`, `delta`) — the decoration is wasted tokens when
+I parse it. When a useful tool colorizes by default, force plain output
+(`--color=never`, `bat -pp`). `rg`/`fd`/`jq`/`yq` are plain already.
 
 ### IMPORTANT: don't let the swap hide files
 
