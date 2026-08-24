@@ -1,0 +1,15 @@
+# ~/.config/neovide/config.toml - Neovide GUI font, matching Ghostty's Maple Mono
+# NF setup. This is the ONLY place Neovide accepts OpenType features, so the font
+# (family + size + features) is defined here rather than via `guifont`.
+#
+# Other Neovide settings (padding, opacity, animations, macOS keymaps) live in the
+# Neovim config: ~/.config/nvim/lua/config/neovide.lua.
+#
+# ss06 is intentionally omitted so Maple's cursive italic keeps its connected
+# strokes (its signature look). calt/liga = ligatures, zero = slashed zero,
+# cv01 = normalized special symbols, cv62 = open ?, cv65 = handwriting &.
+
+[font]
+normal = ["Maple Mono NF"]
+size = 16.0
+features."Maple Mono NF" = ["+calt", "+liga", "+zero", "+cv01", "+cv62", "+cv65"]

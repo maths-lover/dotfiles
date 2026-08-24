@@ -2,88 +2,120 @@
 
 # 7. Prompt (Starship)
 
-Defined in `~/.config/starship.toml`. A tidy two-line prompt: the **full path**
-plus Nerd Font icons on line 1, a quiet clock on the right, and the prompt
-character on line 2. Locally it stays minimal; over SSH it grows a
-`user@host` + LAN-IP block so remote sessions are unmistakable.
+Defined in `~/.config/starship.toml`. A **boxed two-line powerline** prompt,
+framed with `╭` at the top-left and `╰─❯` on line 2. Line 1 is a row of
+connected capsule "pills" split by a `$fill`: **context on the left** (OS,
+directory, git) and **toolchains / status / clock on the right**. On a bare TTY
+or over SSH it drops to a plain ASCII fallback (see below).
 
-```
-local    ~/dev/project   main !2 +12 -3    1.24             14:22
-ssh     me@server 10.0.0.9  ~/src   main ...
-        
-```
+Colours are **ANSI palette roles** in `[palettes.theme]` (no hex), so the prompt
+follows the active Ghostty theme and the `theme` switcher. The old rose-pine
+role *names* are kept (`orange`, `cyan`, `box`, `current_line`, …) but now map to
+ANSI. Every glyph is a **Nerd Font** glyph (Ghostty uses MonaspiceNe).
 
-## Line 1 - context (left)
+## Line 1 — left side (context)
 
-| Segment | Meaning |
-|---------|---------|
-| `me@server 10.0.0.9` | **SSH only** - user@host + LAN IP; hidden locally (as root the username shows bold red) |
-| ` ~/dev/project` | current directory - the **entire path**, never truncated; `󰌾` = read-only |
-| ` main` | git branch |
-| `(a1b2c3d)` | commit hash (+ tag) - **only on a detached HEAD** |
-| `!2 +1 ?3` | git status: `!`modified `+`staged `?`untracked `*`stashed `x`deleted `»`renamed `=`conflicted |
-| `1 2` | commits ahead / behind the remote |
-| `+12 -3` | git metrics - lines added (green) / deleted (red) since HEAD |
-| `rebase 1/3` | in-progress git op (rebase / merge / cherry-pick / bisect) with step count |
-| ` 1.24` | toolchain version - go/rust/python/node/zig/java/c/lua/ruby/php, only in a matching project (icon coloured, version muted) |
-| `` | direnv active (an `.envrc` is loaded) |
-| ` name` | running inside a container |
-| ` ctx` / `󱃾 ctx` | docker / kubernetes context - only when relevant |
-| `` | sudo credentials currently cached |
-| `󰍛 82%` | memory usage - **only when RAM > 75%** |
-| ` 2s` | last command duration (shown when >= 2s) |
-| ` 1` | background jobs |
-| ` INT` / ` NOTFOUND` | exit status - signal name / meaning, **only on failure**; a failed pipeline lists each stage |
+| Segment | Accent | Meaning |
+|---------|--------|---------|
+| OS icon | orange | current OS — Apple logo on macOS, distro glyph over SSH/elsewhere |
+| directory | green | current directory (truncated to last 2 components — see below); read-only marker when applicable |
+| git branch | cyan | current branch |
+| git status | yellow | working-tree counts: modified / staged / untracked / stashed / deleted / renamed / conflicted, plus ahead / behind |
+| git commit | pink | short commit hash (+ tag) — shown **always** (not just detached) |
+| git state | red | in-progress op (rebase / merge / cherry-pick / bisect) with step count |
+| **git metrics** | green / red | **added / deleted line counts** — only when the working tree has uncommitted diffs |
 
-## Right side
+## Line 1 — right side (after the `$fill`)
 
-| Segment | Meaning |
-|---------|---------|
-| ` 14:22` | clock (HH:MM) |
+| Segment | Accent | Meaning |
+|---------|--------|---------|
+| languages | per-lang | toolchain + version — node / .NET / python / java / lua / go / c, only in a matching project |
+| cmd duration | orange | last command duration (≥ 500 ms) |
+| **jobs** | cyan | number of background jobs (≥ 1) |
+| **status** | red | **exit status** — meaning / signal name / code, only on failure (each stage of a failed pipeline) |
+| shell | purple | shell indicator |
+| clock | purple | `HH:MM` — **disabled by default** (`[time] disabled = true`; set `false` to show) |
+| username | yellow | current user (always shown; bold-red as root) |
 
-## Line 2 - prompt character (per vim mode)
+## Line 2 — prompt character
 
-| Mode | Glyph | Colour |
-|------|-------|--------|
-| INSERT | `` | green (ok) / red (last command failed) |
-| NORMAL | `` | magenta |
-| VISUAL | `` | yellow |
-| REPLACE | `` | red (best-effort; zsh has no distinct replace keymap, so it usually falls back to NORMAL) |
+The bottom of the frame (`╰─`) plus the prompt symbol:
 
-Driven by starship's own zsh keymap hook (chains cleanly with the cursor-shape hook).
+| State | Glyph | Colour |
+|-------|-------|--------|
+| success | `❯` | green |
+| error (last command failed) | `×` | red |
 
-## Showing the full path
+No per-vim-mode sigils are set in this config. To get NORMAL/VISUAL/REPLACE
+glyphs, add `vimcmd_symbol` / `vimcmd_visual_symbol` / `vimcmd_replace_symbol` to
+`[character]`.
 
-The directory module is set to show everything:
+## Directory (truncated to 2)
+
+This layout shows only the **last two path components**:
 
 ```toml
 [directory]
-truncation_length = 0      # 0 = do not truncate
-truncate_to_repo  = false  # do not clip to the git repo root
-truncation_symbol = ""     # no leading .../
-home_symbol       = "~"    # $HOME shows as ~
+truncation_length = 2       # last 2 components only
+truncation_symbol = ' '     # leading marker
+home_symbol       = "󰉌 "    # $HOME icon
 ```
 
-To shorten later, raise `truncation_length` (e.g. `3`) or set
-`truncate_to_repo = true` (path starts at the repo root).
+Known folders get an icon via `[directory.substitutions]` (`Documents`,
+`Downloads`, `Music`, `Pictures`, `Develop`/`develop`). **For the full
+untruncated path**, set `truncation_length = 0` and add `truncate_to_repo =
+false`.
 
-## Identity block (SSH only)
+## git metrics vs git status
 
-`username`, `hostname` and `localip` are all `ssh_only`, so locally the line
-starts at the directory. Over SSH you get `user@host ip `; as **root** the
-username also shows (bold red) even locally, as a safety cue.
+They don't overlap: `git_status` reports **file** counts (how many files are
+modified / staged / untracked / …), while `git_metrics` reports **line** counts
+(`+added -deleted`) of the current diff. Metrics stay hidden in a clean repo.
+
+## Always-on commit hash
+
+`[git_commit]` has `only_detached = false`, so the short hash shows on **every**
+prompt, not just on a detached HEAD. Set `only_detached = true` to only show it
+when detached.
+
+## TTY / SSH fallback
+
+The boxed powerline needs a Nerd Font and colour. On a bare Linux virtual
+console (`TERM=linux`) or inside an SSH session, `.zshrc` transparently points
+`STARSHIP_CONFIG` at **`~/.config/starship-plain.toml`** instead:
+
+```sh
+# .zshrc (excerpt)
+if [[ $TERM == linux || $TERM == dumb || -n $SSH_CONNECTION || -n $SSH_TTY ]]; then
+  export STARSHIP_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/starship-plain.toml"
+fi
+```
+
+The plain config keeps the same two-line shape and ANSI palette roles but drops
+all powerline caps, background panels and Nerd Font glyphs: git status uses
+ASCII letters, language chips become short text tags, and the prompt character
+is `>`. It still shows the `user@host` + LAN-IP identity so remote sessions are
+unmistakable.
+
+## Colours (theme-aware)
+
+All colours are **ANSI palette roles** in `[palettes.theme]` (no hex), so the
+prompt follows the active Ghostty theme and the `theme` switcher. The rose-pine
+role *names* are kept but map to ANSI: accents → `bright-*`; `box` /
+`current_line` → `bright-black` (grey panel / frame line); `primary` → `black`
+(symbol on a bright accent cap); segment body text uses the terminal's default
+foreground. Swap the terminal theme and the whole prompt re-colours.
+
+Want the fixed rose-pine look instead? set the terminal to it with `theme
+rosepine-dawn`, or hard-code hex values in `[palettes.theme]`.
 
 ## Nerd Font
 
-Every icon is a Nerd Font glyph, verified present in **MonaspiceNe Nerd Font**
-(the Ghostty font - see [Fonts](09-fonts.md)). Language/module glyphs come from
-`starship preset nerd-font-symbols`; without a Nerd Font they render as boxes.
-
-## Theme-awareness
-
-All prompt colours are **ANSI palette roles** in `[palettes.theme]` (never hex),
-so the prompt automatically follows the active terminal theme - see
-[Themes](08-themes.md).
+Every icon (and the powerline separator caps) is a Nerd Font glyph in
+**MonaspiceNe Nerd Font Mono** (the Ghostty font — see [Fonts](09-fonts.md)).
+Without a Nerd Font they render as boxes — which is why the TTY/SSH fallback
+above exists. Note: the cap glyphs are stored as exact bytes; if you hand-edit
+them and they vanish, re-inject with `perl -CSD` (see the config header).
 
 ---
 

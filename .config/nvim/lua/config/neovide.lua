@@ -1,8 +1,10 @@
 -- lua/config/neovide.lua - GUI settings, applied only inside Neovide.
 if not vim.g.neovide then return end
 
--- Font (Monaspace Nerd Font, same as the terminal)
-vim.o.guifont = "MonaspiceNe Nerd Font Mono:h14"
+-- Font (family + size + OpenType features) is defined in
+-- ~/.config/neovide/config.toml - that's the only place Neovide accepts font
+-- features, so it lives there instead of `guifont` to avoid two sources of truth.
+-- Maple's cursive Italic face + ligatures render automatically.
 
 -- Padding (mirrors Ghostty)
 vim.g.neovide_padding_top = 8

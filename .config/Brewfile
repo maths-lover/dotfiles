@@ -60,6 +60,12 @@ cask "neovide-app"             # GUI neovim front-end (for project work)
 
 # -- Fonts (already installed manually, listed for fresh-machine reproducibility)
 cask "font-monaspice-nerd-font"   # Nerd-Font-patched Monaspace (note: "monaspice")
+# Extra crisp Nerd Fonts to try via the `font` switcher (font.zsh)
+cask "font-jetbrains-mono-nerd-font"
+cask "font-maple-mono-nf"
+cask "font-iosevka-nerd-font"
+cask "font-geist-mono-nerd-font"
+cask "font-commit-mono-nerd-font"
 
 # -- GUI Applications for Mac productivity in general --------------------------
 cask "loop"

@@ -3,32 +3,30 @@
 # See all options:  ghostty +show-config --default --docs | less
 
 # -- Font ----------------------------------------------------------------------
-# Monaspace Nerd Fonts via Homebrew (cask "font-monaspice-nerd-font"). The Nerd
-# Font project renames the cuts: Neon->Ne, Argon->Ar, Krypton->Kr, Radon->Rn, Xenon->Xe.
-font-family = "MonaspiceNe Nerd Font Mono"
-font-size = 14
-# calt = texture healing, liga = typographic ligatures. Monaspace's coding
-# ligatures live in stylistic sets ss01-ss10, all enabled below.
+# The font-family lines are managed by the `font` switcher (font.zsh): run
+# `font <name>` then reload Ghostty with Cmd+Shift+, . All options are Nerd Fonts.
+font-family = "Maple Mono NF"
+# 16pt suits a 27" 4K panel (~163 PPI); bump/drop to taste.
+font-size = 16
+# Maple Mono OpenType features (full list in docs/09-fonts.md). calt+liga =
+# ligatures, zero = slashed zero, cv01/cv62/cv65 = nicer symbols/? /& glyphs.
+# ss06 is deliberately OMITTED: it breaks the connected strokes of Maple's
+# cursive italic, which is exactly the italic style we want to keep.
 font-feature = calt
 font-feature = liga
-font-feature = ss01
-font-feature = ss02
-font-feature = ss03
-font-feature = ss04
-font-feature = ss05
-font-feature = ss06
-font-feature = ss07
-font-feature = ss08
-font-feature = ss09
-font-feature = ss10
-# Thicken text slightly on dark backgrounds for crispness.
-font-thicken = true
+font-feature = zero
+font-feature = cv01
+font-feature = cv62
+font-feature = cv65
+# Thickening fattens thin strokes on LOW-DPI screens; on a 4K/retina panel it
+# just softens text, so keep it OFF here for crisp glyphs.
+font-thicken = false
 
-# Monaspace flourish: cursive "Radon" cut for italics (great for comments)
-# and the slab "Xenon" cut for bold.
-font-family-italic = "MonaspiceRn Nerd Font Mono"
-font-family-bold-italic = "MonaspiceRn Nerd Font Mono"
-font-family-bold = "MonaspiceXe Nerd Font Mono"
+# Italic / bold faces (also set by the `font` switcher): Monaspace uses its Radon
+# (italic) and Xenon (bold) cuts; other fonts use their own faces.
+font-family-italic = "Maple Mono NF"
+font-family-bold-italic = "Maple Mono NF"
+font-family-bold = "Maple Mono NF"
 
 # -- Theme & colors ------------------------------------------------------------
 # Default scheme. Switch live with the `theme` shell command (theme list).

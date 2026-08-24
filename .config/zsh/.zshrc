@@ -204,13 +204,23 @@ export EZA_COLORS="da=90:di=34:ex=32:ln=36:ur=33:uw=31:ux=32:ue=32:gr=33:gw=31:g
 # -- Colorscheme switcher (theme <name> | dark | light | toggle | list) --------
 [[ -f "$ZDOTDIR/theme.zsh" ]] && source "$ZDOTDIR/theme.zsh"
 
+# -- Font switcher (font <name> | next | list) - reload Ghostty with ⌘⇧, -------
+[[ -f "$ZDOTDIR/font.zsh" ]] && source "$ZDOTDIR/font.zsh"
+
 # -- Aliases & functions -------------------------------------------------------
 [[ -f "$ZDOTDIR/aliases.zsh" ]]   && source "$ZDOTDIR/aliases.zsh"
 [[ -f "$ZDOTDIR/functions.zsh" ]] && source "$ZDOTDIR/functions.zsh"
 
 # -- Prompt (must be last so it isn't clobbered) -------------------------------
-# Minimal two-line starship prompt (see starship.toml). Vim NORMAL mode swaps
-# the sigil via starship's own keymap hook - no local machinery needed.
+# Fancy ANSI powerline prompt (starship.toml) in Ghostty; a plain ASCII fallback
+# (starship-plain.toml) on bare TTYs and SSH sessions, where Nerd Font glyphs and
+# powerline pills don't render reliably. Both are theme-aware (ANSI palette).
+# Vim NORMAL mode swaps the sigil via starship's own keymap hook.
+if [[ $TERM == linux || $TERM == dumb || -n $SSH_CONNECTION || -n $SSH_TTY ]]; then
+  _ss_plain="${XDG_CONFIG_HOME:-$HOME/.config}/starship-plain.toml"
+  [[ -f $_ss_plain ]] && export STARSHIP_CONFIG="$_ss_plain"
+  unset _ss_plain
+fi
 command -v starship >/dev/null && eval "$(starship init zsh)"
 
 # -- Local machine overrides (not tracked) -------------------------------------

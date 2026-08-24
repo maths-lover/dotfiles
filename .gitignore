@@ -13,6 +13,7 @@
 .config/zsh/cache/
 .config/zsh/backup-*/
 .config/zsh/.active-theme
+.config/zsh/.active-font
 .config/zsh/local.zsh
 .config/zsh/plugins/
 

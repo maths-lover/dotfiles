@@ -43,7 +43,8 @@ Re-link after adding a **new** file: `cd ~/dotfiles && stow --restow .`
 ~/.zshenv                      Bootstrap → ZDOTDIR (real file; written by setup_zsh.sh)
 ~/.config/                     (tracked entries are symlinks into ~/dotfiles)
 ├── Brewfile                   Declarative list of every package/cask/font
-├── starship.toml              Prompt definition (the HUD)
+├── starship.toml              Prompt definition (powerline HUD, Ghostty)
+├── starship-plain.toml        Plain ASCII fallback prompt (bare TTY / SSH)
 ├── ghostty/config             Terminal: font, theme, padding, keybinds
 └── zsh/
     ├── .zshenv                Universal env (XDG dirs, EDITOR, MANPAGER, LANG)
@@ -52,11 +53,13 @@ Re-link after adding a **new** file: `cd ~/dotfiles && stow --restow .`
     ├── aliases.zsh            Aliases
     ├── functions.zsh          Helper functions
     ├── theme.zsh              `theme` colorscheme switcher
+    ├── font.zsh               `font` Ghostty font switcher
     ├── setup_zsh.sh           Reproducible installer
     ├── docs/                  This documentation
     ├── plugins/fzf-tab/       Vendored plugin — real, untracked (re-cloned by setup)
     ├── local.zsh              Optional per-machine overrides — real, untracked
-    └── .active-theme          Current-theme state — real, untracked
+    ├── .active-theme          Current-theme state — real, untracked
+    └── .active-font           Current-font state — real, untracked
 ```
 
 ### Runtime data (kept out of the config, XDG)
@@ -96,7 +99,7 @@ path+=("$HOME/work/bin")
 |------------|-------|
 | aliases | `aliases.zsh` |
 | functions | `functions.zsh` |
-| the prompt | `starship.toml` (see [Prompt](07-prompt.md)) |
+| the prompt | `starship.toml` (powerline) / `starship-plain.toml` (TTY+SSH fallback) — see [Prompt](07-prompt.md) |
 | the terminal | `ghostty/config` |
 | installed packages | `Brewfile`, then `brew bundle --file ~/.config/Brewfile` |
 | themes / defaults | `theme.zsh` or `local.zsh` (see [Themes](08-themes.md)) |

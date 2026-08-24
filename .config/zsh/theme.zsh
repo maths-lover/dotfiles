@@ -16,14 +16,17 @@ typeset -gA THEME_ALIASES=(
   cyberpunk      "Cyberpunk"
   homebrew       "Homebrew"
   matrix         "Matrix"
+  rosepine       "Rose Pine"
+  rosepine-moon  "Rose Pine Moon"
   # -- light --
   gruvbox-light  "Gruvbox Light Hard"
   latte          "Catppuccin Latte"
   github-light   "GitHub Light Default"
   tokyonight-day "TokyoNight Day"
+  rosepine-dawn  "Rose Pine Dawn"
 )
-typeset -ga THEME_DARK=(tokyonight dracula gruvbox cyberpunk homebrew matrix)
-typeset -ga THEME_LIGHT=(gruvbox-light latte github-light tokyonight-day)
+typeset -ga THEME_DARK=(tokyonight dracula gruvbox cyberpunk homebrew matrix rosepine rosepine-moon)
+typeset -ga THEME_LIGHT=(gruvbox-light latte github-light tokyonight-day rosepine-dawn)
 : ${THEME_DEFAULT_DARK:=tokyonight}
 : ${THEME_DEFAULT_LIGHT:=gruvbox-light}
 

@@ -1,253 +1,232 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
-# Tidy two-line prompt: FULL path + Nerd Font icons. Colours are ANSI palette
-# roles (never hex) so the prompt follows the active terminal theme - see
-# docs/07-prompt.md and the `theme` switcher. Needs a Nerd Font (Ghostty uses
-# MonaspiceNe); every glyph below is verified present in that font.
-#
-# Local:   ~/dotfiles/.config/nvim   main !1 +5 -2   3.12             14:22
-# SSH:    me@server 10.0.0.9   ~/src   main  ...
-#         
-#
-# Prompt char by vim mode:  INSERT (green ok / red err) -  NORMAL -
-#  VISUAL -  REPLACE (best-effort in zsh).
-
-add_newline = true
-command_timeout = 500
-palette = 'theme'
-
 format = """
-$username$hostname$localip\
+[╭](fg:current_line)\
+$os\
 $directory\
-$git_branch$git_commit$git_status$git_metrics$git_state\
-$golang$rust$python$nodejs$zig$java$c$lua$ruby$php\
-$direnv$container$docker_context$kubernetes\
-$sudo$memory_usage$cmd_duration$jobs$status
-$character"""
+$git_branch\
+$git_status\
+$git_commit\
+$git_state\
+$git_metrics\
+$fill\
+$nodejs\
+$dotnet\
+$python\
+$java\
+$lua\
+$golang\
+$c\
+$cmd_duration\
+$jobs\
+$status\
+$shell\
+$time\
+$username\
+$line_break\
+$character\
+"""
 
-right_format = "$time"
+palette = 'theme'
+add_newline = true
 
-# ANSI palette roles -> follow the terminal theme (see docs/08-themes.md).
+# ANSI palette roles -> follow the active Ghostty theme (no hex). Neutrals:
+# box/current_line = a grey panel/line; primary = symbol on a bright accent cap;
+# body text uses the terminal's default foreground.
 [palettes.theme]
-ok    = "bright-green"
-err   = "bright-red"
-warn  = "bright-yellow"
-vim   = "bright-magenta"
-muted = "bright-black"
-dir   = "bright-blue"
-git   = "bright-purple"
-info  = "bright-cyan"
+foreground = 'white'
+background = 'black'
+current_line = 'bright-black'
+primary = 'black'
+box = 'bright-black'
+blue = 'bright-blue'
+cyan = 'bright-cyan'
+green = 'bright-green'
+orange = 'bright-yellow'
+pink = 'bright-purple'
+purple = 'bright-purple'
+red = 'bright-red'
+yellow = 'bright-yellow'
 
-# Prompt character, distinct glyph per vim keymap (colour via palette roles).
-[character]
-success_symbol        = "[](bold ok)"
-error_symbol          = "[](bold err)"
-vimcmd_symbol         = "[](bold vim)"
-vimcmd_visual_symbol  = "[](bold warn)"
-vimcmd_replace_symbol = "[](bold err)"
-vimcmd_replace_one_symbol = "[](bold err)"
-
-# -- Identity: only over SSH (user@host + LAN IP); username also shows as root -
-[username]
-show_always = false
-style_user = "bold warn"
-style_root = "bold err"
-format = "[$user]($style)"
-
-[hostname]
-ssh_only = true
-style = "bold info"
-format = "[@$hostname]($style) "
-
-[localip]
+[os]
+format = '(fg:current_line)[](fg:orange)[$symbol ](fg:primary bg:orange)[](fg:orange)'
 disabled = false
-ssh_only = true
-style = "muted"
-format = "[$localipv4]($style) "
 
-# Full path, always: no truncation, not clipped to the repo root, ~ for $HOME.
+[os.symbols]
+Alpine = ''
+Amazon = ''
+Android = ''
+Arch = ''
+CentOS = ''
+Debian = ''
+EndeavourOS = ''
+Fedora = ''
+FreeBSD = ''
+Garuda = ''
+Gentoo = ''
+Linux = ''
+Macos = ''
+Manjaro = ''
+Mariner = ''
+Mint = ''
+NetBSD = ''
+NixOS = ''
+OpenBSD = ''
+OpenCloudOS = ''
+openEuler = ''
+openSUSE = ''
+OracleLinux = '⊂⊃'
+Pop = ''
+Raspbian = ''
+Redhat = ''
+RedHatEnterprise = ''
+Solus = ''
+SUSE = ''
+Ubuntu = ''
+Unknown = ''
+Windows = ''
+
+
+
 [directory]
-truncation_length = 0
-truncate_to_repo = false
-truncation_symbol = ""
-home_symbol = "~"
-style = "bold dir"
-read_only = " 󰌾"
-read_only_style = "bold err"
-format = "[ ]($style)[$path]($style)([$read_only]($read_only_style))"
+format = '[─](fg:current_line)[](fg:green)[ ](fg:primary bg:green)[](fg:green bg:box)[ $read_only$truncation_symbol$path](bg:box)[](fg:box)'
+home_symbol = "󰉌 "
+truncation_symbol = ' '
+truncation_length = 2
+read_only = '󱧴 '
+read_only_style = ''
+
+[directory.substitutions]
+"Documents" = "󰈙"
+"Downloads" = " "
+"Music" = "󰝚 "
+"Pictures" = " "
+"Develop" = "󰲋 "
+"develop" = "󰲋 "
 
 [git_branch]
-symbol = ""
-style = "bold git"
-format = "[ $symbol $branch]($style)"
-
-# Short hash (+ tag) - only on a detached HEAD.
-[git_commit]
-only_detached = true
-tag_disabled = false
-tag_symbol = "  "
-commit_hash_length = 7
-style = "muted"
-format = '[ \($hash$tag\)]($style)'
+format = '[─](fg:current_line)[](fg:cyan)[$symbol](fg:primary bg:cyan)[](fg:cyan bg:box)[ $branch](bg:box)[](fg:box bg:yellow)'
+symbol = ''
 
 [git_status]
-style = "bold err"
-format = "([ $all_status$ahead_behind]($style))"
-modified   = "!$count"
-staged     = "+$count"
-untracked  = "?$count"
-stashed    = "*$count"
-deleted    = "x$count"
-renamed    = "»$count"
-conflicted = "=$count"
-ahead    = "$count"
-behind   = "$count"
-diverged = "$ahead_count $behind_count"
-
-# Diff line counts: +added (green) / -deleted (red), only when non-zero.
-[git_metrics]
 disabled = false
-added_style = "bold ok"
-deleted_style = "bold err"
-format = "([ +$added]($added_style))([ -$deleted]($deleted_style))"
+format = '[( $all_status $ahead_behind)](fg:primary bg:yellow)[](fg:yellow bg:pink)'
+conflicted = ' '
+stashed = ' '
+deleted = ' '
+renamed = '󰑕 '
+modified = ' '
+typechanged = '󰕁 '
+staged = '$count: '
+untracked = '$count: '
+diverged = ' $ahead_count $behind_count '
+ahead = '$count: '
+behind = '$count: '
+up_to_date = ' '
 
-# In-progress git op: rebase / merge / cherry-pick / bisect (+ step count).
+[git_commit]
+commit_hash_length = 5
+tag_symbol = ' '
+format = '[  $hash $tag](fg:primary bg:pink)[](fg:pink)'
+disabled = false
+only_detached = false
+tag_disabled = false
+
 [git_state]
-style = "bold warn"
-format = "[ $state( $progress_current/$progress_total)]($style)"
-rebase = "rebase"
-merge = "merge"
-revert = "revert"
-cherry_pick = "cherry"
-bisect = "bisect"
-am = "am"
-am_or_rebase = "am/rebase"
-
-# -- Languages: coloured icon + muted version, only inside a matching project --
-[golang]
-symbol = ""
-version_format = "$raw"
-style = "info"
-format = "[ $symbol ]($style)[$version](muted)"
-
-[rust]
-symbol = "󱘗"
-version_format = "$raw"
-style = "info"
-format = "[ $symbol ]($style)[$version](muted)"
-
-[python]
-symbol = ""
-version_format = "$raw"
-style = "info"
-format = "[ $symbol ]($style)[$version](muted)[ ($virtualenv)](muted)"
+disabled = false
+format = '[─](fg:current_line)[](fg:red)[$state ](fg:primary bg:red)[$progress_current/$progress_total](fg:primary bg:red)[](fg:red)'
+rebase = ''
+merge = ''
+revert = '󰕌'
+cherry_pick = ''
+bisect = ''
+am = ''
+am_or_rebase = ' or '
 
 [nodejs]
-symbol = ""
-version_format = "$raw"
-style = "info"
-format = "[ $symbol ]($style)[$version](muted)"
+format = '[─](fg:current_line)[](fg:green)[$symbol](fg:primary bg:green)[](fg:green bg:box)[ $version](bg:box)[](fg:box)'
+symbol = '󰎙 Node.js'
 
-[zig]
-symbol = ""
-version_format = "$raw"
-style = "info"
-format = "[ $symbol ]($style)[$version](muted)"
+[dotnet]
+format = '[─](fg:current_line)[](fg:purple)[$symbol](fg:primary bg:purple)[](fg:purple bg:box)[ $tfm](bg:box)[](fg:box)'
+symbol = ' .NET'
+
+[python]
+format = '[─](fg:current_line)[](fg:cyan)[$symbol](fg:primary bg:cyan)[](fg:cyan bg:box)[ $version](bg:box)[](fg:box)'
+symbol = ' python'
 
 [java]
-symbol = ""
-version_format = "$raw"
-style = "info"
-format = "[ $symbol ]($style)[$version](muted)"
-
-[c]
-symbol = ""
-version_format = "$raw"
-style = "info"
-format = "[ $symbol ]($style)[$version](muted)"
+format = '[─](fg:current_line)[](fg:red)[$symbol](fg:primary bg:red)[](fg:red bg:box)[ $version](bg:box)[](fg:box)'
+symbol = ' Java'
 
 [lua]
-symbol = ""
-version_format = "$raw"
-style = "info"
-format = "[ $symbol ]($style)[$version](muted)"
+format = '[─](fg:current_line)[](fg:blue)[$symbol](fg:primary bg:blue)[](fg:blue bg:box)[ $version](bg:box)[](fg:box)'
+symbol = ' Lua'
 
-[ruby]
-symbol = ""
-version_format = "$raw"
-style = "info"
-format = "[ $symbol ]($style)[$version](muted)"
+[golang]
+format = '[─](fg:current_line)[](fg:cyan)[$symbol](fg:primary bg:cyan)[](fg:cyan bg:box)[ $version](bg:box)[](fg:box)'
+symbol = ' Go'
 
-[php]
-symbol = ""
-version_format = "$raw"
-style = "info"
-format = "[ $symbol ]($style)[$version](muted)"
+[c]
+format = '[─](fg:current_line)[](fg:blue)[$symbol](fg:primary bg:blue)[](fg:blue bg:box)[ $version](bg:box)[](fg:box)'
+symbol = ' C'
 
-# -- Env / infra: direnv, container, docker context, kube context -------------
-[direnv]
-disabled = false
-symbol = ""
-style = "info"
-format = "[ $symbol]($style)"
+[rust]
+format = '[─](fg:current_line)[](fg:red)[$symbol](fg:primary bg:red)[](fg:red bg:box)[ $version](bg:box)[](fg:box)'
+symbol = ' Rust'
 
-[container]
-symbol = ""
-style = "warn"
-format = "[ $symbol ]($style)[$name](muted)"
+[zig]
+format = '[─](fg:current_line)[](fg:yellow)[$symbol](fg:primary bg:yellow)[](fg:yellow bg:box)[ $version](bg:box)[](fg:box)'
+symbol = ' Rust'
 
-[docker_context]
-symbol = ""
-only_with_files = true
-style = "info"
-format = "[ $symbol ]($style)[$context](muted)"
-
-[kubernetes]
-disabled = false
-symbol = "󱃾"
-style = "info"
-format = "[ $symbol ]($style)[$context](muted)"
-
-# -- Transients: sudo, memory (>75%), duration, jobs, exit status -------------
-[sudo]
-disabled = false
-symbol = ""
-style = "warn"
-format = "[ $symbol]($style)"
-
-[memory_usage]
-disabled = false
-threshold = 75
-symbol = "󰍛"
-style = "warn"
-format = "[ $symbol $ram_pct]($style)"
+[fill]
+symbol = '─'
+style = 'fg:current_line'
 
 [cmd_duration]
-min_time = 2000
-style = "warn"
-format = "[  $duration]($style)"
+min_time = 500
+format = '[─](fg:current_line)[](fg:orange)[ ](fg:primary bg:orange)[](fg:orange bg:box)[ $duration ](bg:box)[](fg:box)'
+
+[shell]
+format = '[─](fg:current_line)[](fg:purple)[ ](fg:primary bg:purple)[](fg:purple bg:box)[ $indicator](bg:box)[](fg:box)'
+unknown_indicator = 'shell'
+powershell_indicator = 'powershell'
+fish_indicator = 'fish'
+disabled = false
+
+[time]
+format = '[─](fg:current_line)[](fg:purple)[󰦖 ](fg:primary bg:purple)[](fg:purple bg:box)[ $time](bg:box)[](fg:box)'
+time_format = '%H:%M'
+disabled = true
+
+[username]
+format = '[─](fg:current_line)[](fg:yellow)[ ](fg:primary bg:yellow)[](fg:yellow bg:box)[ $user](bg:box)[](fg:box) '
+show_always = true
+
+[character]
+format = """
+[╰─$symbol](fg:current_line) """
+success_symbol = '[❯](fg:bold green)'
+error_symbol = '[×](fg:bold red)'
+
+[git_metrics]
+disabled = false
+added_style = 'fg:green bg:box'
+deleted_style = 'fg:red bg:box'
+format = '([─](fg:current_line)[](fg:green)[ ](fg:primary bg:green)[](fg:green bg:box)([+$added ]($added_style))([-$deleted ]($deleted_style))[](fg:box))'
 
 [jobs]
+disabled = false
 number_threshold = 1
-symbol = ""
-style = "info"
-format = "[ $symbol $number]($style)"
+symbol = ''
+format = '[─](fg:current_line)[](fg:cyan)[ ](fg:primary bg:cyan)[](fg:cyan bg:box)[ $number](bg:box)[](fg:box)'
 
-# Exit status: per-pipe codes + signal names (SIGINT, ...), only on failure.
 [status]
 disabled = false
 pipestatus = true
-pipestatus_separator = " | "
+pipestatus_separator = ' | '
 recognize_signal_code = true
 map_symbol = false
-symbol = ""
-signal_symbol = ""
-style = "bold err"
-format = "[ $symbol $common_meaning$signal_name$maybe_int]($style)"
-pipestatus_format = "[$pipestatus]($style)"
-
-[time]
-disabled = false
-time_format = "%H:%M"
-style = "muted"
-format = "[ $time]($style)"
+symbol = ''
+format = '[─](fg:current_line)[](fg:red)[ $common_meaning$signal_name$maybe_int ](fg:primary bg:red)[](fg:red)'
+pipestatus_format = '[─](fg:current_line)[](fg:red)[ $pipestatus ](fg:primary bg:red)[](fg:red)'
