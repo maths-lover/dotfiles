@@ -76,6 +76,42 @@ Defined in `aliases.zsh` and `functions.zsh`.
 | `zj` | `zj` (or Ctrl-f) | fuzzy project switcher -> herdr workspace |
 | `nvp` | `nvp` | fuzzy-pick a project, open it in its own Neovide window |
 
+## Scratchpad (`scratch`)
+
+`scratch` is a script in `~/.local/bin` (not a shell function). It opens quick,
+persistent note files in Neovide — or in nvim inside a throwaway ghostty window
+(`-t`). Notes live in `~/Documents/ScratchpadNotes` (untracked) and stick around;
+reopen to continue where you left off.
+
+| Invocation | Does |
+|------------|------|
+| `scratch` | open the default pad `scratch.txt` (Neovide) |
+| `scratch <name>` | open/create `<name>` (`.txt` unless you give an extension) |
+| `scratch ideas.md` | name a `*.md` file for markdown highlighting |
+| `scratch -p` | fuzzy-pick an existing pad (fzf, bat preview) |
+| `scratch -t [name]` | open in nvim in a new ghostty window (self-closes on `:q`) |
+| `scratch -l` | list existing pads |
+
+Autosave writes on focus-loss, buffer-switch and quit; a manual `:w` still works.
+The Neovide pad opens as a small, non-intrusive window (`--grid`, default `96x28`)
+and won't overwrite your normal `nvp` window size. Tune via env: `$SCRATCH_DIR`,
+`$SCRATCH_EXT` (e.g. `md`), `$SCRATCH_DEFAULT`, `$SCRATCH_AUTOSAVE=0`,
+`$SCRATCH_GRID` (e.g. `110x32` bigger, `80x24` smaller).
+
+**Global hotkey (macOS).** Shortcuts.app → new shortcut *Open Scratchpad* → add a
+**Run Shell Script** action with body `$HOME/.local/bin/scratch` → open the ⓘ panel
+and assign a keyboard shortcut (e.g. `⌘⇧Space`). The script hardcodes
+`/opt/homebrew/bin` fallbacks, so it launches even under Shortcuts' minimal PATH.
+The hotkey opens the default pad; use `-p` from a terminal to pick another.
+(Alt: Script Editor / Automator Quick Action running
+`do shell script "$HOME/.local/bin/scratch >/dev/null 2>&1 &"`, bound in
+System Settings → Keyboard → Shortcuts.)
+
+**Scratchpad vs clipboard.** The clipboard is a single slot for text you *already
+have* (a manager like Maccy keeps a time-limited history, but old copies age out).
+The scratchpad is for *composing new* text and keeping it — persistent named files
+you can reopen and search. Different jobs; use both.
+
 ---
 
 Next: [Navigation →](06-navigation.md)

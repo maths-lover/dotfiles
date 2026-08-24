@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# scratch — open a quick-notes scratchpad in Neovide (GUI) or nvim-in-ghostty.
+#
+# Files live in ~/Documents/ScratchpadNotes (override $SCRATCH_DIR). They are
+# plain .txt by default (set $SCRATCH_EXT=md, or name a file *.md, for markdown
+# highlight). A scratchpad persists across sessions — run `scratch` again to
+# pick up where you left off. Autosave writes on focus-loss / buffer-switch /
+# quit; a manual `:w` always works too.
+#
+# Usage:
+#   scratch [name] [-t] [-p] [-l] [-h]
+#
+# Examples:
+#   scratch                # open the default scratchpad (scratch.txt) in Neovide
+#   scratch todo           # open/create todo.txt
+#   scratch ideas.md       # explicit extension -> markdown highlight
+#   scratch -p             # fuzzy-pick an existing scratch file (fzf)
+#   scratch -t             # open in nvim inside a new ghostty window instead
+#   scratch -l             # list existing scratch files
+#
+# Options:
+#   -t, --terminal   Use nvim in a new ghostty window (default: Neovide GUI)
+#   -p, --pick       Fuzzy-pick an existing file with fzf
+#   -l, --list       List scratch files and exit
+#   -h, --help       Show this help
+#
+# Env:
+#   SCRATCH_DIR      Notes directory      (default: ~/Documents/ScratchpadNotes)
+#   SCRATCH_EXT      Default extension    (default: txt)
+#   SCRATCH_DEFAULT  Default file stem    (default: scratch)
+#   SCRATCH_AUTOSAVE Autosave on/off 1|0  (default: 1)
+#   SCRATCH_GRID     Neovide window grid  (default: 96x28, <cols>x<lines>)
+
+set -euo pipefail
+
+die()  { printf '\033[31merror:\033[0m %s\n' "$1" >&2; exit 1; }
+info() { [[ -t 1 ]] && printf '\033[36m::\033[0m %s\n' "$1" || true; }
+usage() { sed -n '2,32p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+
+# --- config (all env-overridable) -----------------------------------------
+SCRATCH_DIR="${SCRATCH_DIR:-$HOME/Documents/ScratchpadNotes}"
+SCRATCH_EXT="${SCRATCH_EXT:-txt}"
+SCRATCH_DEFAULT="${SCRATCH_DEFAULT:-scratch}"
+SCRATCH_AUTOSAVE="${SCRATCH_AUTOSAVE:-1}"
+SCRATCH_GRID="${SCRATCH_GRID:-96x28}"     # compact Neovide window (cols x lines)
+
+# Resolve bins with hard fallbacks: Shortcuts.app / launchd launch with a
+# minimal PATH that usually lacks /opt/homebrew/bin.
+NEOVIDE="${NEOVIDE:-$(command -v neovide || echo /opt/homebrew/bin/neovide)}"
+NVIM="${NVIM:-$(command -v nvim || echo /opt/homebrew/bin/nvim)}"
+
+# --- args -----------------------------------------------------------------
+TERMINAL=0
+PICK=0
+NAME=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)     usage 0;;
+    -t|--terminal) TERMINAL=1; shift;;
+    -p|--pick)     PICK=1; shift;;
+    -l|--list)
+      mkdir -p "$SCRATCH_DIR"
+      if command -v eza >/dev/null 2>&1; then
+        eza -lh --icons --group-directories-first "$SCRATCH_DIR"
+      else
+        ls -lh "$SCRATCH_DIR"
+      fi
+      exit 0;;
+    -*)            die "unknown flag: $1 (see --help)";;
+    *)             [[ -z "$NAME" ]] || die "unexpected argument: $1"; NAME="$1"; shift;;
+  esac
+done
+
+mkdir -p "$SCRATCH_DIR"
+
+# --- choose the file ------------------------------------------------------
+default_file() { printf '%s/%s.%s' "$SCRATCH_DIR" "$SCRATCH_DEFAULT" "$SCRATCH_EXT"; }
+
+if [[ "$PICK" -eq 1 ]]; then
+  command -v fzf >/dev/null 2>&1 || die "fzf not found (needed for -p)"
+  if command -v fd >/dev/null 2>&1; then
+    listing() { fd --type f . "$SCRATCH_DIR"; }
+  else
+    listing() { find "$SCRATCH_DIR" -type f; }
+  fi
+  file="$(listing | fzf +m \
+        --preview 'bat --color=always --style=numbers {} 2>/dev/null || cat {}' \
+        --header 'pick a scratch file (Esc = default)')" || true
+  [[ -n "${file:-}" ]] || file="$(default_file)"
+elif [[ -n "$NAME" ]]; then
+  NAME="${NAME##*/}"                        # basename only — no path escapes
+  [[ "$NAME" == *..* || -z "$NAME" ]] && die "invalid name"
+  case "$NAME" in
+    *.*) : ;;                               # already carries an extension
+    *)   NAME="$NAME.$SCRATCH_EXT";;
+  esac
+  file="$SCRATCH_DIR/$NAME"
+else
+  file="$(default_file)"
+fi
+
+# --- autosave (injected at launch, no global nvim config change) ----------
+nvim_args=()
+if [[ "$SCRATCH_AUTOSAVE" -eq 1 ]]; then
+  nvim_args+=(-c 'autocmd FocusLost,BufLeave,VimLeavePre * silent! update')
+fi
+
+# --- launch ---------------------------------------------------------------
+if [[ "$TERMINAL" -eq 1 ]]; then
+  # New ghostty window; ghostty's quit-after-last-window-closed=true makes it
+  # self-close when nvim quits. -n forces a fresh instance so --args is honored.
+  info "scratch (nvim/ghostty): $file"
+  open -na Ghostty --args -e "$NVIM" ${nvim_args[@]+"${nvim_args[@]}"} "$file"
+else
+  # Neovide GUI. File goes BEFORE `--` (neovide only opens FILES_TO_OPEN there;
+  # a path after `--` is passed raw and silently NOT loaded). --grid forces a
+  # compact window, overriding any remembered maximized size. We also flip
+  # neovide_remember_window_size off so this throwaway pad never saves its
+  # geometry back over your normal (nvp) window size. --fork detaches.
+  info "scratch (neovide): $file"
+  "$NEOVIDE" --fork --grid "$SCRATCH_GRID" "$file" -- \
+    -c 'let g:neovide_remember_window_size = v:false' \
+    ${nvim_args[@]+"${nvim_args[@]}"}
+fi
