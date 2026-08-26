@@ -36,17 +36,24 @@ font — see the Maple section below (the current pick).
 
 ## Maple Mono (current font) — features & cursive italic
 
-Maple Mono NF is the active font. Its charm is a **connected cursive italic** and
-a pile of glyph toggles. Enabled in `ghostty/config`:
+Maple Mono NF is the active font, with a feature set generated at the
+[maple-font site](https://font.subf.dev) and mirrored into both `ghostty/config`
+and `~/.config/neovide/config.toml` (identical lists — the source of truth).
+Enabled:
 
-```
-font-feature = calt   # ligatures + smart contextual forms
-font-feature = liga
-font-feature = zero   # slashed zero
-font-feature = cv01   # normalize special symbols
-font-feature = cv62   # ? with larger openings
-font-feature = cv65   # & in handwriting style
-```
+- **Tags:** `calt` renders `TODO: FIXME: NOTE: INFO: WARN: HACK: ERROR: DEBUG:
+  FATAL: TRACE: MARK:` as badges (add the trailing `:`); `ss03` matches them in
+  any case. The badge *shape* comes from the font; the *colour* still comes from
+  your editor (e.g. todo-comments.nvim).
+- **Extra ligatures:** `ss07` (`>>`), `ss08` (double / reverse arrows), `ss10`
+  (`≈`), `ss11` (`=` + punctuation).
+- **Glyph alternates:** `cv09` (`7` with middle bar), `cv43` (italic `z`/`Z` with
+  middle bar), `cv66` (pipe arrows).
+- **Dotted zero:** `zero` is enabled — in Maple this feature draws the dotted zero
+  (center dot), which is what you want.
+
+The cursive **Italic** face is used automatically (`ss06` left off). To change the
+set, edit the two config files or re-generate at the site and re-map.
 
 **Cursive italic:** it comes from the Italic face (`font-family-italic = "Maple
 Mono NF"`) and shows wherever a program requests italics (comments, `man` pages,

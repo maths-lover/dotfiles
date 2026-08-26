@@ -5,11 +5,12 @@
 # Other Neovide settings (padding, opacity, animations, macOS keymaps) live in the
 # Neovim config: ~/.config/nvim/lua/config/neovide.lua.
 #
-# ss06 is intentionally omitted so Maple's cursive italic keeps its connected
-# strokes (its signature look). calt/liga = ligatures, zero = slashed zero,
-# cv01 = normalized special symbols, cv62 = open ?, cv65 = handwriting &.
+# Feature set mirrors ghostty/config (from your maple-font generator config).
+# calt+liga = ligatures + tag badges; ss03 = any-case tags; ss07/08/10/11 = extra
+# ligatures; cv09 = 7 with middle bar; cv43 = [italic] z/Z with middle bar;
+# cv66 = pipe arrows; zero = dotted zero (Maple's `zero` adds the center dot).
 
 [font]
 normal = ["Maple Mono NF"]
 size = 16.0
-features."Maple Mono NF" = ["+calt", "+liga", "+zero", "+cv01", "+cv62", "+cv65"]
+features."Maple Mono NF" = ["+calt", "+liga", "+ss03", "+ss07", "+ss08", "+ss10", "+ss11", "+cv09", "+cv43", "+cv66", "+zero"]
