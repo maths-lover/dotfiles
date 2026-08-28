@@ -68,7 +68,8 @@ cask "font-geist-mono-nerd-font"
 cask "font-commit-mono-nerd-font"
 
 # -- GUI Applications for Mac productivity in general --------------------------
-cask "loop"
+cask "loop"                    # window snapper (light; complements Hammerspoon)
+cask "hammerspoon"             # Lua-scripted window manager; config in .config/hammerspoon
 cask "iina"                    # modern media player (mpv core); config in .config/mpv
 
 # -- Developer tools -----------------------------------------------------------
