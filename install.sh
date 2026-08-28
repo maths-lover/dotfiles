@@ -132,4 +132,14 @@ if [[ -d /Applications/IINA.app ]]; then
   mkdir -p "$HOME/.local/state/mpv/watch_later"
 fi
 
+# 8. Hammerspoon: read config from ~/.config/hammerspoon, hide the Dock icon,
+#    keep the menubar icon. Hammerspoon itself comes from the Brewfile cask in
+#    step 5; start-at-login is handled by hs.autoLaunch(true) on first launch.
+if [[ -d /Applications/Hammerspoon.app ]]; then
+  info "Configuring Hammerspoon (config dir + menubar/dock)..."
+  defaults write org.hammerspoon.Hammerspoon MJConfigFile "$HOME/.config/hammerspoon/init.lua"
+  defaults write org.hammerspoon.Hammerspoon MJShowDockIconKey -bool false
+  defaults write org.hammerspoon.Hammerspoon MJShowMenuIconKey -bool true
+fi
+
 printf '\n%sDone.%s  Start a new shell:  exec zsh\n' "$bold" "$reset"
