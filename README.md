@@ -92,3 +92,5 @@ everything else works on Linux.
 - **neovim**: [`.config/nvim/docs/`](.config/nvim/docs/README.md) - getting started,
   architecture, keymaps, plugins, LSP & languages, completion, navigation, git,
   theme sync, Neovide, troubleshooting.
+- **hammerspoon**: [`.config/hammerspoon/docs/`](.config/hammerspoon/docs/README.md) - the
+  keyboard-driven window manager (window mode, window ops, multi-display, reload).
