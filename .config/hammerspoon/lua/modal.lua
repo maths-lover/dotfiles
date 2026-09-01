@@ -2,28 +2,35 @@
 --
 -- Enter with the entry chord (default Cmd+Ctrl+Space). While active, bare keys
 -- act (no modifiers), the mode PERSISTS so ops can be chained, and Esc/q exits.
--- Bare keys are safe: they only fire while the modal owns the keyboard, so they
--- never clash with nvim's Ctrl+hjkl or the terminal's Option/Meta.
+-- Modal keys only fire while the modal owns the keyboard, so they never clash
+-- with nvim's Ctrl+hjkl or the terminal's Option/Meta.
+-- Focus is GLOBAL (Cmd+Ctrl+h/j/k/l, see lua/focus.lua), not bound here.
 
-local config  = require("config")
-local window  = require("window")
+local config = require("config")
+local window = require("window")
 local display = require("display")
 
 local M = {}
 
 local mode = hs.hotkey.modal.new(config.entryChord.mods, config.entryChord.key)
 
-function mode:entered() hs.alert.show("window mode", config.modeAlertDuration) end
-function mode:exited()  hs.alert.show("window mode off", config.modeAlertDuration) end
+function mode:entered()
+	hs.alert.show("window mode", config.modeAlertDuration)
+end
+function mode:exited()
+	hs.alert.show("window mode off", config.modeAlertDuration)
+end
 
 -- bind a bare key (no modifiers) to fn while the modal is active.
-local function bind(key, fn) mode:bind({}, key, fn) end
+local function bind(key, fn)
+	mode:bind({}, key, fn)
+end
 
 -- Halves
 bind("h", window.left)
-bind("l", window.right)
-bind("k", window.top)
 bind("j", window.bottom)
+bind("k", window.top)
+bind("l", window.right)
 
 -- Thirds (direct) + two-thirds
 bind("1", window.thirdLeft)
@@ -51,21 +58,25 @@ bind("=", window.grow)
 bind("-", window.shrink)
 
 -- Move window to next / previous display
-mode:bind({},        "tab", function() display.moveToDisplay(1)  end)
-mode:bind({ "shift" }, "tab", function() display.moveToDisplay(-1) end)
-
--- Focus directional (arrows), crosses displays
-mode:bind({}, "left",  function() display.focusDir("West")  end)
-mode:bind({}, "right", function() display.focusDir("East")  end)
-mode:bind({}, "up",    function() display.focusDir("North") end)
-mode:bind({}, "down",  function() display.focusDir("South") end)
+mode:bind({}, "tab", function()
+	display.moveToDisplay(1)
+end)
+mode:bind({ "shift" }, "tab", function()
+	display.moveToDisplay(-1)
+end)
 
 -- Reload config from inside the modal
-bind("r", function() hs.reload() end)
+bind("r", function()
+	hs.reload()
+end)
 
 -- Exit
-mode:bind({}, "escape", function() mode:exit() end)
-bind("q", function() mode:exit() end)
+mode:bind({}, "escape", function()
+	mode:exit()
+end)
+bind("q", function()
+	mode:exit()
+end)
 
 M.mode = mode
 return M

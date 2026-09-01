@@ -13,18 +13,18 @@ local M = {}
 local realDir = hs.fs.pathToAbsolute(hs.configdir) or hs.configdir
 
 M.watcher = hs.pathwatcher.new(realDir, function(files)
-  for _, f in ipairs(files) do
-    if f:sub(-4) == ".lua" then
-      hs.reload()
-      return
-    end
-  end
+	for _, f in ipairs(files) do
+		if f:sub(-4) == ".lua" then
+			hs.reload()
+			return
+		end
+	end
 end)
 M.watcher:start()
 
 -- Global manual reload (also available as `r` inside window mode).
 hs.hotkey.bind(config.reloadHotkey.mods, config.reloadHotkey.key, function()
-  hs.reload()
+	hs.reload()
 end)
 
 return M

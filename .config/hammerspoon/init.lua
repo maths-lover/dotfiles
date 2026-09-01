@@ -24,6 +24,7 @@ hs.window.animationDuration = 0    -- instant snapping (native feel, no slide)
 require("float")     -- window-should-not-be-managed predicate
 require("window")    -- frame operations
 require("display")   -- multi-display move/focus + screen watcher
+require("focus")     -- global directional focus hotkeys (no window mode)
 require("modal")     -- window-mode modal + keymap
 require("reload")    -- pathwatcher auto-reload + manual hotkey
 

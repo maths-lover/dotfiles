@@ -10,18 +10,23 @@ M.entryChord = { mods = { "cmd", "ctrl" }, key = "space" }
 -- Global manual-reload hotkey (works outside the modal too).
 M.reloadHotkey = { mods = { "cmd", "ctrl" }, key = "r" }
 
+-- Global window-focus modifier (no window mode needed): +h/j/k/l focus
+-- left/down/up/right. Cmd+Ctrl is conflict-free — macOS has no default for it,
+-- and terminal/nvim never see Cmd, so Ctrl+hjkl splits + Option motions stay put.
+M.focusMods = { "cmd", "ctrl" }
+
 -- Grow/shrink step as a fraction of the screen, per keypress.
 M.resizeStep = 0.05
 
 -- Apps whose windows are never moved/resized (treated as floating).
 -- Matched by application name. Neovide (incl. the scratchpad) stays put.
 M.floatApps = {
-  ["Neovide"] = true,
+	["Neovide"] = true,
 }
 
 -- Alert timings (seconds).
-M.alertDuration     = 0.6   -- "skipped" / "no window" / "one display"
-M.modeAlertDuration = 0.4   -- entering/leaving window mode
+M.alertDuration = 0.6 -- "skipped" / "no window" / "one display"
+M.modeAlertDuration = 0.4 -- entering/leaving window mode
 
 -- Shown on load and on every reload.
 M.startupText = "Hammerspoon loaded"
