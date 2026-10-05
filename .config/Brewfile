@@ -80,4 +80,5 @@ brew "krunkit"             # libkrun VM launcher for podman machine
 brew "kind"                # Kubernetes-in-Docker(/Podman) clusters
 brew "kubernetes-cli"      # kubectl
 brew "docker-compose"      # compose (works with podman's docker socket)
-cask "podman-desktop"
+cask "podman-desktop"      # docker-desktop is weird
+brew "xcodes"              # xcodes version selector and installer

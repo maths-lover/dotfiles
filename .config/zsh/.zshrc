@@ -174,6 +174,10 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#6c7086'
 [[ -f "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && \
   source "$HOMEBREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
+# Default zsh-syntax-highlighting sets comments to fg=black, which is invisible
+# on dark terminal backgrounds (color-0 equals or nearly equals the bg).
+ZSH_HIGHLIGHT_STYLES[comment]='fg=245,italic'
+
 # -- Tool integrations ---------------------------------------------------------
 # zoxide - smarter cd (provides `z` and `zi`)
 command -v zoxide >/dev/null && eval "$(zoxide init zsh)"

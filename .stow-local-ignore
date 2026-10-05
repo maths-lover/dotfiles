@@ -12,6 +12,9 @@
 
 # ── pi agent is its own stow package (installed separately) ──
 ^/pi$
+
+# ── cheapino keyboard firmware source (never link into $HOME) ──
+^/cheapino$
 ^/\.git$
 ^/\.gitignore$
 ^/\.gitmodules$

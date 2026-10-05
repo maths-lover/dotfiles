@@ -83,6 +83,16 @@ theme() {
     print -P "%F{red}theme:%f '$cmd' not found - run %Btheme list%b"; return 1
   fi
   _theme_emit_osc "$f"                       # recolor current window now
+
+  # Keep shell comments visible when switching between light/dark themes.
+  if (( $+ZSH_HIGHLIGHT_STYLES )); then
+    if (( ${THEME_LIGHT[(Ie)$cmd]} )); then
+      ZSH_HIGHLIGHT_STYLES[comment]='fg=240,italic'
+    else
+      ZSH_HIGHLIGHT_STYLES[comment]='fg=245,italic'
+    fi
+  fi
+
   print -r -- "$cmd" > "$_THEME_STATE"       # remember choice
   # Persist to Ghostty config so new windows / restarts match.
   # Resolve symlinks (${:A}) so we edit the real file in the dotfiles repo
