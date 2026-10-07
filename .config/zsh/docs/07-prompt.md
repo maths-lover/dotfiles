@@ -8,8 +8,12 @@ connected capsule "pills" split by a `$fill`: **context on the left** (OS,
 directory, git) and **toolchains / status / clock on the right**. On a bare TTY
 or over SSH it drops to a plain ASCII fallback (see below).
 
-Colours are **ANSI palette roles** in `[palettes.theme]` (no hex), so the prompt
-follows the active Ghostty theme and the `theme` switcher. The old rose-pine
+Colours are **palette roles**, so the prompt follows the active Ghostty theme
+and the `theme` switcher. Four palettes exist — generic `[palettes.theme-dark]`
+/ `[palettes.theme-light]` (ANSI roles, no hex) and GitHub-specific
+`[palettes.github-dark]` / `[palettes.github-light]` (Primer hex tokens for
+panel/frame) — and the `theme` command flips the active `palette = '...'` line
+on every switch (see "Colours" below). The old rose-pine
 role *names* are kept (`orange`, `cyan`, `box`, `current_line`, …) but now map to
 ANSI. Every glyph is a **Nerd Font** glyph (Ghostty uses MonaspiceNe).
 
@@ -99,15 +103,38 @@ unmistakable.
 
 ## Colours (theme-aware)
 
-All colours are **ANSI palette roles** in `[palettes.theme]` (no hex), so the
-prompt follows the active Ghostty theme and the `theme` switcher. The rose-pine
-role *names* are kept but map to ANSI: accents → `bright-*`; `box` /
-`current_line` → `bright-black` (grey panel / frame line); `primary` → `black`
-(symbol on a bright accent cap); segment body text uses the terminal's default
-foreground. Swap the terminal theme and the whole prompt re-colours.
+Four palettes exist; the `theme` command picks one per switch. Segment body
+text (`$path`, `$branch`, …) is unstyled default-fg on `bg:box`, so `box` is
+the contrast-critical role everywhere.
+
+`theme-dark` / `theme-light` are **generic ANSI palettes** (no hex) that follow
+any Ghostty theme. Light themes invert accent semantics (their `bright-*`
+slots are text colours, not panel colours), hence the split:
+
+| role | `theme-dark` | `theme-light` |
+|------|--------------|---------------|
+| `box` (segment panel) | `bright-black` | `bright-white` |
+| `primary` (symbol on accent cap) | `black` | `bright-white` |
+| `current_line` (frame lines) | `bright-black` | `bright-black` |
+| accents (`green`, `cyan`, …) | `bright-*` | normal slots |
+
+`github-dark` / `github-light` are used for the GitHub terminal themes
+specifically. Their palettes have no usable panel/border slots, so panel and
+frame come from **GitHub Primer design tokens** (hex) while accent caps stay on
+the theme's own ANSI slots — no colour distortion:
+
+| role | `github-dark` | `github-light` |
+|------|---------------|----------------|
+| `box` (panel) | `#3d444d` (border-default) | `#d1d9e0` (border-default) |
+| `primary` (on accent cap) | `#0d1117` (canvas) | `#ffffff` |
+| `current_line` | `#6e7681` (border-emphasis) | `#818b98` (border-emphasis) |
+| accents | `bright-*` slots | normal slots (white text = Primer button pattern) |
+
+The `theme` zsh function seds the `palette = '...'` line in `starship.toml` on
+switch; starship re-reads config on every prompt, so it applies instantly.
 
 Want the fixed rose-pine look instead? set the terminal to it with `theme
-rosepine-dawn`, or hard-code hex values in `[palettes.theme]`.
+rosepine-dawn`, or hard-code hex values in a palette.
 
 ## Nerd Font
 

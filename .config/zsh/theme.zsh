@@ -10,6 +10,7 @@
 # Friendly aliases -> exact Ghostty theme names (so you can skip quoting spaces).
 typeset -gA THEME_ALIASES=(
   # -- dark --
+  github-dark    "GitHub Dark Default"
   tokyonight     "TokyoNight Night"
   dracula        "Dracula"
   gruvbox        "Gruvbox Dark Hard"
@@ -25,10 +26,10 @@ typeset -gA THEME_ALIASES=(
   tokyonight-day "TokyoNight Day"
   rosepine-dawn  "Rose Pine Dawn"
 )
-typeset -ga THEME_DARK=(tokyonight dracula gruvbox cyberpunk homebrew matrix rosepine rosepine-moon)
+typeset -ga THEME_DARK=(github-dark tokyonight dracula gruvbox cyberpunk homebrew matrix rosepine rosepine-moon)
 typeset -ga THEME_LIGHT=(gruvbox-light latte github-light tokyonight-day rosepine-dawn)
-: ${THEME_DEFAULT_DARK:=tokyonight}
-: ${THEME_DEFAULT_LIGHT:=gruvbox-light}
+: ${THEME_DEFAULT_DARK:=github-dark}
+: ${THEME_DEFAULT_LIGHT:=github-light}
 
 _THEME_SYSDIR="/Applications/Ghostty.app/Contents/Resources/ghostty/themes"
 _THEME_USRDIR="$HOME/.config/ghostty/themes"
@@ -85,12 +86,26 @@ theme() {
   _theme_emit_osc "$f"                       # recolor current window now
 
   # Keep shell comments visible when switching between light/dark themes.
-  if (( $+ZSH_HIGHLIGHT_STYLES )); then
-    if (( ${THEME_LIGHT[(Ie)$cmd]} )); then
-      ZSH_HIGHLIGHT_STYLES[comment]='fg=240,italic'
-    else
-      ZSH_HIGHLIGHT_STYLES[comment]='fg=245,italic'
-    fi
+  local is_light=0
+  if (( ${THEME_LIGHT[(Ie)$cmd]} )); then
+    is_light=1
+    (( $+ZSH_HIGHLIGHT_STYLES )) && ZSH_HIGHLIGHT_STYLES[comment]='fg=240,italic'
+  else
+    (( $+ZSH_HIGHLIGHT_STYLES )) && ZSH_HIGHLIGHT_STYLES[comment]='fg=245,italic'
+  fi
+
+  # Pick the starship palette (it re-reads config on every prompt draw, so
+  # this applies on the next prompt): GitHub themes get their dedicated Primer
+  # palettes; everything else falls back to the generic dark/light ANSI one.
+  local scfg="$HOME/.config/starship.toml"
+  if [[ -f $scfg ]]; then
+    local pal
+    case $cmd in
+      github-dark)  pal=github-dark ;;
+      github-light) pal=github-light ;;
+      *) if (( is_light )); then pal=theme-light; else pal=theme-dark; fi ;;
+    esac
+    sed -i '' "s|^palette = '.*'|palette = '$pal'|" "${scfg:A}"
   fi
 
   print -r -- "$cmd" > "$_THEME_STATE"       # remember choice

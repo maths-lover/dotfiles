@@ -21,8 +21,8 @@ its 200+ themes works.
 theme               # list themes + show current
 theme dracula       # switch (live, no reload needed)
 theme gruvbox-light # a light scheme
-theme dark          # default dark   (tokyonight)
-theme light         # default light  (gruvbox-light)
+theme dark          # default dark   (github-dark)
+theme light         # default light  (github-light)
 theme toggle        # flip dark ⇄ light
 theme "Rose Pine"   # any Ghostty theme name (quote spaces)
 ```
@@ -33,8 +33,8 @@ Tab-completion is available for the aliases and sub-commands.
 
 | Mode | Aliases |
 |------|---------|
-| 🌙 dark | `tokyonight` `dracula` `gruvbox` `cyberpunk` `homebrew` `matrix` |
-| ☀️ light | `gruvbox-light` `latte` `github-light` `tokyonight-day` |
+| 🌙 dark | `github-dark` `tokyonight` `dracula` `gruvbox` `cyberpunk` `homebrew` `matrix` |
+| ☀️ light | `github-light` `gruvbox-light` `latte` `tokyonight-day` |
 
 (`homebrew` and `matrix` are the bright-green hacker looks.)
 
@@ -53,7 +53,8 @@ Add your own alias by editing `THEME_ALIASES` in `theme.zsh`.
 
 - Live switching recolors the **current** window only; other open windows update
   when they next launch (they read the persisted Ghostty config).
-- Inside a multiplexer (`tmux`/`herdr`), OSC sequences may need passthrough to reach the terminal. herdr's `theme = "terminal"` follows the host palette.
+- zellij renders its own UI, so OSC sequences never reach it directly; instead its custom theme in `config.kdl` maps colors to ANSI palette indices 0-15, so zellij follows the host palette (and this switcher) automatically.
+- starship can't follow light/dark with one fixed palette (light themes invert `bright-*` semantics), so it ships four palettes in `starship.toml`: generic `theme-dark`/`theme-light` (ANSI roles) plus `github-dark`/`github-light` (Primer hex tokens for panel/frame, accents stay on the theme's own slots). The `theme` command picks the right one on every switch; applies on the next prompt draw.
 
 ---
 

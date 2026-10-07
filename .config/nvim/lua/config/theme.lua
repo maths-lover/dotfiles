@@ -16,7 +16,8 @@ local MAP = {
   mocha             = { "catppuccin-mocha", "dark" },
   ["rose-pine"]     = { "rose-pine", "dark" },
   ["rose-pine-dawn"] = { "rose-pine-dawn", "light" },
-  ["github-light"]  = { "rose-pine-dawn", "light" },
+  ["github-dark"]   = { "github_dark_default", "dark" },
+  ["github-light"]  = { "github_light_default", "light" },
   -- terminal-only neon/green themes -> closest rich nvim scheme
   cyberpunk         = { "tokyonight-night", "dark" },
   homebrew          = { "tokyonight-night", "dark" },
@@ -44,7 +45,9 @@ local function resolve(name)
   local function has(p) return n:find(p, 1, true) ~= nil end
   local light = has("light") or has("day") or has("dawn") or has("latte") or has("dayfox")
   local scheme
-  if has("rose") then
+  if has("github") then
+    scheme = light and "github_light_default" or "github_dark_default"
+  elseif has("rose") then
     scheme = light and "rose-pine-dawn" or "rose-pine"
   elseif has("gruvbox") then
     scheme = "gruvbox"

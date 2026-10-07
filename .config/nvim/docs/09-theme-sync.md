@@ -26,6 +26,7 @@ and the editor always match. Implemented in `lua/config/theme.lua`.
 | gruvbox / gruvbox-light | gruvbox | dark / light |
 | latte | catppuccin-latte | light |
 | rose-pine / rose-pine-dawn | rose-pine / rose-pine-dawn | dark / light |
+| github-dark / github-light | github_dark_default / github_light_default | dark / light |
 
 The resolver is family-aware: it also handles full Ghostty theme names (for
 example "Rose Pine Dawn", "Catppuccin Mocha") and infers light vs dark from the

@@ -41,7 +41,7 @@ font-family-bold = "Maple Mono NF"
 
 # -- Theme & colors ------------------------------------------------------------
 # Default scheme. Switch live with the `theme` shell command (theme list).
-theme = Homebrew
+theme = GitHub Light Default
 background-opacity = 0.96
 background-blur = true
 # Brighten/dim if the opacity feels off:

@@ -7,4 +7,5 @@ return {
   { "ellisonleao/gruvbox.nvim", priority = 1000, opts = { contrast = "hard" } },
   { "Mofiqul/dracula.nvim", priority = 1000 },
   { "rose-pine/neovim", name = "rose-pine", priority = 1000 },
+  { "projekt0n/github-nvim-theme", name = "github-theme", priority = 1000 },
 }

@@ -27,13 +27,23 @@ $line_break\
 $character\
 """
 
-palette = 'theme'
+palette = 'github-light'
 add_newline = true
 
-# ANSI palette roles -> follow the active Ghostty theme (no hex). Neutrals:
-# box/current_line = a grey panel/line; primary = symbol on a bright accent cap;
-# body text uses the terminal's default foreground.
-[palettes.theme]
+# Palettes. The `theme` zsh command flips the active `palette =` line on every
+# switch (sed on this file); starship re-reads config per prompt draw.
+#
+# theme-dark / theme-light = GENERIC ANSI palettes (no hex) that follow any
+# Ghostty theme: dark uses bright-* accent caps with dark text and a
+# bright-black panel; light uses normal accent slots with light text and a
+# bright-white panel (light themes' bright-* slots are text colors, not caps).
+#
+# github-dark / github-light = GitHub Primer design tokens (hex) for the GitHub
+# themes specifically: their terminal palettes have no usable panel/border
+# slots, so the panel and frame use GitHub's canvas-subtle/border colors while
+# accent caps keep the theme's own ANSI slots (zero color distortion).
+# Body text ($path, $branch, ...) is unstyled default-fg on box in all four.
+[palettes.theme-dark]
 foreground = 'white'
 background = 'black'
 current_line = 'bright-black'
@@ -47,6 +57,58 @@ pink = 'bright-purple'
 purple = 'bright-purple'
 red = 'bright-red'
 yellow = 'bright-yellow'
+
+[palettes.theme-light]
+foreground = 'black'
+background = 'white'
+current_line = 'bright-black'
+primary = 'bright-white'
+box = 'bright-white'
+blue = 'blue'
+cyan = 'cyan'
+green = 'green'
+orange = 'yellow'
+pink = 'purple'
+purple = 'purple'
+red = 'red'
+yellow = 'yellow'
+
+# GitHub Dark (canvas #0d1117): panel = border-default #3d444d, frame =
+# border-emphasis #6e7681, cap text = canvas color on the theme's bright
+# accent slots (~7-8:1).
+[palettes.github-dark]
+foreground = '#e6edf3'
+background = '#0d1117'
+current_line = '#6e7681'
+primary = '#0d1117'
+box = '#3d444d'
+blue = 'bright-blue'
+cyan = 'bright-cyan'
+green = 'bright-green'
+orange = 'bright-yellow'
+pink = 'bright-purple'
+purple = 'bright-purple'
+red = 'bright-red'
+yellow = 'bright-yellow'
+
+# GitHub Light (canvas #ffffff): panel = border-default #d1d9e0, frame =
+# border-emphasis #818b98, cap text = white on the theme's normal accent slots
+# (GitHub's text-on-white accents, all >=4.5:1 with white - the Primer button
+# pattern).
+[palettes.github-light]
+foreground = '#1f2328'
+background = '#ffffff'
+current_line = '#818b98'
+primary = '#ffffff'
+box = '#d1d9e0'
+blue = 'blue'
+cyan = 'cyan'
+green = 'green'
+orange = 'yellow'
+pink = 'purple'
+purple = 'purple'
+red = 'red'
+yellow = 'yellow'
 
 [os]
 format = '(fg:current_line)[](fg:orange)[$symbol ](fg:primary bg:orange)[](fg:orange)'
