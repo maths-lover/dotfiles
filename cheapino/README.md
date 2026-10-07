@@ -6,7 +6,7 @@ Firmware + keymap for a **Cheapino v2** — an affordable 36-key split
 This layout is a [Miryoku](https://github.com/manna-harbour/miryoku)-style base
 with **home-row mods** and **thumb layer-taps**, plus a custom **WM layer** that
 drives the Hammerspoon window manager in `.config/hammerspoon` with its
-`Cmd+Ctrl` chords. Tuned for the vim / herdr / Hammerspoon workflow in this repo.
+`Cmd+Ctrl` chords. Tuned for the vim / zellij / Hammerspoon workflow in this repo.
 
 - Source of truth: [`keymap.json`](keymap.json) (QMK Configurator / `qmk` format).
 - Upstream: <https://github.com/tompi/cheapino> · firmware guide `doc/firmware.md`.
@@ -151,7 +151,7 @@ Because the WM layer only emits these chords while its thumb is held, nothing
 here collides with:
 
 - **nvim** `Ctrl+hjkl` splits — use **left** Ctrl (`D`) + tap `h/j/k/l`.
-- **herdr** prefix `Ctrl+Space` — Ctrl (`D` or `K`) + Space thumb.
+- **zellij** mode keys `Ctrl+g/p/t/n/h/s/o` — Ctrl (`D` or `K`) + home-row letter.
 - **zsh** `Ctrl+a/e/r/f`, Alt word-motions — home-row Ctrl/Alt + letter.
 
 ---

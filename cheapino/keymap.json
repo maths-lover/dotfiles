@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "notes": "Cheapino v2 (RP2040-Zero, LAYOUT_split_3x5_3). Miryoku-style base with home-row mods (GACS), thumb layer-taps, and a dedicated WM layer that drives the Hammerspoon window manager (Cmd+Ctrl chords). Tuned for a vim / herdr / Hammerspoon workflow. Layers: 0 BASE 1 NAV 2 SYM 3 NUM 4 FUN 5 MEDIA 6 WM.",
+  "notes": "Cheapino v2 (RP2040-Zero, LAYOUT_split_3x5_3). Miryoku-style base with home-row mods (GACS), thumb layer-taps, and a dedicated WM layer that drives the Hammerspoon window manager (Cmd+Ctrl chords). Tuned for a vim / zellij / Hammerspoon workflow. Layers: 0 BASE 1 NAV 2 SYM 3 NUM 4 FUN 5 MEDIA 6 WM.",
   "keyboard": "cheapino",
   "keymap": "surajp",
   "layout": "LAYOUT_split_3x5_3",

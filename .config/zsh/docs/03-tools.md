@@ -26,7 +26,7 @@ All packages are declared in `~/.config/Brewfile`. Run `brew bundle --file
 | yq | `yq` | YAML/JSON/XML processor |
 | tealdeer | `tldr` | community cheatsheet man pages |
 | httpie | `http` | friendly HTTP client |
-| herdr | `herdr` | agent multiplexer (sessions, panes, agent-state) |
+| zellij | `zellij` | terminal multiplexer (sessions, panes, tabs) |
 | neovim | `nvim` | the editor (`$EDITOR`, `$MANPAGER`) |
 | starship | `starship` | the prompt |
 

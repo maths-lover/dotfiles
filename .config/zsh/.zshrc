@@ -131,7 +131,7 @@ _vi_cursor_init() { printf '\e[6 q' }                    # beam on each new prom
 add-zle-hook-widget keymap-select _vi_cursor_select
 add-zle-hook-widget line-init     _vi_cursor_init
 
-# Ctrl-f -> run the `zj` project switcher (zoxide + fzf -> herdr workspace).
+# Ctrl-f -> run the `zj` project switcher (zoxide + fzf -> zellij session).
 # Types the command and runs it, so the full-screen pickers behave normally.
 _zj_widget() { BUFFER="zj"; zle accept-line }
 zle -N _zj_widget
@@ -232,6 +232,6 @@ command -v starship >/dev/null && eval "$(starship init zsh)"
 
 # -- Startup greeting -----------------------------------------------------------
 # Bare Ghostty: a random xkcd comic (inline image, fetched in the background so
-# the shell stays instant). herdr: a fastfetch splash, once per workspace.
+# the shell stays instant). Nothing inside zellij/tmux or over SSH.
 # Disable in local.zsh with XKCD_NO_GREETING=1.
 _startup_greeting

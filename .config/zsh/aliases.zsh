@@ -85,10 +85,6 @@ alias ports='lsof -iTCP -sTCP:LISTEN -nP'
 # -- Eza tree alias for `tree` if you have the muscle memory --------------------
 alias tree='eza --tree --icons=auto --group-directories-first'
 
-# -- herdr (agent multiplexer: one server, a workspace per project) ------------
-alias hd='herdr'                     # launch / attach the persistent session
-alias hl='herdr workspace list'      # workspaces in the running session
-alias hs='herdr status'              # client + server status
-alias hstop='herdr server stop'      # stop the server (ends every workspace)
-alias hh='bat --style=plain "$XDG_CONFIG_HOME/herdr/CHEATSHEET.md" 2>/dev/null || cat "$XDG_CONFIG_HOME/herdr/CHEATSHEET.md"'
-# `zj` (function in functions.zsh) jumps to a project as a herdr workspace.
+# -- zellij (terminal multiplexer: a session per project) ----------------------
+alias zz='bat --style=plain "$XDG_CONFIG_HOME/zellij/CHEATSHEET.md" 2>/dev/null || cat "$XDG_CONFIG_HOME/zellij/CHEATSHEET.md"'
+# `zj` (function in functions.zsh) jumps to a project as a zellij session.

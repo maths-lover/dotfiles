@@ -1,0 +1,25 @@
+// zellij config - docs: https://zellij.dev/documentation
+// Locked by default: keys pass straight to the shell until Ctrl-g unlocks.
+// The status bar shows the mode keys, so it doubles as the built-in help.
+default_mode "locked"
+
+// Follow the terminal's 16-color ANSI palette (indices, not hex) so the live
+// `theme <name>` switcher (OSC palette sets) recolors zellij too - same
+// trick as eza/bat/fzf.
+theme "ansi"
+
+themes {
+    ansi {
+        fg 7
+        bg 0
+        black 0
+        red 1
+        green 2
+        yellow 3
+        blue 4
+        magenta 5
+        cyan 6
+        white 7
+        orange 208
+    }
+}
