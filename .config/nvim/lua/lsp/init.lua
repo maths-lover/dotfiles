@@ -62,7 +62,7 @@ local function on_attach(ev)
   local buf = ev.buf
   local ok_fzf, fzf = pcall(require, "fzf-lua")
   local function map(keys, fn, desc, mode)
-    vim.keymap.set(mode or "n", keys, fn, { buffer = buf, desc = "LSP: " .. desc })
+    vim.keymap.set(mode or "n", keys, fn, { buf = buf, desc = "LSP: " .. desc })
   end
   map("gd", ok_fzf and fzf.lsp_definitions or vim.lsp.buf.definition, "Definition")
   map("gr", ok_fzf and fzf.lsp_references or vim.lsp.buf.references, "References")

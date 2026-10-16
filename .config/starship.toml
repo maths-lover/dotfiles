@@ -27,7 +27,7 @@ $line_break\
 $character\
 """
 
-palette = 'github-light'
+palette = 'github-dark'
 add_newline = true
 
 # Palettes. The `theme` zsh command flips the active `palette =` line on every

@@ -35,7 +35,7 @@ vim.api.nvim_create_autocmd("FileType", {
   pattern = { "help", "qf", "man", "lspinfo", "checkhealth", "gitsigns-blame" },
   callback = function(ev)
     vim.bo[ev.buf].buflisted = false
-    vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = ev.buf, silent = true })
+    vim.keymap.set("n", "q", "<cmd>close<cr>", { buf = ev.buf, silent = true })
   end,
 })
 

@@ -48,10 +48,18 @@ return {
   {
     "nvim-treesitter/nvim-treesitter",
     branch = "main",
-    build = ":TSUpdate",
+    build = function()
+      local ok, err = pcall(function() vim.cmd("TSUpdate") end)
+      if not ok then
+        vim.notify("TSUpdate warning: " .. tostring(err), vim.log.levels.WARN)
+      end
+    end,
     lazy = false,
     config = function()
-      require("nvim-treesitter").install(parsers)
+      local ok, err = pcall(require("nvim-treesitter").install, parsers)
+      if not ok then
+        vim.notify("Treesitter install warning: " .. tostring(err), vim.log.levels.WARN)
+      end
       -- Highlighting + indent are opt-in per buffer on main: start them for
       -- any filetype whose parser is available (auto-installs missing ones).
       vim.api.nvim_create_autocmd("FileType", {
@@ -62,7 +70,7 @@ return {
             -- Auto-install on first use, but only languages that exist on
             -- main (avoids a warning per buffer for parserless filetypes).
             if vim.tbl_contains(require("nvim-treesitter.config").get_available(), lang) then
-              require("nvim-treesitter").install({ lang })
+              pcall(require("nvim-treesitter").install, { lang })
             end
             return
           end

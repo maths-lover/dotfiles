@@ -7,7 +7,7 @@ return {
       on_attach = function(buf)
         local gs = require("gitsigns")
         local function m(keys, fn, desc, mode)
-          vim.keymap.set(mode or "n", keys, fn, { buffer = buf, desc = desc })
+          vim.keymap.set(mode or "n", keys, fn, { buf = buf, desc = desc })
         end
         m("]h", function() gs.nav_hunk("next") end, "Next hunk")
         m("[h", function() gs.nav_hunk("prev") end, "Prev hunk")
