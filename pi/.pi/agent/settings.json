@@ -9,5 +9,8 @@
   "treeFilterMode": "default",
   "terminal": {
     "showTerminalProgress": true
+  },
+  "compaction": {
+    "enabled": true
   }
 }

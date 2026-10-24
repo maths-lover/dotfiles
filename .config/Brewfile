@@ -67,6 +67,9 @@ cask "font-iosevka-nerd-font"
 cask "font-geist-mono-nerd-font"
 cask "font-commit-mono-nerd-font"
 
+# Music player
+cask "foobar2000"
+
 # -- GUI Applications for Mac productivity in general --------------------------
 cask "loop"                    # window snapper (light; complements Hammerspoon)
 cask "hammerspoon"             # Lua-scripted window manager; config in .config/hammerspoon
@@ -82,3 +85,5 @@ brew "kubernetes-cli"      # kubectl
 brew "docker-compose"      # compose (works with podman's docker socket)
 cask "podman-desktop"      # docker-desktop is weird
 brew "xcodes"              # xcodes version selector and installer
+brew "skopeo"              # for podman and docker inspection
+brew "cocoapods"           # for dep management of swift proj
