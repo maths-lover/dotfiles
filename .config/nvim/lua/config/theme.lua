@@ -22,6 +22,11 @@ local MAP = {
   cyberpunk         = { "tokyonight-night", "dark" },
   homebrew          = { "tokyonight-night", "dark" },
   matrix            = { "tokyonight-night", "dark" },
+  green             = { "tokyonight-night", "dark" },
+  ["hipster-green"] = { "tokyonight-night", "dark" },
+  phala             = { "tokyonight-night", "dark" },
+  seedflip          = { "tokyonight-night", "dark" },
+  phosphor          = { "tokyonight-night", "dark" },
 }
 
 local DEFAULT = { "tokyonight-night", "dark" }

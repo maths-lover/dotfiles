@@ -1,0 +1,32 @@
+# Green Terminal - phosphor-green default text on pure black, but with a normal
+# vivid 16-color ANSI palette so TUIs (Claude Code, lazygit, btop, fzf...) keep
+# their reds/yellows/blues instead of going monochrome like "Matrix" or
+# "Green Phosphor CRT" do.
+#
+# Tweak the look here:
+#   foreground  = the default text green (#33ff33 classic CRT; #4ade80 softer)
+#   palette 8   = "bright black" = dim/comment text; keep it clearly visible
+#   palette 7   = "white" = what some TUIs use for body text; tinted green here
+background = #000000
+foreground = #33ff33
+cursor-color = #33ff33
+cursor-text = #000000
+selection-background = #1f5f1f
+selection-foreground = #ffffff
+
+palette = 0=#000000
+palette = 1=#ff5555
+palette = 2=#33ff33
+palette = 3=#ffd700
+palette = 4=#5c8cff
+palette = 5=#ff5cff
+palette = 6=#33e6e6
+palette = 7=#c8ffc8
+palette = 8=#6b6b6b
+palette = 9=#ff7b7b
+palette = 10=#7dff7d
+palette = 11=#ffe66d
+palette = 12=#8ab4ff
+palette = 13=#ff8cff
+palette = 14=#7dffff
+palette = 15=#ffffff

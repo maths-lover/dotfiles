@@ -41,8 +41,10 @@ font-family-bold = "Maple Mono NF"
 
 # -- Theme & colors ------------------------------------------------------------
 # Default scheme. Switch live with the `theme` shell command (theme list).
-theme = GitHub Dark Default
-background-opacity = 0.96
+theme = Green Terminal
+# Managed by `theme` too: green-on-black themes get 0.9, others 0.96
+# (see THEME_OPACITY in zsh/theme.zsh).
+background-opacity = 0.9
 background-blur = true
 # Brighten/dim if the opacity feels off:
 # minimum-contrast = 1.1

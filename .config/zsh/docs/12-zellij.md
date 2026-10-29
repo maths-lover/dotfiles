@@ -73,8 +73,11 @@ No launch alias needed: use `zj`, or plain `zellij` / `zellij attach -c <name>`.
 
 Config is `~/.config/zellij/config.kdl`. This repo sets only
 `default_mode "locked"` and a custom `ansi` theme that maps zellij's colors to
-terminal palette indices 0–15, so the live `theme` light/dark switcher
-recolors zellij too (same trick as eza/bat/fzf — see [Themes](08-themes.md)).
+terminal palette indices 0–15, so zellij always matches the active Ghostty
+theme (same trick as eza/bat/fzf — see [Themes](08-themes.md)). Zellij keeps
+OSC palette changes per pane instead of forwarding them to Ghostty, so running
+`theme <name>` inside zellij writes the Ghostty config and reloads it
+(Cmd+Shift+, by hand, or automatically once Ghostty has Accessibility access).
 Everything else is zellij defaults.
 
 ## Remote: work machine runs tmux, not zellij
