@@ -5,8 +5,8 @@ Firmware + keymap for a **Cheapino v2** — an affordable 36-key split
 
 This layout is a [Miryoku](https://github.com/manna-harbour/miryoku)-style base
 with **home-row mods** and **thumb layer-taps**, plus a custom **WM layer** that
-drives the Hammerspoon window manager in `.config/hammerspoon` with its
-`Cmd+Ctrl` chords. Tuned for the vim / zellij / Hammerspoon workflow in this repo.
+emits `Cmd+Ctrl` chords for the window manager (yabai; config pending). Tuned for
+the vim / zellij workflow in this repo.
 
 - Source of truth: [`keymap.json`](keymap.json) (QMK Configurator / `qmk` format).
 - Upstream: <https://github.com/tompi/cheapino> · firmware guide `doc/firmware.md`.
@@ -19,7 +19,7 @@ drives the Hammerspoon window manager in `.config/hammerspoon` with its
 ## 1. Flash the firmware (Vial route — recommended)
 
 Vial lets you re-map **live over USB** with no compile toolchain — ideal while
-you iterate on the Hammerspoon binds below.
+you iterate on the window-manager binds below.
 
 1. Download `cheapino_vial.uf2` from the v2 release:
    <https://github.com/tompi/cheapino/releases>.
@@ -108,7 +108,7 @@ BOOT  RGBt  RGBm    ·     ·          ·     ·     ·     ·     ·
 
 `BOOT` = `QK_BOOT` (jump to bootloader for re-flashing).
 
-### 6 · WM — Hammerspoon — hold left-inner thumb (over `TAB`)
+### 6 · WM — window manager — hold left-inner thumb (over `TAB`)
 
 ```
   ·     ·     ·    C^R    ·           ·     ·     ·     ·     ·
@@ -117,35 +117,22 @@ BOOT  RGBt  RGBm    ·     ·          ·     ·     ·     ·     ·
                               [C^SPC]
 ```
 
-`C^x` = **`Cmd+Ctrl+x`**, the modifier this repo's Hammerspoon uses:
+`C^x` = **`Cmd+Ctrl+x`**. The layer only emits chords; what they do is up to
+the window manager's keybinding config (yabai/skhd, to be set up):
 
-| WM-layer key | Sends | Hammerspoon action |
-|--------------|-------|--------------------|
-| right-inner thumb | `Cmd+Ctrl+Space` | **toggle window mode** (sticky modal) |
-| `h` `j` `k` `l` | `Cmd+Ctrl+h/j/k/l` | **focus** window left/down/up/right (global) |
-| `R` (top row) | `Cmd+Ctrl+R` | **reload** Hammerspoon config |
-
-See `.config/hammerspoon/docs/13.01-keybindings.md`.
+| WM-layer key | Sends |
+|--------------|-------|
+| right-inner thumb | `Cmd+Ctrl+Space` |
+| `h` `j` `k` `l` | `Cmd+Ctrl+h/j/k/l` |
+| `R` (top row) | `Cmd+Ctrl+R` |
 
 ---
 
-## 3. Driving Hammerspoon from the board
+## 3. Driving the window manager from the board
 
-Two ways, both fast:
-
-1. **Direct focus** — hold left-inner thumb (WM), tap `h/j/k/l`. Fires the global
-   `Cmd+Ctrl+hjkl` focus binds without contorting for the chord.
-2. **Window mode** — hold left-inner thumb, tap right-inner thumb → sends
-   `Cmd+Ctrl+Space`, which pops the **sticky window-mode modal**. Now release
-   everything: the modal reads **bare** keys, so plain `h l k j` = halves,
-   `y u b n` = quarters, `m` = maximize, `c` = center, `Tab` = next display,
-   `q`/`Esc` = exit.
-
-> **Numbers/symbols inside window mode.** Thirds (`1 2 3`, `4 6`) and grow/shrink
-> (`-`/`=`) live on the NUM/SYM layers, not BASE. While window mode is active,
-> hold the NUM thumb and tap `1/2/3` — the modal still sees the digit. If you use
-> thirds constantly, consider adding letter aliases in `lua/modal.lua`
-> (e.g. bind `a`/`s`/`d` to the thirds) so they stay bare-key.
+Hold left-inner thumb (WM), tap `h/j/k/l` or `R`, or tap right-inner thumb for
+`Cmd+Ctrl+Space`. Bind those chords in the window manager config (e.g. skhd) to
+focus / reload / toggle whatever mode you like.
 
 Because the WM layer only emits these chords while its thumb is held, nothing
 here collides with:

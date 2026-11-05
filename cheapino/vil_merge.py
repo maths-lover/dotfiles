@@ -17,7 +17,7 @@ Usage:
 --training derives a beginner layout: home row = plain letters (no hold-mods, so
 a fast typist stops triggering stray Cmd/Ctrl/Shift), and the right-outer thumb
 becomes a one-shot Shift for easy capitals (costs the FUN layer + forward-Delete
-until you switch back). Numbers/symbols/arrows/Hammerspoon layers still work.
+until you switch back). Numbers/symbols/arrows/WM layers still work.
 
 Then in Vial: File -> Load Saved Layout -> pick the output file.
 """
