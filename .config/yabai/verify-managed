@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# verify-managed — restart yabai once if it dropped windows while starting.
+#
+# When yabai starts it asks every running app for its windows through the
+# Accessibility API and registers observers on each. An app that is busy at
+# that moment (Ghostty rendering, Electron apps...) does not answer in time, and
+# yabai 7.1.25 then discards the window for good: it still shows up in
+# `yabai -m query --windows` (from the Core Graphics window list) but with no
+# accessibility reference (has-ax-reference false, empty role, lowercase process
+# name), and every `yabai -m window --focus <id>` answers "could not locate
+# window". Nothing in
+# yabai retries that case, so Space switching to such a window is dead until
+# the next restart. A second start a few seconds later almost always succeeds.
+#
+# yabairc runs this in the background at the end of startup. It waits for the
+# enumeration to settle, looks for windows without accessibility data, and
+# restarts yabai at most once per two minutes so a window that can never be
+# observed cannot cause a restart loop.
+set -uo pipefail
+
+STATE="$HOME/.local/state/yabai"
+mkdir -p "$STATE"
+sleep 4
+
+# Untracked = no accessibility reference (query field has-ax-reference). Skip
+# apps that are hidden (Cmd+H): yabai cannot reach their windows at all while
+# hidden, and they are not what breaks Space switching.
+bad=""
+while read -r id pid app; do
+  hidden="$(osascript -e "tell application \"System Events\" to get visible of (first process whose unix id is $pid)" 2>/dev/null)"
+  [[ "$hidden" == "false" ]] && continue
+  bad="$bad $app:$id"
+done < <(yabai -m query --windows 2>/dev/null \
+  | jq -r '.[] | select(."has-ax-reference" == false and ."is-minimized" == false and .frame.w > 100 and .frame.h > 100)
+           | "\(.id) \(.pid) \(.app)"')
+[[ -z "$bad" ]] && exit 0
+
+now=$(date +%s)
+last=$(cat "$STATE/verify-restart" 2>/dev/null || echo 0)
+if (( now - last < 120 )); then
+  echo "verify-managed: windows still untracked after a retry, leaving yabai alone: $bad" >&2
+  exit 1
+fi
+
+echo "$now" > "$STATE/verify-restart"
+echo "verify-managed: yabai dropped $bad at startup, restarting it once" >&2
+exec yabai --restart-service

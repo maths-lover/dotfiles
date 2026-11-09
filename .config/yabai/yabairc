@@ -122,7 +122,21 @@ yabai -m rule --add app="^Neovide$" manage=off # was floatApps in the old Hammer
 # roles/subroles; float them so they don't get crammed into a tile.
 yabai -m rule --add subrole="^AXDialog$" manage=off
 yabai -m rule --add subrole="^AXSystemDialog$" manage=off
+# Noctis (Avalonia UI) draws dialogs, flyouts and confirmations as a second
+# full-size window (title "Confirm" etc.) meant to sit exactly over the main
+# window; tiling it pushes the dialog box off screen. Leave every Noctis
+# window except the main one ("Noctis") alone. `title!=` inverts the match.
+yabai -m rule --add label=noctis_popups app="^Noctis$" title!="^Noctis$" manage=off
 yabai -m rule --apply
+
+# --- Signals: scripts yabai runs on events --------------------------------------
+# macOS native tabs (Ghostty, Terminal, Finder...) are separate windows to the
+# Accessibility API, so every Cmd+T would split the tile in half and leave the
+# old tab hidden behind the new one. ./native-tab stacks the new tab onto the
+# tab it came from instead (a yabai stack = several windows in one frame), so
+# the terminal keeps its full tile. Add more apps by copying the line.
+yabai -m signal --add app="^Ghostty$" event=window_created label=native_tab_ghostty \
+  action="$HOME/.config/yabai/native-tab"
 
 # --- Scripting-addition features (need SIP partially disabled; NOT loaded) ------
 # Left here as documentation only. See `man yabai`: every setting marked
@@ -135,5 +149,11 @@ yabai -m rule --apply
 # yabai -m config menubar_opacity            1.0
 # Also SA-only: `space --focus/--create/--destroy/--move/--swap`, sticky windows,
 # window layers, picture-in-picture, scratchpads.
+
+# yabai can lose windows while starting (apps that answer the accessibility
+# handshake too slowly are dropped for good). ./verify-managed checks a few
+# seconds after startup and restarts yabai once if that happened. Detached, so
+# this file finishes immediately.
+nohup "$HOME/.config/yabai/verify-managed" >> /tmp/yabai_verify_"$USER".log 2>&1 &
 
 echo "yabai configuration loaded.."

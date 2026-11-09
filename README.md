@@ -97,7 +97,14 @@ everything else works on Linux.
   theme sync, Neovide, troubleshooting.
 - **yabai / skhd**: [`.config/yabai/yabairc`](.config/yabai/yabairc) and
   [`.config/skhd/skhdrc`](.config/skhd/skhdrc) - the tiling window manager and its
-  hotkeys. Every line is commented in place; SIP stays enabled.
+  hotkeys. Every line is commented in place; SIP stays enabled. Two helper scripts
+  cover what yabai can't do alone without the scripting addition:
+  `focus-space` (switch Spaces: yabai window focus, falling back to activating
+  the app) and `native-tab` (keep Ghostty's native tabs in one tile instead of
+  splitting it on every Cmd+T). `verify-managed` restarts yabai once if it
+  dropped windows while starting, which is what used to make Space switching die
+  until the next Cmd+Ctrl+R. Apps whose dialogs are full-size overlay windows
+  (Noctis) get a `manage=off` rule for everything but their main window.
 - **rice**: [`rice/.config/rice/rice.sh`](rice/.config/rice/rice.sh) - the opt-in
   desktop rice (SketchyBar, JankyBorders, generated wallpapers, Firefox/Chrome/
   Discord themes, Übersicht widgets), all rendered from the active `theme`. See

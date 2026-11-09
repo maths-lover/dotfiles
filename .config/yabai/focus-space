@@ -5,29 +5,50 @@
 # by synthesising a trackpad swipe, and on this Mac (macOS 27.2) that silently
 # does nothing or lands on the wrong desktop. Focusing a WINDOW that lives on
 # space N is deterministic: macOS itself switches to the window's space
-# (yabairc sets skip_window_focus_animation on so it's instant). If the space
-# has no windows, fall back to macOS's own "Switch to Desktop N" shortcut,
-# Ctrl+N, which you must enable once in:
-#   System Settings > Keyboard > Keyboard Shortcuts... > Mission Control
+# (yabairc sets skip_window_focus_animation on so it's instant).
+#
+# Two attempts, most precise first:
+#   1. yabai focuses a window on space N. Fails with "could not locate window"
+#      when yabai does not track that window: after a (re)start yabai drops
+#      windows whose app did not answer the accessibility handshake in time
+#      (Ghostty and Electron apps are the usual victims) and never retries, so
+#      the window is listed by `query --windows --space` but cannot be focused.
+#      ./verify-managed restarts yabai once when that happens, but until then:
+#   2. Activate the app that owns a window on space N; macOS jumps to that
+#      app's most recent window, which is usually the one we want.
+# (Mission Control's own Ctrl+N shortcuts are not used: Reef owns those keys.)
 #
 # Requires Mission Control's "Automatically rearrange Spaces based on most
 # recent use" to be OFF (install.sh does this), otherwise desktop N is a
 # different desktop after every switch.
 #
 # Called from skhdrc as:  ~/.config/yabai/focus-space 3
-set -euo pipefail
+set -uo pipefail
 
 n="${1:?usage: focus-space <space index 1-9>}"
 
-# Ask yabai for every window on space N, keep the ones that are actually
-# visible (not minimized, app not hidden), and take the first one's id.
-# `// empty` makes jq print nothing (instead of "null") when the list is empty.
-id="$(yabai -m query --windows --space "$n" \
-      | jq -r 'map(select(."is-minimized" == false and ."is-hidden" == false))[0].id // empty')"
+# Already there? Nothing to do (keeps the bar click idempotent).
+cur="$(yabai -m query --spaces --space 2>/dev/null | jq -r '.index // empty')"
+[[ "$cur" == "$n" ]] && exit 0
 
-if [[ -n "$id" ]]; then
-  exec yabai -m window --focus "$id"
-fi
+# Windows on space N that are actually visible (not minimized, app not hidden),
+# windows yabai tracks first (has-ax-reference is false for the ones it dropped, see
+# ./verify-managed), so a dropped window is only ever the last resort.
+mapfile -t candidates < <(yabai -m query --windows --space "$n" 2>/dev/null \
+  | jq -r 'map(select(."is-minimized" == false and ."is-hidden" == false))
+           | sort_by(if ."has-ax-reference" == false then 1 else 0 end) | .[] | "\(.id) \(.pid)"')
 
-# Empty space: synthesize the Mission Control shortcut through skhd.
-exec skhd -k "ctrl - $n"
+# 1. Ask yabai to focus one of them.
+for c in "${candidates[@]}"; do
+  id=${c%% *}
+  yabai -m window --focus "$id" 2>/dev/null && exit 0
+done
+
+# 2. Activate the owning app of the first candidate that works.
+for c in "${candidates[@]}"; do
+  pid=${c##* }
+  osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $pid) to true" >/dev/null 2>&1 && exit 0
+done
+
+echo "focus-space: could not switch to space $n" >&2
+exit 1

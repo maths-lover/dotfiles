@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# native-tab — keep macOS native tabs (Ghostty, Terminal, Finder...) in ONE tile.
+#
+# macOS implements native tabs as separate NSWindows that share a frame, and
+# the Accessibility API hands yabai each tab as a window of its own. So every
+# Cmd+T splits the tile in two: the new tab gets half, the old tab is hidden
+# behind it but stays in the tree, and you are left with a half-width terminal
+# next to an empty hole. Ghostty's docs call this unfixable on their side
+# (https://ghostty.org/docs/help/macos-tiling-wms).
+#
+# What yabai *does* have is a stack: several windows in one node, one frame.
+# That is exactly what a tab group is. So when an app we care about creates a
+# window, find the tab it was opened from and stack the newcomer onto it. A
+# real new window (Cmd+N) leaves the old one visible, so it is tiled normally.
+# Closing a tab removes it from the stack and the survivor keeps the frame.
+#
+# Finding the parent: the hidden tab drops out of `yabai -m query --windows`
+# the moment it is covered, and yabai's `recent` selector points at whatever
+# was focused before (often another app), so neither helps. But the new window
+# was inserted by splitting the focused window's node (window_insertion_point
+# focused), which makes the parent the new window's tree SIBLING, and yabai
+# resolves `sibling` relative to the focused window, which the new tab is.
+# Windows that left the list can still be queried (and act) by id, which is
+# what the hidden-tab test and the stack call below rely on.
+#
+# Wired from yabairc as a window_created signal filtered on the app:
+#   yabai -m signal --add app='^Ghostty$' event=window_created \
+#     action='~/.config/yabai/native-tab'
+set -uo pipefail
+
+new="${YABAI_WINDOW_ID:?run from a yabai window_created signal}"
+LOG="$HOME/.local/state/yabai/native-tab.log"; mkdir -p "${LOG%/*}"
+log() { printf '%s %s\n' "$(date +%T)" "$*" >> "$LOG"; }
+
+wid() { yabai -m query --windows --window "$@" 2>/dev/null | jq -r '.id // empty'; }
+
+# is_hidden_tab_of <candidate id> <new window json>: same app and space,
+# tiled, not minimized, yet not visible = covered by the new tab.
+is_hidden_tab_of() {
+  yabai -m query --windows --window "$1" 2>/dev/null | jq -e --argjson new "$2" '
+    .app == $new.app and .space == $new.space
+    and (.["is-minimized"] | not) and (.["is-floating"] | not)
+    and (.["is-visible"] | not)' >/dev/null
+}
+
+for _ in 1 2 3 4 5 6 7 8; do
+  newinfo="$(yabai -m query --windows --window "$new" 2>/dev/null)" || exit 0
+  candidates=()
+  if [[ "$(wid)" == "$new" ]]; then
+    s="$(wid sibling)"; [[ -n $s && $s != "$new" ]] && candidates+=("$s")
+  else
+    for sel in "" recent; do
+      c="$(wid $sel)"; [[ -n $c && $c != "$new" ]] && candidates+=("$c")
+    done
+  fi
+  for c in "${candidates[@]}"; do
+    if is_hidden_tab_of "$c" "$newinfo"; then
+      # Direction matters: `window A --stack B` pulls B onto A's node. The
+      # parent must stay where it is and the new tab must leave its own leaf,
+      # so the parent acts and the new tab is the selection.
+      if yabai -m window "$c" --stack "$new" 2>>"$LOG"; then
+        log "stacked tab $new onto $c"; exit 0
+      fi
+      log "stack of $new onto $c failed"; exit 1
+    fi
+  done
+  sleep 0.1   # the tab join can land a few ms after window_created
+done
+log "no hidden parent for $new (candidates: ${candidates[*]:-none}); left tiled"
+exit 0
