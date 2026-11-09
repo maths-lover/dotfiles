@@ -30,6 +30,17 @@ always gets the same set of pictures:
   strata     a canyon wall: dozens of near-horizontal sediment layers, each with
              its own tint, every few layers rimmed in the accent
   meteors    a meteor shower: tapered diagonal streaks of light across the sky
+  harmonograph  a damped Lissajous figure: sums of decaying sines, two pendulum sets
+             (fg and accent) whose pen strength drifts along the line
+  attractor  a Clifford strange attractor: millions of orbits iterated in parallel,
+             binned and log-scaled from the accent up to the foreground
+  julia      a Julia set z -> z^2 + c: smooth escape-time contour lines in the
+             exterior, a quiet interior, one accent level
+  chladni    Chladni plate figures: the zero set of cos(n pi x)cos(m pi y) -
+             cos(m pi x)cos(n pi y), glowing, over a faint accent second mode
+  spirograph hypo-/epitrochoids of three sizes at golden-ratio positions
+  interference  3-5 circular waves superposed: moire rings where the sum changes
+             sign (fg) and at its crest bands (accent), on a two-tone fill
 
   pixel-<any of the above>   the same scene as retro pixel art: composed on a grid
              of ~212 cells along the short side, colours snapped to a small palette
@@ -570,6 +581,355 @@ def meteors(c):
     img = comp(c, img, glow, 12 * s)
     return comp(c, img, lay, 0.4 * s)
 
+# ----------------------------------------------------------------------------- mathematical flavours
+# Imagery straight from formulas: damped pendulums, a chaotic map, an escape-time
+# fractal, plate vibrations, rolling circles, superposed waves. The numeric ones work
+# in float32, row chunks and uint8 alpha, so a 9024x5076 canvas stays well under 3 GB.
+def smoothstep(x, a, b):
+    t = np.clip((x - a) / (b - a), 0, 1)
+    return t * t * (3 - 2 * t)
+
+def math_base(c, top=0.05):
+    """gradient() in 256-row blocks straight into uint8 (its float32 temporaries
+    would cost ~1 GB on the supersampled canvas)."""
+    t0 = np.array(c.bg if c.light else mix(c.bg, c.fg, top), np.float32); t1 = np.array(c.bg, np.float32)
+    out = np.empty((c.h, c.w, 4), np.uint8); out[..., 3] = 255
+    for y0 in range(0, c.h, 256):
+        y1 = min(c.h, y0 + 256)
+        t = np.linspace(y0 / max(1, c.h - 1), (y1 - 1) / max(1, c.h - 1), y1 - y0, dtype=np.float32)[:, None, None]
+        blk = t0 + (t1 - t0) * t + noise(c, (y1 - y0, c.w, 3), 0.5)
+        out[y0:y1, :, :3] = np.clip(np.rint(blk), 0, 255)
+    return Image.fromarray(out, "RGBA")
+
+def alayer(rgb, a8):
+    """RGBA layer from one colour and a uint8 (h,w) alpha."""
+    h, w = a8.shape
+    out = np.empty((h, w, 4), np.uint8)
+    out[..., :3] = rgb; out[..., 3] = a8
+    return Image.fromarray(out, "RGBA")
+
+def trace(d, pts, width, color, alphas):
+    """Polyline in len(alphas) consecutive pieces, each with its own opacity (0..1):
+    a stroke whose strength drifts slowly along its length."""
+    width = max(1, int(round(width)))
+    edges = np.linspace(0, len(pts) - 1, len(alphas) + 1).astype(int)
+    for i, a in enumerate(alphas):
+        seg = pts[edges[i]:edges[i + 1] + 1]
+        if len(seg) > 1:
+            d.line(seg.ravel().tolist(), fill=color + (int(255 * a),), width=width, joint="curve")
+
+def grad_mag(F, y0, y1):
+    """|grad F| for rows y0..y1 of a (h,w) float32 field (one-row halo for the stencil)."""
+    a, b = max(0, y0 - 1), min(F.shape[0], y1 + 1)
+    gy, gx = np.gradient(F[a:b])
+    return np.hypot(gx, gy)[y0 - a:y0 - a + (y1 - y0)]
+
+def line_alpha(dist, hw):
+    return np.clip(hw + 0.5 - dist, 0, 1)
+
+# ----------------------------------------------------------------------------- flavour: harmonograph
+def pendulum_set(rng, n, T):
+    """x(t), y(t): two damped pendulums per axis, x = sum A_i sin(f_i t + p_i) e^(-d_i t).
+    The y pendulums share the x amplitudes and run a quarter period out of phase, so the
+    figure is round, not a thin ellipse; frequencies sit near small integer ratios
+    (detuned by 0.2-1%), so the pen keeps almost closing and the figure precesses into a
+    rosette. Damping is gentle: the curve covers the area before it decays."""
+    a, b = rng.choice([(2, 3), (3, 4), (3, 5), (1, 1)])
+    if (a, b) == (1, 1): b = 1.0 + rng.uniform(0.002, 0.01)
+    t = np.linspace(0, T, n)
+    A = (rng.uniform(0.9, 1.0), rng.uniform(0.8, 1.0))
+    ph = (rng.uniform(0, 6.28), rng.uniform(0, 6.28))
+    jit = lambda: rng.uniform(-0.12, 0.12)
+    x = y = 0
+    for f, amp, p in ((a, A[0], ph[0]), (b, A[1], ph[1])):
+        det = 1 + rng.choice([-1, 1]) * rng.uniform(0.002, 0.01)
+        dmp = np.exp(-rng.uniform(0.35, 0.6) * t / T)
+        x = x + amp * np.sin(f * t + p) * dmp
+        y = y + amp * np.sin(f * det * t + p + np.pi / 2 + jit()) * dmp
+    return x, y
+
+def harmonograph(c):
+    w, h, rng, s = c.w, c.h, c.rng, c.s
+    img = math_base(c)
+    n, T = (6000, 22.0) if c.pixel else (60000, 120.0)
+    cx, cy = w * 0.5, h * (0.47 if c.portrait else 0.5)
+    half = min(w, h) * 0.35                                   # figure spans ~70% of the short side
+    lay, d = layer(w, h)
+    for k, (col, size, wd) in enumerate(((c.fg, 1.0, 1.3), (c.accent, 0.62, 1.5))):
+        x, y = pendulum_set(rng, n, T * (1.0 if k == 0 else 0.8))
+        x = x - (x.max() + x.min()) / 2; y = y - (y.max() + y.min()) / 2
+        sc = half * size / max(np.abs(x).max(), np.abs(y).max())
+        pts = np.stack([cx + x * sc, cy + y * sc], 1)
+        phase = rng.uniform(0, 6.28)
+        m = 40 if c.pixel else 400
+        u = np.linspace(0, 1, m)
+        alphas = (0.40 + 0.55 * (0.5 + 0.5 * np.sin(phase + 2 * np.pi * rng.uniform(1.2, 2.0) * u))) * (1.0 if k == 0 else 0.9)
+        trace(d, pts, wd * s * (0.8 if k == 0 else 1.0), mix(c.bg, col, 1.0), alphas)
+    return comp(c, img, lay, 0.35 * s)
+
+# ----------------------------------------------------------------------------- flavour: attractor
+CLIFFORD = [(-1.4, 1.6, 1.0, 0.7), (1.6, -0.6, -1.2, 1.6), (1.7, 1.7, 0.6, 1.2),
+            (1.5, -1.8, 1.6, 0.9), (-1.7, 1.3, -0.1, -1.21), (-1.8, -2.0, -0.5, -0.9)]
+
+def attractor(c):
+    """Clifford attractor x' = sin(a y) + c cos(a x), y' = sin(b x) + d cos(b y): tens of
+    thousands of orbits iterated in parallel, binned into a histogram, log-scaled."""
+    w, h, rng = c.w, c.h, c.rng
+    a, b, cc, dd = rng.choice(CLIFFORD)
+    nrng = np.random.default_rng(rng.randrange(2 ** 32))
+    P, steps = (4096, 400) if c.pixel else (16384, 1500)
+    def start(p):
+        return nrng.uniform(-1, 1, p).astype(np.float32), nrng.uniform(-1, 1, p).astype(np.float32)
+    def step(x, y):
+        return np.sin(a * y) + cc * np.cos(a * x), np.sin(b * x) + dd * np.cos(b * y)
+    x, y = start(4000); px, py = [], []                       # probe run: where does it live?
+    for i in range(260):
+        x, y = step(x, y)
+        if i >= 60: px.append(x); py.append(y)
+    px, py = np.concatenate(px), np.concatenate(py)
+    x0, x1 = np.percentile(px, [0.05, 99.95]); y0, y1 = np.percentile(py, [0.05, 99.95])
+    del px, py
+    mx, my = 0.03 * (x1 - x0), 0.03 * (y1 - y0)
+    x0, x1, y0, y1 = x0 - mx, x1 + mx, y0 - my, y1 + my
+    aw, ah = (0.94 * w, 0.94 * w) if c.portrait else (0.9 * h * 1.3, 0.92 * h)
+    k = min(aw / (x1 - x0), ah / (y1 - y0))
+    rw, rh = int((x1 - x0) * k) + 1, int((y1 - y0) * k) + 1
+    D = np.zeros(rw * rh, np.float32)
+    x, y = start(P)
+    for _ in range(40): x, y = step(x, y)
+    done = 0
+    while done < steps:
+        xs, ys = [], []
+        for _ in range(min(250, steps - done)):
+            x, y = step(x, y); xs.append(x); ys.append(y)
+        done += len(xs)
+        ix = ((np.concatenate(xs) - x0) * k).astype(np.int32); iy = ((np.concatenate(ys) - y0) * k).astype(np.int32)
+        del xs, ys
+        ok = (ix >= 0) & (ix < rw) & (iy >= 0) & (iy < rh)
+        D += np.bincount((iy * rw + ix)[ok], minlength=rw * rh); del ix, iy, ok
+    D = D.reshape(rh, rw)
+    nz = D[D > 0]
+    ref = np.percentile(nz[::5], 99.3) if nz.size else 1.0
+    v = np.clip(np.log1p(D) / np.log1p(ref), 0, 1); del D, nz
+    if not c.pixel:                                           # soften the shot noise of sparse filaments
+        v8 = Image.fromarray((v * 255).astype(np.uint8), "L").filter(ImageFilter.GaussianBlur(0.55 * c.s))
+        v = np.asarray(v8).astype(np.float32) / 255; del v8
+    t = smoothstep(v, 0.35, 1.0)[..., None]
+    rgb = np.array(c.accent, np.float32) + (np.array(c.fg, np.float32) - np.array(c.accent, np.float32)) * t; del t
+    img = math_base(c, 0.04)
+    img.alpha_composite(np_layer(rgb, v ** 1.2 * 0.97), dest=((w - rw) // 2, (h - rh) // 2))
+    return img
+
+# ----------------------------------------------------------------------------- flavour: julia
+JULIA_C = [(-0.8, 0.156), (-0.4, 0.6), (0.285, 0.01), (-0.70176, -0.3842),
+           (-0.835, -0.2321), (0.355, 0.355), (-0.7269, 0.1889), (-0.123, 0.745)]
+
+def julia_field(cr, ci, u, v, portrait, maxit):
+    """Smooth escape-time mu per pixel for z -> z^2 + c; -1 inside. Only still-iterating
+    pixels are kept (compaction), so the cost is dominated by the points near the set."""
+    ch, cw = len(v), len(u)
+    zr, zi = (np.repeat(v, cw), np.tile(u, ch)) if portrait else (np.tile(u, ch), np.repeat(v, cw))
+    zr = zr.astype(np.float32); zi = zi.astype(np.float32)
+    idx = np.arange(cw * ch, dtype=np.int32)
+    mu = np.full(cw * ch, -1, np.float32)
+    for it in range(maxit):
+        zr2, zi2 = zr * zr, zi * zi
+        m2 = zr2 + zi2
+        esc = m2 > 256.0
+        if esc.any():
+            e = np.nonzero(esc)[0]
+            mu[idx[e]] = np.maximum(it + 1 - np.log2(0.5 * np.log(m2[e])), 0.2)
+            keep = ~esc
+            idx, zr, zi, zr2, zi2 = idx[keep], zr[keep], zi[keep], zr2[keep], zi2[keep]
+            if idx.size == 0: break
+        zi = 2 * zr * zi + ci
+        zr = zr2 - zi2 + cr
+    return mu.reshape(ch, cw)
+
+def julia(c):
+    w, h, rng, s = c.w, c.h, c.rng, c.s
+    cr, ci = rng.choice(JULIA_C)
+    maxit = 120 if c.pixel else 150
+    q = 1.0 if c.pixel else 0.5                               # iterate at half size, upscale smoothly
+    cw, ch = max(2, round(w * q)), max(2, round(h * q))
+    short = 1.25
+    long_ = short * max(w, h) / min(w, h)
+    ax_w, ax_h = (short, long_) if c.portrait else (long_, short)
+    mu = julia_field(cr, ci, np.linspace(-ax_w, ax_w, cw, dtype=np.float32),
+                     np.linspace(-ax_h, ax_h, ch, dtype=np.float32), c.portrait, maxit)
+    inside = (mu < 0).astype(np.float32)
+    L = np.log1p(np.where(mu < 0, maxit, mu)).astype(np.float32); del mu
+    if (cw, ch) != (w, h):
+        up = lambda a: np.asarray(Image.fromarray(a, "F").resize((w, h), Image.BICUBIC))
+        L, inside = up(L), up(inside)
+    dL = 0.55 if c.pixel else 0.30                            # spacing of the contour lines in log(mu)
+    hw = 0.5 if c.pixel else 0.8 * s
+    dim = mix(c.bg, c.fg, 0.55)
+    a_fill = np.empty((h, w), np.uint8); a_line = np.empty_like(a_fill); a_acc = np.empty_like(a_fill)
+    acc_k = 7
+    for y0 in range(0, h, 512):
+        y1 = min(h, y0 + 512)
+        Lc, ic = L[y0:y1], inside[y0:y1]
+        g = grad_mag(L, y0, y1) + 1e-6
+        quiet = 1 - smoothstep(ic, 0.25, 0.75)
+        lvl = np.clip(Lc / 5.0, 0, 1)
+        a_fill[y0:y1] = np.clip((lvl ** 2.2) * 0.55 * quiet * 255, 0, 255)
+        tt = Lc / dL; kk = np.rint(tt)
+        dist = np.abs(tt - kk) * dL / g
+        fade = 1 - smoothstep(2 * hw * g / dL, 0.35, 0.8)
+        al = line_alpha(dist, hw) * fade * quiet * (0.2 + 0.8 * np.clip(Lc / 3.2, 0, 1))
+        isacc = (kk == acc_k)
+        a_line[y0:y1] = np.where(isacc, 0, al * 0.8 * 255)
+        a_acc[y0:y1] = np.where(isacc, np.clip(al * 1.1, 0, 1) * 255, 0)
+    del L, inside
+    img = math_base(c, 0.02)
+    for rgb, a in ((dim, a_fill), (c.fg, a_line), (c.accent, a_acc)):
+        img = Image.alpha_composite(img, alayer(rgb, a))
+    return img
+
+# ----------------------------------------------------------------------------- flavour: chladni
+def chladni_alpha(w, h, n, m, ox, oy, scale, cx, cy, hw, glow, ax, ay, amp):
+    """alpha (uint8) of the nodal set of f = cos(n pi x) cos(m pi y) - cos(m pi x) cos(n pi y).
+    Distance to the zero set is |f| / |grad f| (separable trig, so row chunks stay cheap);
+    a thin line plus an analytic glow, faded by a super-Gaussian vignette."""
+    x = ((np.arange(w, dtype=np.float32) - cx) / scale + ox)
+    y = ((np.arange(h, dtype=np.float32) - cy) / scale + oy)
+    An, Am = np.cos(n * np.pi * x), np.cos(m * np.pi * x)
+    dAn, dAm = -n * np.pi * np.sin(n * np.pi * x), -m * np.pi * np.sin(m * np.pi * x)
+    Bn, Bm = np.cos(n * np.pi * y), np.cos(m * np.pi * y)
+    dBn, dBm = -n * np.pi * np.sin(n * np.pi * y), -m * np.pi * np.sin(m * np.pi * y)
+    ux2 = (((np.arange(w, dtype=np.float32) - cx) / ax) ** 2)[None, :]
+    out = np.empty((h, w), np.uint8)
+    for y0 in range(0, h, 384):
+        sl = slice(y0, min(h, y0 + 384))
+        bn, bm = Bn[sl, None], Bm[sl, None]
+        f = An[None] * bm - Am[None] * bn
+        fx = dAn[None] * bm - dAm[None] * bn
+        fy = An[None] * dBm[sl, None] - Am[None] * dBn[sl, None]
+        g = np.hypot(fx, fy) / scale + 1e-3; del fx, fy
+        dist = np.abs(f) / g; del f, g
+        a = line_alpha(dist, hw)
+        if glow: a = np.maximum(a, 0.22 * np.exp(-dist / glow))
+        del dist
+        p = ux2 + (((np.arange(sl.start, sl.stop, dtype=np.float32) - cy) / ay) ** 2)[:, None]
+        out[sl] = np.clip(a * np.exp(-p * p) * amp * 255, 0, 255)
+    return out
+
+def chladni(c):
+    w, h, rng, s = c.w, c.h, c.rng, c.s
+    m = min(w, h)
+    scale = m * 0.5 * (1.0 if c.portrait else 1.0)            # the plate has half-width `scale` px
+    cx, cy = w / 2, h / 2
+    ax, ay = (w * 0.46, h * 0.40) if c.portrait else (w * 0.34, h * 0.56)
+    pairs = [(2, 5), (3, 7), (4, 9), (3, 8), (2, 7), (5, 8)] if not c.pixel else [(2, 5), (3, 7), (2, 7), (3, 5)]
+    n1, m1 = rng.choice(pairs)
+    n2, m2 = rng.choice([p for p in pairs if p != (n1, m1)])
+    img = math_base(c, 0.03)
+    glow = 0 if c.pixel else 6.0 * s
+    hw = 0.5 if c.pixel else 0.8 * s
+    faint = chladni_alpha(w, h, n2 + 2, m2 + 3, rng.uniform(0, 1), rng.uniform(0, 1), scale * 1.05, cx, cy,
+                          hw * 0.8, 0, ax * 1.35, ay * 1.35, 0.5)
+    img = Image.alpha_composite(img, alayer(mix(c.bg, c.accent, 0.9), faint)); del faint
+    main = chladni_alpha(w, h, n1, m1, 0.0, 0.0, scale, cx, cy, hw, glow, ax, ay, 1.0)
+    return Image.alpha_composite(img, alayer(c.fg, main))
+
+# ----------------------------------------------------------------------------- flavour: spirograph
+def trochoid(kind, R, r, rho, n):
+    """Hypotrochoid (a circle r rolling inside R) or epitrochoid (outside), pen at
+    rho * r from the rolling centre; closes after r / gcd(R, r) turns. Unit radius."""
+    turns = r // math.gcd(R, r)
+    t = np.linspace(0, 2 * np.pi * turns, n)
+    if kind == "hypo":
+        k = (R - r) / r
+        x = (R - r) * np.cos(t) + rho * r * np.cos(k * t); y = (R - r) * np.sin(t) - rho * r * np.sin(k * t)
+    else:
+        k = (R + r) / r
+        x = (R + r) * np.cos(t) - rho * r * np.cos(k * t); y = (R + r) * np.sin(t) - rho * r * np.sin(k * t)
+    m = np.hypot(x, y).max()
+    return np.stack([x / m, y / m], 1), turns
+
+def spirograph(c):
+    w, h, rng, s = c.w, c.h, c.rng, c.s
+    m = min(w, h)
+    if c.portrait:
+        spots = [(0.5 * w, 0.36 * h, 0.46 * m), (0.64 * w, 0.735 * h, 0.21 * m), (0.27 * w, 0.875 * h, 0.095 * m)]
+    else:
+        spots = [(0.382 * w, 0.5 * h, 0.40 * h), (0.76 * w, 0.64 * h, 0.19 * h), (0.90 * w, 0.20 * h, 0.095 * h)]
+    recipes = [("hypo", 5, 3), ("hypo", 7, 3), ("hypo", 8, 3), ("epi", 5, 3), ("hypo", 9, 4), ("epi", 3, 2),
+               ("hypo", 11, 4), ("epi", 5, 2), ("hypo", 13, 5), ("hypo", 7, 2)]
+    rng.shuffle(recipes)
+    img = math_base(c, 0.04)
+    lay, d = layer(w, h)
+    cols = [c.fg, c.accent, mix(c.bg, c.fg, 0.7)]
+    for i, ((x0, y0, R0), (kind, R, r)) in enumerate(zip(spots, recipes)):
+        col = cols[i]
+        if not c.pixel:                                       # the fixed circle, a faint construction line
+            ring(d, x0, y0, R0 * 1.02, [0.6 * s] * 240, mix(c.bg, col, 0.55) + (70,), n=240)
+        passes = (1.0, 0.8, 0.6) if i == 0 else (1.0, 0.75) if not c.pixel or i == 0 else (1.0,)
+        if c.pixel and i == 0: passes = (1.0, 0.7)
+        for j, scale_d in enumerate(passes):
+            rho = rng.uniform(0.65, 1.25) * scale_d if j == 0 else rho * scale_d
+            _, turns = trochoid(kind, R, r, rho, 8)
+            n = 300 * turns * (R + r) // (4 if c.pixel else 1)
+            n = int(min(max(n, 800), 60000))
+            pts, _ = trochoid(kind, R, r, rho, n)
+            pts = pts * (R0 * (0.97 ** j)) + (x0, y0)
+            wd = (1.5 if i == 0 else 1.3) * s * (1.0 - 0.15 * j)
+            trace(d, pts, wd, col, [(0.95, 0.6, 0.38)[j]])
+    return comp(c, img, lay, 0.3 * s)
+
+# ----------------------------------------------------------------------------- flavour: interference
+def interference(c):
+    """Superposition of circular waves F = mean sin(k_i |p - p_i| + phi_i): fills tint the
+    sign of F, fg lines mark F = 0, accent lines the +-level crest bands."""
+    w, h, rng, s = c.w, c.h, c.rng, c.s
+    q = 1.0 if c.pixel else 0.5                               # the field is smooth: sample at half size
+    fw, fh = max(2, round(w * q)), max(2, round(h * q))
+    n = rng.randint(3, 5)
+    lam = (h if not c.portrait else w) * (0.11 if c.pixel else rng.uniform(0.085, 0.105))
+    if c.portrait: lam *= 1.0
+    ax, ay = (1.0, 1.6) if c.portrait else (1.6, 1.0)
+    base = w if c.portrait else h
+    th0 = rng.uniform(0, 6.28)
+    srcs = []
+    for i in range(n):
+        th = th0 + i * 2.39996323
+        r = (0.10 + 0.30 * math.sqrt((i + 0.5) / n)) * base
+        srcs.append((w / 2 + r * math.cos(th) * ax, h / 2 + r * math.sin(th) * ay,
+                     2 * math.pi / lam * (1 + 0.07 * rng.uniform(-1, 1)), rng.uniform(0, 6.28)))
+    xs = ((np.arange(fw, dtype=np.float32) + 0.5) / q)
+    F = np.zeros((fh, fw), np.float32)
+    for y0 in range(0, fh, 256):
+        ys = ((np.arange(y0, min(fh, y0 + 256), dtype=np.float32) + 0.5) / q)[:, None]
+        blk = F[y0:y0 + 256]
+        for sx, sy, k, ph in srcs:
+            blk += np.sin(k * np.sqrt((xs[None] - sx) ** 2 + (ys - sy) ** 2) + ph)
+    F /= n
+    gy, gx = np.gradient(F)
+    G = (np.hypot(gx, gy) * q).astype(np.float32); del gx, gy
+    if (fw, fh) != (w, h):
+        up = lambda a: np.asarray(Image.fromarray(a, "F").resize((w, h), Image.BICUBIC))
+        F, G = up(F), up(G)
+    G = G + np.float32(1e-5)
+    hw_line = 0.55 if c.pixel else 1.0 * s
+    lev = 0.42
+    a_fill = np.empty((h, w), np.uint8); a_zero = np.empty_like(a_fill); a_acc = np.empty_like(a_fill)
+    ux2 = (((np.arange(w, dtype=np.float32) - w / 2) / (w * (0.50 if not c.portrait else 0.62))) ** 2)[None, :]
+    for y0 in range(0, h, 512):
+        y1 = min(h, y0 + 512)
+        Fc, Gc = F[y0:y1], G[y0:y1]
+        p = ux2 + (((np.arange(y0, y1, dtype=np.float32) - h / 2) / (h * (0.55 if c.portrait else 0.62))) ** 2)[:, None]
+        vig = 0.04 + 0.96 * np.exp(-p * p)
+        a_fill[y0:y1] = np.clip((Fc / Gc + 0.5), 0, 1) * 0.10 * vig * 255
+        a_zero[y0:y1] = line_alpha(np.abs(Fc) / Gc, hw_line) * vig * 0.9 * 255
+        da = np.abs(np.abs(Fc) - lev) / Gc
+        a_acc[y0:y1] = line_alpha(da, hw_line * 0.8) * np.clip((np.abs(Fc) - 0.2) * 6, 0, 1) * vig * 0.85 * 255
+    del F, G
+    img = math_base(c, 0.03)
+    for rgb, a in ((c.tints[1], a_fill), (c.fg, a_zero), (c.accent, a_acc)):
+        img = Image.alpha_composite(img, alayer(rgb, a))
+    return img
+
 # ----------------------------------------------------------------------------- pixel-art post-processing
 BAYER8 = np.array([[ 0, 32,  8, 40,  2, 34, 10, 42], [48, 16, 56, 24, 50, 18, 58, 26],
                    [12, 44,  4, 36, 14, 46,  6, 38], [60, 28, 52, 20, 62, 30, 54, 22],
@@ -603,7 +963,9 @@ def pixelate(c, small, w, h, cell):
 # ----------------------------------------------------------------------------- main
 FLAVOURS = {"ridges": ridges, "contours": contours, "strands": strands, "waves": waves, "peaks": peaks,
             "dunes": dunes, "orbits": orbits, "horizon": horizon, "constellation": constellation,
-            "strata": strata, "meteors": meteors}
+            "strata": strata, "meteors": meteors, "harmonograph": harmonograph,
+            "attractor": attractor, "julia": julia, "chladni": chladni, "spirograph": spirograph,
+            "interference": interference}
 
 def main(palette_path, out, w, h, flavour="ridges"):
     global WMIN

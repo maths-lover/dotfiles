@@ -68,7 +68,9 @@ Left to right, one bar per display:
   hover for album, position and previous/next. Needs Noctis's Local API on:
   Noctis > Settings > Account & Devices > Local API.
 - **WINDOW badge** (centre): shown while skhd is in window mode.
-- **Status cluster**: CPU graph and percent, memory used, volume (click for a
+- **Status cluster**: CPU graph (click: top processes, load, uptime), memory
+  graph (click: top processes by memory), network down/up rates with a download
+  graph (click: interface and IP), disk used (click: mounted volumes), volume (click for a
   slider), battery (laptops only), clock (click for this month's calendar).
 
 Colours come from the active theme. `sketchybar --reload` re-reads
@@ -199,7 +201,9 @@ renders one flavour at any size (quarter 4K here, fast) for previewing. A flavou
 is a function `name(c)` that returns a PIL image from `c.w, c.h` (canvas),
 `c.bg, c.fg, c.accent, c.tints` (palette), `c.rng` (seeded), `c.s` (stroke scale)
 and `c.pixel` / `c.portrait` flags; register it in the `FLAVOURS` dict and in
-`FLAVOURS_SMOOTH` / `FLAVOURS_PIXEL` in `rice.sh`. Helpers: `gradient`, `ribbon`
+`FLAVOURS_SMOOTH` / `FLAVOURS_PIXEL` in `rice.sh`. The six mathematical flavours
+(harmonograph, attractor, julia, chladni, spirograph, interference) use numpy only
+and `math_base()` for a cheap background gradient. Helpers: `gradient`, `ribbon`
 (variable-width stroke), `ring`, `jagged` (needs 2^k+1 points), `stars`. Pixel
 variants come for free; keep strokes ≥ 1 cell and skip soft glows when `c.pixel`.
 Rendered files are cached in `~/.local/state/rice/wallpapers/`; delete a file to
@@ -228,7 +232,11 @@ re-selects it, because Noctis only takes a theme's accent on selection.
 
 ### Übersicht (desktop widgets) — `rice/.config/rice/templates/ubersicht-*.jsx`
 
-Rendered to `~/Library/Application Support/Übersicht/widgets/` on apply.
+Rendered to `~/Library/Application Support/Übersicht/widgets/` on apply: a
+calendar card and big clock bottom-left, a glass system card bottom-right (cpu
+sparkline, cpu/mem/disk bars, network, uptime, load) and above it a Noctis
+now-playing card with the cover, shown only while something is loaded. They sit
+on the desktop, so you see them on an empty Space or around floating windows.
 `open -b tracesOf.Uebersicht` starts it (the umlaut breaks `open -a`).
 
 ## 7. When something is off

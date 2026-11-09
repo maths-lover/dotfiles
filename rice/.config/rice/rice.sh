@@ -37,8 +37,8 @@ NOCTIS_RELOADER="$NOCTIS/plugins/rice.reloader"   # dotnet plugin that re-reads 
 # and the same scenes as pixel art. `rice.sh style pixel|smooth|<list>` records the
 # choice in $STATE/flavours; the env var RICE_WALLPAPER_FLAVOURS overrides both, e.g.
 #   export RICE_WALLPAPER_FLAVOURS="contours peaks"   (in .zshrc, before `theme` runs)
-FLAVOURS_SMOOTH="ridges contours strands waves peaks dunes orbits horizon constellation strata meteors"
-FLAVOURS_PIXEL="pixel-ridges pixel-peaks pixel-waves pixel-contours pixel-strands pixel-dunes pixel-orbits pixel-horizon pixel-constellation pixel-strata pixel-meteors"
+FLAVOURS_SMOOTH="ridges contours strands waves peaks dunes orbits horizon constellation strata meteors harmonograph attractor julia chladni spirograph interference"
+FLAVOURS_PIXEL="pixel-ridges pixel-peaks pixel-waves pixel-contours pixel-strands pixel-dunes pixel-orbits pixel-horizon pixel-constellation pixel-strata pixel-meteors pixel-harmonograph pixel-attractor pixel-julia pixel-chladni pixel-spirograph pixel-interference"
 flavours_current() {
   if [[ -n ${RICE_WALLPAPER_FLAVOURS:-} ]]; then printf '%s' "$RICE_WALLPAPER_FLAVOURS"
   elif [[ -s $STATE/flavours ]]; then tr -s '\n' ' ' < "$STATE/flavours" | sed 's/ $//'
@@ -200,6 +200,7 @@ apply() {
   if [[ -d $UBER_WIDGETS ]]; then
     python3 -IB "$LIB" render "$TPL/ubersicht-clock.jsx" "$UBER_WIDGETS/rice-clock.jsx" "$STATE"
     python3 -IB "$LIB" render "$TPL/ubersicht-stats.jsx" "$UBER_WIDGETS/rice-stats.jsx" "$STATE"
+    python3 -IB "$LIB" render "$TPL/ubersicht-music.jsx" "$UBER_WIDGETS/rice-music.jsx" "$STATE"
   fi
 
   noctis_apply

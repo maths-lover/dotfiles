@@ -144,16 +144,20 @@ How it works: `theme <name>` writes the active Ghostty theme; `rice.sh apply`
 | Firefox | `templates/firefox-userChrome.css` | every profile's `chrome/userChrome.css` + `user.js` flag |
 | Discord | Vencord theme from `templates/vencord.theme.css`, built on the [midnight](https://github.com/refact0r/midnight-discord) theme and recoloured from the palette | `~/Library/Application Support/Vencord/themes/rice.theme.css` |
 | Chrome | `BrowserThemeColor` policy | frame colour; Chrome shows a "managed" badge |
-| widgets | Übersicht (`templates/ubersicht-*.jsx`) | clock + system stats on the desktop |
+| widgets | Übersicht (`templates/ubersicht-*.jsx`) | calendar + clock, glass system card with cpu sparkline, Noctis now-playing card |
 | Noctis (music) | content pack from `templates/noctis-theme.json` + the `noctis/reloader` plugin | `~/Library/Application Support/Noctis/plugins/rice.theme`; the plugin makes Noctis re-read it live, otherwise at its next start |
 
-**Wallpapers.** Eleven flavours of generated line art, all from the theme's colours:
+**Wallpapers.** Seventeen flavours of generated line art, all from the theme's colours:
 `ridges` (sine-sum mountains in haze), `contours` (a topographic map), `strands` (a
 flowing bundle of curves), `waves` (stacked rolling lines), `peaks` (jagged
 silhouettes under a ringed moon), `dunes` (a desert with a low sun), `orbits`
 (tilted orbits around a star), `horizon` (a synthwave grid floor), `constellation`
 (stars joined into figures), `strata` (canyon sediment layers) and `meteors` (a
-meteor shower), plus every scene as retro pixel art (`pixel-<flavour>`: a ~212-cell
+meteor shower), and six drawn purely from mathematics: `harmonograph` (damped
+Lissajous pendulum curves), `attractor` (a Clifford strange-attractor density plot),
+`julia` (a Julia set with escape-time contours), `chladni` (plate-vibration nodal
+lines), `spirograph` (hypotrochoids and epitrochoids) and `interference` (moiré
+from superposed circular waves); plus every scene as retro pixel art (`pixel-<flavour>`: a ~212-cell
 grid, a small palette from the theme, Bayer dithering, stars at night). Space 1 gets the first flavour, Space 2 the
 second, and so on, wrapping around. `rice.sh style pixel|smooth` switches the whole
 set and is remembered across theme changes; `style shuffle` (or `shuffle-pixel`) deals

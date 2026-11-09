@@ -7,7 +7,7 @@
 # Layout (one bar per display, floating "island" style):
 #   left     theme  [1 ▢▢] [2 ▢] [3 ▢]  ▢ Front App     (theme picker, this display's Spaces, focused app)
 #   center  ♪ Title · Artist   WINDOW                   (Noctis now playing; badge while skhd is in window mode)
-#   right   [cpu graph · mem · volume · battery · clock]
+#   right   [cpu · mem · net · disk · volume · battery · clock]
 # Every item is a plugin in ./plugins; click behaviour is documented next to it.
 
 PLUGIN_DIR="$CONFIG_DIR/plugins"
@@ -148,18 +148,57 @@ sketchybar --add slider volume.slider popup.volume 120 \
                  script="$PLUGIN_DIR/volume_slider.sh" \
            --subscribe volume.slider mouse.clicked
 
-# Memory: used percent.
-sketchybar --add item mem right \
-           --set mem update_freq=5 icon="󰍛" icon.color="$RICE_C3_0X" script="$PLUGIN_DIR/mem.sh"
+# Popup rows helper: top-N style lists, filled by the parent's plugin.
+popup_rows() {  # popup_rows <parent> <prefix> <count>: label-only popup rows under popup.<parent>
+  local n
+  for ((n = 0; n < $3; n++)); do
+    sketchybar --add item "$1.$2$n" popup."$1" \
+               --set "$1.$2$n" icon.drawing=off label.font="$FONT:Regular:12.0" \
+                     label.padding_left=12 label.padding_right=14 label.color="$RICE_FG_0X"
+  done
+}
 
-# CPU: a 40px rolling graph with the current percent next to it.
+# Disk: used percent of the data volume. Click: mounted volumes.
+sketchybar --add item disk right \
+           --set disk icon="󰋊" icon.color="$RICE_C13_0X" popup.align=right \
+                 click_script="sketchybar --set disk popup.drawing=toggle"
+popup_rows disk v 5
+sketchybar --set disk update_freq=60 script="$PLUGIN_DIR/disk.sh" --subscribe disk mouse.exited.global
+
+# Network: download graph + "down/up" per second. Click: interface and local IP.
+sketchybar --add graph net right 40 \
+           --set net update_freq=2 icon="󰛳" icon.color="$RICE_C7_0X" \
+                 graph.color="$RICE_C7_0X" graph.fill_color="${RICE_C7_0X/0xff/0x40}" \
+                 graph.line_width=1.5 label.padding_left=4 popup.align=right \
+                 click_script="sketchybar --set net popup.drawing=toggle"
+sketchybar --add item net.if popup.net --add item net.ip popup.net \
+           --set net.if icon.drawing=off label.padding_left=12 label.padding_right=14 \
+           --set net.ip icon.drawing=off label.padding_left=12 label.padding_right=14
+sketchybar --set net script="$PLUGIN_DIR/net.sh" --subscribe net mouse.exited.global
+
+# Memory: graph + percent. Click: top 5 processes by memory.
+sketchybar --add graph mem right 40 \
+           --set mem update_freq=2 icon="󰍛" icon.color="$RICE_C3_0X" \
+                 graph.color="$RICE_C3_0X" graph.fill_color="${RICE_C3_0X/0xff/0x40}" \
+                 graph.line_width=1.5 label.padding_left=4 popup.align=right \
+                 click_script="sketchybar --set mem popup.drawing=toggle"
+popup_rows mem p 5
+sketchybar --set mem script="$PLUGIN_DIR/mem.sh" --subscribe mem mouse.exited.global
+
+# CPU: graph + percent. Click: top 5 processes, load average, uptime.
 sketchybar --add graph cpu right 40 \
            --set cpu update_freq=2 icon="󰘚" icon.color="$RICE_C4_0X" \
-                 graph.color="$RICE_ACCENT_0X" graph.fill_color="0x55${RICE_ACCENT_HEX:-58a6ff}" \
-                 graph.line_width=1.5 label.padding_left=4 script="$PLUGIN_DIR/cpu.sh"
+                 graph.color="$RICE_ACCENT_0X" graph.fill_color="${RICE_ACCENT_0X/0xff/0x55}" \
+                 graph.line_width=1.5 label.padding_left=4 popup.align=right \
+                 click_script="sketchybar --set cpu popup.drawing=toggle"
+popup_rows cpu p 5
+sketchybar --add item cpu.load popup.cpu --add item cpu.up popup.cpu \
+           --set cpu.load icon.drawing=off label.padding_left=12 label.padding_right=14 label.color="$RICE_FG_DIM_0X" \
+           --set cpu.up icon.drawing=off label.padding_left=12 label.padding_right=14 label.color="$RICE_FG_DIM_0X"
+sketchybar --set cpu script="$PLUGIN_DIR/cpu.sh" --subscribe cpu mouse.exited.global
 
 # One pill around the whole status cluster.
-sketchybar --add bracket status cpu mem volume battery clock \
+sketchybar --add bracket status cpu mem net disk volume battery clock \
            --set status background.drawing=on background.color="$RICE_BG_ALT_0X" \
                  background.border_width=1 background.border_color="$RICE_BORDER_0X" \
                  background.corner_radius=8 background.height=26
