@@ -56,16 +56,18 @@ button to resize. Dropping a tiled window on another swaps them.
 
 Left to right, one bar per display:
 
+- **Theme picker**: the logo at the far left shows the active theme; click it
+  for a menu of every theme alias and switch from there.
 - **Space pills**: only the Spaces on that display, with the icons of the apps
   on each. The highlighted pill is the visible Space. Click a pill to go there.
 - **Front app**: icon and name of the focused app. **Click it** for Hide / Quit /
   Force quit. This is the replacement for right-clicking a Dock icon.
+- **Now playing** (centre): the track Noctis is playing, click to play/pause,
+  hover for album, position and previous/next. Needs Noctis's Local API on:
+  Noctis > Settings > Account & Devices > Local API.
 - **WINDOW badge** (centre): shown while skhd is in window mode.
-- **Status cluster**: CPU graph and percent, memory used, network (Wi-Fi signal
-  icon and name, or LAN; click for IP, signal, channel, rate, security, a Wi-Fi
-  power toggle and the settings pane), volume (click for a slider), battery
-  (laptops only), clock (click for this month's calendar). macOS hides the Wi-Fi
-  name from the bar until sketchybar is allowed Location Services.
+- **Status cluster**: CPU graph and percent, memory used, volume (click for a
+  slider), battery (laptops only), clock (click for this month's calendar).
 
 Colours come from the active theme. `sketchybar --reload` re-reads
 `sketchybar/sketchybarrc` after an edit.

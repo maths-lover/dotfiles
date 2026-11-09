@@ -5,9 +5,9 @@
 # Reference: https://felixkratz.github.io/SketchyBar/config/bar
 #
 # Layout (one bar per display, floating "island" style):
-#   left    [1 ▢▢] [2 ▢] [3 ▢]  ›  ▢ Front App ▾      (this display's Spaces, then the focused app)
-#   center  WINDOW                                       (only while skhd is in window mode)
-#   right   [cpu graph · mem · net · volume · battery · clock]
+#   left     theme  [1 ▢▢] [2 ▢] [3 ▢]  ▢ Front App     (theme picker, this display's Spaces, focused app)
+#   center  ♪ Title · Artist   WINDOW                   (Noctis now playing; badge while skhd is in window mode)
+#   right   [cpu graph · mem · volume · battery · clock]
 # Every item is a plugin in ./plugins; click behaviour is documented next to it.
 
 PLUGIN_DIR="$CONFIG_DIR/plugins"
@@ -19,7 +19,7 @@ if [[ -f "$PALETTE" ]]; then source "$PALETTE"; else
   RICE_BORDER_0X=0xff30363d RICE_C1_0X=0xffff7b72 RICE_C3_0X=0xffd29922 RICE_C2_0X=0xff3fb950
 fi
 FONT="Maple Mono NF"
-export RICE_FG_0X RICE_FG_DIM_0X RICE_ACCENT_0X RICE_BG_ALT2_0X RICE_C1_0X RICE_C3_0X   # for plugins
+export RICE_FG_0X RICE_FG_DIM_0X RICE_ACCENT_0X RICE_BG_ALT2_0X RICE_C1_0X RICE_C3_0X RICE_C5_0X   # for plugins
 
 # --- the bar itself ------------------------------------------------------------
 # A floating island: margin from the screen edges, rounded, slightly translucent
@@ -44,6 +44,18 @@ sketchybar --default icon.font="$FONT:Bold:14.0" icon.color="$RICE_FG_0X" \
 # --- events we raise ourselves --------------------------------------------------
 # mode_change: skhdrc triggers it when entering/leaving the sticky `window` mode.
 sketchybar --add event mode_change
+
+# --- left: logo = theme picker --------------------------------------------------
+# Shows the active theme's name; click for a menu of every theme alias (dark ones
+# with a moon, light ones with a sun). plugins/theme_menu.sh builds the rows.
+sketchybar --add item logo left \
+           --set logo icon="󰏘" icon.color="$RICE_ACCENT_0X" icon.font="$FONT:Bold:15.0" \
+                 label.color="$RICE_FG_DIM_0X" label.font="$FONT:Medium:11.5" label.padding_right=10 \
+                 background.drawing=on background.color="$RICE_BG_ALT2_0X" \
+                 popup.align=left updates=on script="$PLUGIN_DIR/theme_menu.sh" \
+                 click_script="sketchybar --set logo popup.drawing=toggle" \
+           --subscribe logo mouse.exited.global
+"$PLUGIN_DIR/theme_menu.sh"
 
 # --- left: Spaces, one pill per Space, shown only on the display they live on ----
 # plugins/spaces.sh creates the items from yabai's space list, fills each with the
@@ -82,10 +94,30 @@ sketchybar --add item mode center \
                  script="$PLUGIN_DIR/mode.sh" \
            --subscribe mode mode_change
 
+# --- center: now playing (Noctis Local API) ---------------------------------------
+# Hidden unless Noctis runs with its Local API on (Settings > Account & Devices >
+# Local API). Click: play/pause. Hover: album, position and prev/next buttons.
+sketchybar --add item music center \
+           --set music drawing=off updates=on update_freq=3 icon="󰝚" icon.color="$RICE_C5_0X" \
+                 label.max_chars=42 label.color="$RICE_FG_0X" popup.align=center \
+                 background.drawing=on background.color="$RICE_BG_ALT2_0X" \
+                 script="$PLUGIN_DIR/music.sh" click_script="$PLUGIN_DIR/music_action.sh toggle" \
+           --subscribe music mouse.entered mouse.exited.global
+sketchybar --add item music.album popup.music \
+           --set music.album icon="󰀥" icon.color="$RICE_FG_DIM_0X" icon.padding_left=10 label.padding_right=14 \
+           --add item music.pos popup.music \
+           --set music.pos icon="󰔛" icon.color="$RICE_FG_DIM_0X" icon.padding_left=10 label.padding_right=14 \
+           --add item music.prev popup.music \
+           --set music.prev icon="󰒮" icon.color="$RICE_C5_0X" icon.padding_left=10 label="Previous" label.padding_right=14 \
+                 click_script="$PLUGIN_DIR/music_action.sh previous" \
+           --add item music.next popup.music \
+           --set music.next icon="󰒭" icon.color="$RICE_C5_0X" icon.padding_left=10 label="Next" label.padding_right=14 \
+                 click_script="$PLUGIN_DIR/music_action.sh next"
+
 # --- right: status cluster (added right-to-left: first added = rightmost) ----------
 # Clock. Click: this month's calendar.
 sketchybar --add item clock right \
-           --set clock icon="󰥔" icon.color="$RICE_FG_DIM_0X" \
+           --set clock icon="󰥔" icon.color="$RICE_C6_0X" \
                  popup.align=right click_script="sketchybar --set clock popup.drawing=toggle"
 for i in 0 1 2 3 4 5 6 7; do
   sketchybar --add item "clock.cal.$i" popup.clock \
@@ -98,12 +130,12 @@ sketchybar --set clock update_freq=10 script="$PLUGIN_DIR/clock.sh" \
 
 # Battery: hidden on desktops without one (plugin decides).
 sketchybar --add item battery right \
-           --set battery update_freq=120 icon.color="$RICE_FG_DIM_0X" script="$PLUGIN_DIR/battery.sh" \
+           --set battery update_freq=120 icon.color="$RICE_C2_0X" script="$PLUGIN_DIR/battery.sh" \
            --subscribe battery system_woke power_source_change
 
 # Volume. Click: a slider.
 sketchybar --add item volume right \
-           --set volume icon.color="$RICE_FG_DIM_0X" script="$PLUGIN_DIR/volume.sh" \
+           --set volume icon.color="$RICE_C5_0X" script="$PLUGIN_DIR/volume.sh" \
                  popup.align=right click_script="sketchybar --set volume popup.drawing=toggle" \
            --subscribe volume volume_change mouse.exited.global
 sketchybar --add slider volume.slider popup.volume 120 \
@@ -114,40 +146,18 @@ sketchybar --add slider volume.slider popup.volume 120 \
                  script="$PLUGIN_DIR/volume_slider.sh" \
            --subscribe volume.slider mouse.clicked
 
-# Network: Wi-Fi signal icon + name ("Wi-Fi" until sketchybar may use Location
-# Services), "LAN" on ethernet, or offline. Click: details, Wi-Fi power toggle,
-# and a jump to the Wi-Fi settings pane.
-sketchybar --add item net right \
-           --set net icon.color="$RICE_FG_DIM_0X" \
-                 popup.align=right click_script="sketchybar --set net popup.drawing=toggle"
-for row in name ip signal security; do
-  sketchybar --add item "net.$row" popup.net \
-             --set "net.$row" icon.drawing=off label.font="$FONT:Regular:12.0" label.color="$RICE_FG_0X" \
-                   label.padding_left=12 label.padding_right=14
-done
-sketchybar --set net.name label.font="$FONT:Bold:12.5" \
-           --set net.security label.color="$RICE_FG_DIM_0X"
-sketchybar --add item net.toggle popup.net \
-           --set net.toggle icon="󰖩" icon.color="$RICE_FG_DIM_0X" icon.padding_left=10 label="Turn Wi-Fi off" \
-                 label.padding_right=14 click_script="$PLUGIN_DIR/net_action.sh toggle"
-sketchybar --add item net.settings popup.net \
-           --set net.settings icon="󰒓" icon.color="$RICE_FG_DIM_0X" icon.padding_left=10 label="Open Wi-Fi settings" \
-                 label.padding_right=14 click_script="$PLUGIN_DIR/net_action.sh settings"
-sketchybar --set net update_freq=60 script="$PLUGIN_DIR/net.sh" \
-           --subscribe net wifi_change system_woke mouse.exited.global
-
 # Memory: used percent.
 sketchybar --add item mem right \
-           --set mem update_freq=5 icon="󰍛" icon.color="$RICE_FG_DIM_0X" script="$PLUGIN_DIR/mem.sh"
+           --set mem update_freq=5 icon="󰍛" icon.color="$RICE_C3_0X" script="$PLUGIN_DIR/mem.sh"
 
 # CPU: a 40px rolling graph with the current percent next to it.
 sketchybar --add graph cpu right 40 \
-           --set cpu update_freq=2 icon="󰘚" icon.color="$RICE_FG_DIM_0X" \
+           --set cpu update_freq=2 icon="󰘚" icon.color="$RICE_C4_0X" \
                  graph.color="$RICE_ACCENT_0X" graph.fill_color="0x55${RICE_ACCENT_HEX:-58a6ff}" \
                  graph.line_width=1.5 label.padding_left=4 script="$PLUGIN_DIR/cpu.sh"
 
 # One pill around the whole status cluster.
-sketchybar --add bracket status cpu mem net volume battery clock \
+sketchybar --add bracket status cpu mem volume battery clock \
            --set status background.drawing=on background.color="$RICE_BG_ALT_0X" \
                  background.border_width=1 background.border_color="$RICE_BORDER_0X" \
                  background.corner_radius=8 background.height=26
