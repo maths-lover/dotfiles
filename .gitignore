@@ -33,3 +33,6 @@ pi/.pi/agent/saved-sessions/
 # anything pi drops there lands in the repo — keep vendored/generated bits out)
 pi/.pi/agent/**/node_modules/
 pi/.pi/agent/**/*.log
+
+# python bytecode (py_compile checks)
+__pycache__/
