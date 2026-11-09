@@ -203,4 +203,10 @@ sketchybar --add bracket status cpu mem net disk volume battery clock \
                  background.border_width=1 background.border_color="$RICE_BORDER_0X" \
                  background.corner_radius=8 background.height=26
 
+# Per-display layout: the portrait display gets a slim bar (plugins/layout.sh).
+sketchybar --add item layout_watcher left \
+           --set layout_watcher drawing=off updates=on script="$PLUGIN_DIR/layout.sh" \
+           --subscribe layout_watcher display_change
+"$PLUGIN_DIR/layout.sh"
+
 sketchybar --update

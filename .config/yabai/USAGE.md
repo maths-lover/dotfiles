@@ -73,6 +73,10 @@ Left to right, one bar per display:
   graph (click: interface and IP), disk used (click: mounted volumes), volume (click for a
   slider), battery (laptops only), clock (click for this month's calendar).
 
+A portrait display (taller than wide) gets a slim bar: theme, its Space pills,
+front app, volume, battery and clock; the graphs, disk and now-playing items stay
+on the wide displays (`plugins/layout.sh`, re-run on every display change).
+
 Colours come from the active theme. `sketchybar --reload` re-reads
 `sketchybar/sketchybarrc` after an edit.
 
