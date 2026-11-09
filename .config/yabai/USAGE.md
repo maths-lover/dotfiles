@@ -222,8 +222,9 @@ packs when it starts, so `noctis/reloader` is a ~100-line Noctis plugin that
 watches that folder and asks Noctis to re-read the pack, which recolours live.
 `rice.sh noctis-plugin` builds it against the installed Noctis.app and installs it;
 restart Noctis once and approve "Rice theme reloader" under Settings > Plugins.
-Its log lines show in Noctis's plugin page. The first time the pack appears it
-also selects the Rice theme for you; after that your own pick in Settings wins.
+The first time the pack appears it also selects the Rice theme for you; after
+that your own pick in Settings wins. While Rice is the active theme, each reload
+re-selects it, because Noctis only takes a theme's accent on selection.
 
 ### Übersicht (desktop widgets) — `rice/.config/rice/templates/ubersicht-*.jsx`
 

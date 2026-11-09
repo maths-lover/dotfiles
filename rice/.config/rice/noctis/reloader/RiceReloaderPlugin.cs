@@ -17,7 +17,9 @@
 //
 // First run: rice.sh drops `select-once.txt` into the pack when it creates it, and
 // this plugin then picks the Rice theme in Settings for you (and deletes the marker),
-// so switching to another Noctis theme later is respected.
+// so switching to another Noctis theme later is respected. While Rice *is* the active
+// theme, every reload re-selects it, because that is the only path on which Noctis
+// takes the accent from the theme (a plain re-read keeps the old accent).
 using System.Collections;
 using System.Reflection;
 using System.Windows.Input;
@@ -104,7 +106,10 @@ public sealed class RiceReloaderPlugin : INoctisPlugin
             if (loadFrom is null) { Log("LoadFrom not found"); return; }
             loadFrom.Invoke(owner, new object[] { _packDir }); // Discover + Activate + publish content -> theme recolours
             Log("re-read the Rice pack");
-            if (File.Exists(Path.Combine(_packDir, Marker))) SelectTheme();
+            // Noctis seeds the accent from a pack theme only when the theme is *selected*, not
+            // when its colours are re-read. So while Rice is the active theme, select it again:
+            // same theme, but the accent picker follows the new palette too.
+            if (File.Exists(Path.Combine(_packDir, Marker)) || IsRiceActive()) SelectTheme();
         }
         else if (existing is not null)
         {
@@ -121,8 +126,12 @@ public sealed class RiceReloaderPlugin : INoctisPlugin
         if (SettingsViewModel() is not { } settings) { Log("Settings not reachable; pick 'Rice' under Settings > Appearance > Themes"); return; }
         if (settings.GetType().GetProperty("ApplyPackThemeCommand", Any)?.GetValue(settings) is not ICommand apply) { Log("ApplyPackThemeCommand not found; pick 'Rice' under Settings > Appearance > Themes"); return; }
         apply.Execute(ThemeKey);
-        Log("selected the Rice theme");
+        Log("selected the Rice theme (accent " + ThemeKey + ")");
     }
+
+    private static bool IsRiceActive() =>
+        SettingsViewModel() is { } settings &&
+        string.Equals(settings.GetType().GetProperty("ActivePackThemeKey", Any)?.GetValue(settings) as string, ThemeKey, StringComparison.OrdinalIgnoreCase);
 
     private object? PluginHost() => _host?.GetType().GetField("_owner", Any)?.GetValue(_host);
 
