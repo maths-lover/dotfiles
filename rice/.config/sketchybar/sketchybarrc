@@ -76,7 +76,9 @@ sketchybar --add item front_app left \
                  click_script="sketchybar --set front_app popup.drawing=toggle" \
            --subscribe front_app front_app_switched mouse.exited.global
 # Fill it right away instead of waiting for the next app switch.
-INFO="$(lsappinfo info -only name "$(lsappinfo front)" 2>/dev/null | sed -n 's/^"\([^"]*\)".*/\1/p' | head -1)" NAME=front_app "$PLUGIN_DIR/front_app.sh"
+INFO="$(yabai -m query --windows --window 2>/dev/null | jq -r '.app // empty')"
+[[ -z $INFO ]] && INFO="$(lsappinfo info -only name "$(lsappinfo front)" 2>/dev/null | awk -F'"' 'NR==1{print $2}')"
+INFO="$INFO" NAME=front_app "$PLUGIN_DIR/front_app.sh"
 for action in hide quit force; do
   case $action in hide) l="Hide" i="󰘓";; quit) l="Quit" i="󰅖";; force) l="Force quit" i="󰚌";; esac
   sketchybar --add item "front_app.$action" popup.front_app \
