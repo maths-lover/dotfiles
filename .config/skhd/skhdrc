@@ -28,7 +28,8 @@
 # this lives up top. No `@`, so keys NOT bound in the mode still reach the app,
 # the same way the Hammerspoon modal only intercepted its own keys. Add `@`
 # after the name if you'd rather have every key swallowed while in the mode.
-:: window
+:: window  : sketchybar --trigger mode_change MODE=window  2>/dev/null
+:: default : sketchybar --trigger mode_change MODE=default 2>/dev/null
 
 # ============================================================================ #
 # GLOBAL (default mode): the chords the keyboard's WM layer emits               #
@@ -44,6 +45,12 @@ cmd + ctrl - l : yabai -m window --focus east  || yabai -m display --focus east
 
 # Restart yabai, which re-runs yabairc from scratch (skhdrc reloads itself).
 cmd + ctrl - r : yabai --restart-service
+
+# Show/hide the Dock. The rice auto-hides it (it peeks out at the bottom edge);
+# this flips auto-hide off/on when you need it for longer, e.g. to quit apps
+# from their Dock icon. The bar's front-app menu (click the app name) also has
+# Hide / Quit / Force quit.
+cmd + ctrl - d : osascript -e 'tell application "System Events" to set autohide of dock preferences to not (autohide of dock preferences)'
 
 # Enter "window mode" (sticky; see below). `; window` = switch skhd into the
 # mode named `window` and stay there until something switches back to default.

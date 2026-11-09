@@ -57,11 +57,12 @@ yabai -m config right_padding 8
 # Space between adjacent tiled windows.
 yabai -m config window_gap 8
 
-# Reserve room at the top for SketchyBar when the rice is running (its bar is
-# 36px tall; see rice/.config/sketchybar/sketchybarrc). `all` = every display.
-# Without the bar, nothing is reserved. This is evaluated on every (re)start.
+# Reserve room at the top for SketchyBar when the rice is running: a 34px bar
+# floating 6px below the top edge plus a 6px gap = 46px (see
+# rice/.config/sketchybar/sketchybarrc). `all` = every display. Without the
+# bar, nothing is reserved. This is evaluated on every (re)start.
 if pgrep -xq sketchybar; then
-  yabai -m config external_bar all:36:0
+  yabai -m config external_bar all:46:0
 else
   yabai -m config external_bar off:0:0
 fi

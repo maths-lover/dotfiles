@@ -3,57 +3,153 @@
 # Colours come from the active theme via ~/.local/state/rice/palette.sh, which
 # `rice.sh apply` regenerates from the Ghostty theme file on every `theme` switch.
 # Reference: https://felixkratz.github.io/SketchyBar/config/bar
+#
+# Layout (one bar per display, floating "island" style):
+#   left    [1 ▢▢] [2 ▢] [3 ▢]  ›  ▢ Front App ▾      (this display's Spaces, then the focused app)
+#   center  WINDOW                                       (only while skhd is in window mode)
+#   right   [cpu graph · mem · net · volume · battery · clock]
+# Every item is a plugin in ./plugins; click behaviour is documented next to it.
 
 PLUGIN_DIR="$CONFIG_DIR/plugins"
 PALETTE="$HOME/.local/state/rice/palette.sh"
 if [[ -f "$PALETTE" ]]; then source "$PALETTE"; else
   # Fallback so the bar still draws before the first `rice.sh apply`.
-  RICE_BG_HEX=0d1117 RICE_FG_0X=0xffe6edf3 RICE_FG_DIM_0X=0xff8b949e RICE_ACCENT_0X=0xff58a6ff RICE_BG_ALT2_0X=0xff21262d RICE_BORDER_0X=0xff30363d
+  RICE_BG_HEX=0d1117 RICE_FG_0X=0xffe6edf3 RICE_FG_DIM_0X=0xff8b949e RICE_FG_MUTED_0X=0xff6e7681
+  RICE_ACCENT_0X=0xff58a6ff RICE_BG_0X=0xff0d1117 RICE_BG_ALT_0X=0xff161b22 RICE_BG_ALT2_0X=0xff21262d
+  RICE_BORDER_0X=0xff30363d RICE_C1_0X=0xffff7b72 RICE_C3_0X=0xffd29922 RICE_C2_0X=0xff3fb950
 fi
 FONT="Maple Mono NF"
+export RICE_FG_0X RICE_FG_DIM_0X RICE_ACCENT_0X RICE_BG_ALT2_0X RICE_C1_0X RICE_C3_0X   # for plugins
 
 # --- the bar itself ------------------------------------------------------------
-# 0xee + hex = bar background at ~93% opacity; blur_radius softens what shows through.
-sketchybar --bar height=36 position=top sticky=on topmost=off margin=0 \
-           color="0xee${RICE_BG_HEX}" blur_radius=20 border_width=0 \
-           padding_left=10 padding_right=10 y_offset=0 corner_radius=0
+# A floating island: margin from the screen edges, rounded, slightly translucent
+# with blur. yabairc reserves 46px (6 offset + 34 bar + 6 gap) via external_bar.
+sketchybar --bar height=34 position=top sticky=on topmost=off \
+           margin=10 y_offset=6 corner_radius=10 \
+           color="0xf0${RICE_BG_HEX}" border_width=1 border_color="$RICE_BORDER_0X" \
+           blur_radius=24 shadow=on padding_left=6 padding_right=6
 
 # --- defaults every item inherits ---------------------------------------------
 sketchybar --default icon.font="$FONT:Bold:14.0" icon.color="$RICE_FG_0X" \
-           label.font="$FONT:Medium:13.0" label.color="$RICE_FG_0X" \
-           padding_left=4 padding_right=4 \
-           icon.padding_left=8 icon.padding_right=4 label.padding_left=4 label.padding_right=8 \
-           background.color="$RICE_BG_ALT2_0X" background.corner_radius=6 background.height=26 \
-           background.drawing=off
+           label.font="$FONT:Medium:12.5" label.color="$RICE_FG_0X" \
+           padding_left=3 padding_right=3 \
+           icon.padding_left=8 icon.padding_right=4 label.padding_left=2 label.padding_right=8 \
+           background.color="$RICE_BG_ALT2_0X" background.corner_radius=7 background.height=24 \
+           background.border_width=0 background.drawing=off \
+           popup.background.color="$RICE_BG_0X" popup.background.border_width=1 \
+           popup.background.border_color="$RICE_BORDER_0X" popup.background.corner_radius=9 \
+           popup.background.shadow.drawing=on popup.blur_radius=24 popup.y_offset=4 \
+           updates=when_shown   # hidden items get no events; the watcher and mode badge opt back in
 
-# --- left: one pill per Mission Control space ------------------------------------
-# `space` items know their Mission Control index (associated_space) and get a
-# SELECTED env var when that space is active; plugins/space.sh colours them.
-for sid in $(yabai -m query --spaces 2>/dev/null | jq -r '.[].index' || seq 1 4); do
-  sketchybar --add space "space.$sid" left \
-             --set "space.$sid" associated_space="$sid" icon="$sid" \
-                   icon.padding_left=10 icon.padding_right=10 label.drawing=off \
-                   icon.highlight_color="$RICE_ACCENT_0X" \
-                   script="$PLUGIN_DIR/space.sh" \
-                   click_script="$HOME/.config/yabai/focus-space $sid"
-done
+# --- events we raise ourselves --------------------------------------------------
+# mode_change: skhdrc triggers it when entering/leaving the sticky `window` mode.
+sketchybar --add event mode_change
 
-# --- left: focused application (icon from sketchybar-app-font + name) ------------
+# --- left: Spaces, one pill per Space, shown only on the display they live on ----
+# plugins/spaces.sh creates the items from yabai's space list, fills each with the
+# icons of the apps on that Space (sketchybar-app-font), highlights the visible
+# Space of each display, and re-runs on every space / window / display change.
+sketchybar --add item spaces_watcher left \
+           --set spaces_watcher drawing=off updates=on script="$PLUGIN_DIR/spaces.sh" \
+           --subscribe spaces_watcher space_change space_windows_change display_change front_app_switched
+"$PLUGIN_DIR/spaces.sh"
+
+# --- left: focused application --------------------------------------------------
+# Icon from sketchybar-app-font + name. Click: a menu with Hide / Quit / Force quit
+# for that app (this replaces the Dock's right-click menu, since the Dock is hidden).
 sketchybar --add item front_app left \
-           --set front_app icon.font="sketchybar-app-font:Regular:16.0" \
-                 icon.color="$RICE_ACCENT_0X" label.color="$RICE_FG_0X" \
-                 background.drawing=off padding_left=12 \
+           --set front_app icon.font="sketchybar-app-font:Regular:15.0" icon.color="$RICE_ACCENT_0X" \
+                 icon.padding_left=14 label.padding_right=10 background.drawing=off \
                  script="$PLUGIN_DIR/front_app.sh" \
-           --subscribe front_app front_app_switched
+                 click_script="sketchybar --set front_app popup.drawing=toggle" \
+           --subscribe front_app front_app_switched mouse.exited.global
+# Fill it right away instead of waiting for the next app switch.
+INFO="$(lsappinfo info -only name "$(lsappinfo front)" 2>/dev/null | sed -n 's/^"\([^"]*\)".*/\1/p' | head -1)" NAME=front_app "$PLUGIN_DIR/front_app.sh"
+for action in hide quit force; do
+  case $action in hide) l="Hide" i="󰘓";; quit) l="Quit" i="󰅖";; force) l="Force quit" i="󰚌";; esac
+  sketchybar --add item "front_app.$action" popup.front_app \
+             --set "front_app.$action" icon="$i" icon.color="$RICE_FG_DIM_0X" label="$l" \
+                   icon.padding_left=10 label.padding_right=14 \
+                   click_script="$PLUGIN_DIR/app_action.sh $action"
+done
+sketchybar --set front_app.force icon.color="$RICE_C1_0X"
 
-# --- right: clock, battery, volume ---------------------------------------------
+# --- center: skhd mode badge ------------------------------------------------------
+sketchybar --add item mode center \
+           --set mode drawing=off updates=on icon="󰖲" icon.color="$RICE_BG_0X" label="WINDOW" \
+                 label.color="$RICE_BG_0X" label.font="$FONT:Bold:11.0" \
+                 background.drawing=on background.color="$RICE_ACCENT_0X" \
+                 script="$PLUGIN_DIR/mode.sh" \
+           --subscribe mode mode_change
+
+# --- right: status cluster (added right-to-left: first added = rightmost) ----------
+# Clock. Click: this month's calendar.
 sketchybar --add item clock right \
-           --set clock update_freq=10 icon="󰥔" icon.color="$RICE_FG_DIM_0X" script="$PLUGIN_DIR/clock.sh"
+           --set clock icon="󰥔" icon.color="$RICE_FG_DIM_0X" \
+                 popup.align=right click_script="sketchybar --set clock popup.drawing=toggle"
+for i in 0 1 2 3 4 5 6 7; do
+  sketchybar --add item "clock.cal.$i" popup.clock \
+             --set "clock.cal.$i" icon.drawing=off label.font="$FONT:Regular:12.0" \
+                   width=190 label.align=center label.color="$RICE_FG_0X"
+done
+# Script last, so its first run finds the calendar items.
+sketchybar --set clock update_freq=10 script="$PLUGIN_DIR/clock.sh" \
+           --subscribe clock mouse.exited.global
+
+# Battery: hidden on desktops without one (plugin decides).
 sketchybar --add item battery right \
-           --set battery update_freq=120 script="$PLUGIN_DIR/battery.sh" \
+           --set battery update_freq=120 icon.color="$RICE_FG_DIM_0X" script="$PLUGIN_DIR/battery.sh" \
            --subscribe battery system_woke power_source_change
+
+# Volume. Click: a slider.
 sketchybar --add item volume right \
-           --set volume script="$PLUGIN_DIR/volume.sh" \
-           --subscribe volume volume_change
+           --set volume icon.color="$RICE_FG_DIM_0X" script="$PLUGIN_DIR/volume.sh" \
+                 popup.align=right click_script="sketchybar --set volume popup.drawing=toggle" \
+           --subscribe volume volume_change mouse.exited.global
+sketchybar --add slider volume.slider popup.volume 120 \
+           --set volume.slider slider.highlight_color="$RICE_ACCENT_0X" \
+                 slider.background.color="$RICE_BG_ALT2_0X" slider.background.height=6 \
+                 slider.background.corner_radius=3 slider.knob="" slider.knob.color="$RICE_FG_0X" \
+                 slider.knob.font="$FONT:Regular:11.0" padding_left=12 padding_right=12 \
+                 script="$PLUGIN_DIR/volume_slider.sh" \
+           --subscribe volume.slider mouse.clicked
+
+# Network: Wi-Fi signal icon + name ("Wi-Fi" until sketchybar may use Location
+# Services), "LAN" on ethernet, or offline. Click: details, Wi-Fi power toggle,
+# and a jump to the Wi-Fi settings pane.
+sketchybar --add item net right \
+           --set net icon.color="$RICE_FG_DIM_0X" \
+                 popup.align=right click_script="sketchybar --set net popup.drawing=toggle"
+for row in name ip signal security; do
+  sketchybar --add item "net.$row" popup.net \
+             --set "net.$row" icon.drawing=off label.font="$FONT:Regular:12.0" label.color="$RICE_FG_0X" \
+                   label.padding_left=12 label.padding_right=14
+done
+sketchybar --set net.name label.font="$FONT:Bold:12.5" \
+           --set net.security label.color="$RICE_FG_DIM_0X"
+sketchybar --add item net.toggle popup.net \
+           --set net.toggle icon="󰖩" icon.color="$RICE_FG_DIM_0X" icon.padding_left=10 label="Turn Wi-Fi off" \
+                 label.padding_right=14 click_script="$PLUGIN_DIR/net_action.sh toggle"
+sketchybar --add item net.settings popup.net \
+           --set net.settings icon="󰒓" icon.color="$RICE_FG_DIM_0X" icon.padding_left=10 label="Open Wi-Fi settings" \
+                 label.padding_right=14 click_script="$PLUGIN_DIR/net_action.sh settings"
+sketchybar --set net update_freq=60 script="$PLUGIN_DIR/net.sh" \
+           --subscribe net wifi_change system_woke mouse.exited.global
+
+# Memory: used percent.
+sketchybar --add item mem right \
+           --set mem update_freq=5 icon="󰍛" icon.color="$RICE_FG_DIM_0X" script="$PLUGIN_DIR/mem.sh"
+
+# CPU: a 40px rolling graph with the current percent next to it.
+sketchybar --add graph cpu right 40 \
+           --set cpu update_freq=2 icon="󰘚" icon.color="$RICE_FG_DIM_0X" \
+                 graph.color="$RICE_ACCENT_0X" graph.fill_color="0x55${RICE_ACCENT_HEX:-58a6ff}" \
+                 graph.line_width=1.5 label.padding_left=4 script="$PLUGIN_DIR/cpu.sh"
+
+# One pill around the whole status cluster.
+sketchybar --add bracket status cpu mem net volume battery clock \
+           --set status background.drawing=on background.color="$RICE_BG_ALT_0X" \
+                 background.border_width=1 background.border_color="$RICE_BORDER_0X" \
+                 background.corner_radius=8 background.height=26
 
 sketchybar --update

@@ -95,6 +95,8 @@ everything else works on Linux.
 - **neovim**: [`.config/nvim/docs/`](.config/nvim/docs/README.md) - getting started,
   architecture, keymaps, plugins, LSP & languages, completion, navigation, git,
   theme sync, Neovide, troubleshooting.
+- **desktop usage guide**: [`.config/yabai/USAGE.md`](.config/yabai/USAGE.md) -
+  keys, window mode, the bar, themes, troubleshooting. Start here.
 - **yabai / skhd**: [`.config/yabai/yabairc`](.config/yabai/yabairc) and
   [`.config/skhd/skhdrc`](.config/skhd/skhdrc) - the tiling window manager and its
   hotkeys. Every line is commented in place; SIP stays enabled. Two helper scripts
@@ -121,6 +123,7 @@ that already drives the terminal, and it is built to be removed cleanly.
 ~/.config/rice/rice.sh status      # incl. which wallpaper flavour each Space got
 ~/.config/rice/rice.sh wallpapers  # render every flavour (smooth + pixel) and open them in Preview
 ~/.config/rice/rice.sh style pixel # switch every Space to the pixel-art set (style smooth to go back)
+~/.config/rice/rice.sh style shuffle # deal the flavours out to the Spaces in a new random order
 ~/.config/rice/rice.sh uninstall   # restore every macOS setting, remove rendered files, unstow
 ~/.config/rice/rice.sh purge       # uninstall + brew uninstall the rice packages + delete state
 ```
@@ -140,14 +143,17 @@ How it works: `theme <name>` writes the active Ghostty theme; `rice.sh apply`
 | Chrome | `BrowserThemeColor` policy | frame colour; Chrome shows a "managed" badge |
 | widgets | Übersicht (`templates/ubersicht-*.jsx`) | clock + system stats on the desktop |
 
-**Wallpapers.** Five flavours of generated line art, all from the theme's colours:
-`ridges` (sine-sum mountains with meandering rivers), `contours` (a topographic map),
-`strands` (a flowing bundle of curves), `waves` (stacked rolling lines) and `peaks`
-(jagged silhouettes under a ringed moon), plus the same five scenes as retro pixel
-art (`pixel-ridges` ... `pixel-peaks`: a ~212-cell grid, a small palette from the
-theme, Bayer dithering, stars at night). Space 1 gets the first flavour, Space 2 the
+**Wallpapers.** Eleven flavours of generated line art, all from the theme's colours:
+`ridges` (sine-sum mountains in haze), `contours` (a topographic map), `strands` (a
+flowing bundle of curves), `waves` (stacked rolling lines), `peaks` (jagged
+silhouettes under a ringed moon), `dunes` (a desert with a low sun), `orbits`
+(tilted orbits around a star), `horizon` (a synthwave grid floor), `constellation`
+(stars joined into figures), `strata` (canyon sediment layers) and `meteors` (a
+meteor shower), plus every scene as retro pixel art (`pixel-<flavour>`: a ~212-cell
+grid, a small palette from the theme, Bayer dithering, stars at night). Space 1 gets the first flavour, Space 2 the
 second, and so on, wrapping around. `rice.sh style pixel|smooth` switches the whole
-set and is remembered across theme changes; `rice.sh style ridges pixel-peaks` picks
+set and is remembered across theme changes; `style shuffle` (or `shuffle-pixel`) deals
+the set out in a new random order; `rice.sh style ridges pixel-peaks` picks
 an explicit list; `RICE_WALLPAPER_FLAVOURS` in the environment overrides both. Each
 picture is rendered at the display's Retina size (the portrait 1080p panel gets its
 own composition), supersampled 1.5x and Lanczos-downscaled so edges are

@@ -7,7 +7,7 @@
 #   rice.sh purge       uninstall + brew uninstall every rice package + delete state
 #   rice.sh status      what is installed / running / applied (incl. wallpaper per Space)
 #   rice.sh wallpapers [smooth|pixel|all]   render the wallpaper flavours and open them in Preview
-#   rice.sh style [smooth|pixel|<flavours>]  pick the wallpaper set for every Space (and apply it)
+#   rice.sh style [smooth|pixel|shuffle|shuffle-pixel|<flavours>]  pick the wallpaper set for every Space (and apply it)
 #
 # Design: the active Ghostty theme (chosen with the zsh `theme` command) is the
 # single source of truth. ricelib.py turns it into palette.{sh,json,css} under
@@ -33,8 +33,8 @@ FIREFOX="$HOME/Library/Application Support/Firefox"
 # and the same scenes as pixel art. `rice.sh style pixel|smooth|<list>` records the
 # choice in $STATE/flavours; the env var RICE_WALLPAPER_FLAVOURS overrides both, e.g.
 #   export RICE_WALLPAPER_FLAVOURS="contours peaks"   (in .zshrc, before `theme` runs)
-FLAVOURS_SMOOTH="ridges contours strands waves peaks"
-FLAVOURS_PIXEL="pixel-ridges pixel-peaks pixel-waves pixel-contours pixel-strands"
+FLAVOURS_SMOOTH="ridges contours strands waves peaks dunes orbits horizon constellation strata meteors"
+FLAVOURS_PIXEL="pixel-ridges pixel-peaks pixel-waves pixel-contours pixel-strands pixel-dunes pixel-orbits pixel-horizon pixel-constellation pixel-strata pixel-meteors"
 flavours_current() {
   if [[ -n ${RICE_WALLPAPER_FLAVOURS:-} ]]; then printf '%s' "$RICE_WALLPAPER_FLAVOURS"
   elif [[ -s $STATE/flavours ]]; then tr -s '\n' ' ' < "$STATE/flavours" | sed 's/ $//'
@@ -176,9 +176,9 @@ install() {
   info "Stowing rice configs (~/.config/{rice,sketchybar,borders})..."
   stow -d "$DOT" -t "$HOME" --restow rice
 
-  info "Dock: auto-hide with a reveal delay so it stays out of the way..."
+  info "Dock: auto-hide, peeks out when the pointer hits the screen edge..."
   defaults write com.apple.dock autohide -bool true
-  defaults write com.apple.dock autohide-delay -float 1000        # seconds before it peeks out
+  defaults write com.apple.dock autohide-delay -float 0.15       # seconds before it peeks out (Cmd+Ctrl+D toggles it)
   defaults write com.apple.dock autohide-time-modifier -float 0  # no slide animation
   defaults write com.apple.dock show-recents -bool false
   killall Dock
@@ -306,6 +306,10 @@ style() {
   case $1 in
     smooth) printf '%s\n' "$FLAVOURS_SMOOTH" > "$STATE/flavours" ;;
     pixel)  printf '%s\n' "$FLAVOURS_PIXEL" > "$STATE/flavours" ;;
+    shuffle|shuffle-pixel)   # a fresh random order of the set, so the Spaces get different scenes
+      set_="$FLAVOURS_SMOOTH"; [[ $1 == shuffle-pixel ]] && set_="$FLAVOURS_PIXEL"
+      tr ' ' '\n' <<< "$set_" | awk 'BEGIN{srand()} {print rand() "\t" $0}' | sort -n | cut -f2 | tr '\n' ' ' | sed 's/ $//' > "$STATE/flavours"
+      echo >> "$STATE/flavours" ;;
     *)      printf '%s\n' "$*" > "$STATE/flavours" ;;
   esac
   [[ -n ${RICE_WALLPAPER_FLAVOURS:-} ]] && warn "RICE_WALLPAPER_FLAVOURS is set in this shell and overrides the saved style"
