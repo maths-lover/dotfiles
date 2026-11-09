@@ -11,6 +11,7 @@ DOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 # Module selector:  ./install.sh        -> everything (includes the pi module)
 #                   ./install.sh pi     -> ONLY the pi agent module, nothing else
+#                   ./install.sh rice   -> ONLY the desktop rice (opt-in; see rice/)
 MODULE="${1:-all}"
 
 bold=$(tput bold 2>/dev/null || true); reset=$(tput sgr0 2>/dev/null || true)
@@ -64,6 +65,12 @@ setup_pi() {
   mkdir -p "$HOME/.pi/agent"
   stow -d "$DOT" -t "$HOME" --restow pi
 }
+
+# Desktop rice (SketchyBar, borders, wallpapers, app themes): opt-in, never part
+# of the full install. Fully reversible: rice.sh uninstall | purge.
+if [[ "${MODULE}" == "rice" ]]; then
+  exec "$DOT/rice/.config/rice/rice.sh" install
+fi
 
 # The pi module is cross-platform, so handle it BEFORE the macOS-only full setup.
 if [[ "${MODULE}" == "pi" ]]; then
@@ -130,6 +137,26 @@ if [[ -d /Applications/IINA.app ]]; then
   defaults write com.colliderli.iina useUserDefinedConfDir -bool true
   defaults write com.colliderli.iina userDefinedConfDir -string "$HOME/.config/mpv"
   mkdir -p "$HOME/.local/state/mpv/watch_later"
+fi
+
+# 8. yabai + skhd (window manager, from the Brewfile in step 5): install the
+#    launchd agents and start them. Idempotent: re-running restarts them with the
+#    current configs. Both need Accessibility (System Settings > Privacy &
+#    Security > Accessibility); macOS prompts on first start. SIP stays ON: the
+#    configs avoid every scripting-addition feature.
+if command -v yabai >/dev/null 2>&1; then
+  # Mission Control's "Automatically rearrange Spaces based on most recent use"
+  # renumbers desktops every time you switch, which makes "go to space 3" land
+  # somewhere different each press. Turn it off (restart the Dock only when the
+  # value actually changed, so re-runs don't flash the Dock).
+  if [[ "$(defaults read com.apple.dock mru-spaces 2>/dev/null || echo 1)" != "0" ]]; then
+    info "Disabling 'rearrange Spaces based on most recent use'..."
+    defaults write com.apple.dock mru-spaces -bool false
+    killall Dock
+  fi
+  info "Starting yabai + skhd services..."
+  yabai --start-service 2>/dev/null || yabai --restart-service
+  command -v skhd >/dev/null 2>&1 && { skhd --start-service 2>/dev/null || skhd --restart-service; }
 fi
 
 printf '\n%sDone.%s  Start a new shell:  exec zsh\n' "$bold" "$reset"

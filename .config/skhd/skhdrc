@@ -1,0 +1,160 @@
+# skhdrc — hotkeys for yabai. Symlinked to ~/.config/skhd/skhdrc by GNU Stow.
+# skhd hot-reloads this file on save; `skhd --reload` forces it.
+#
+# Line syntax (full grammar: /opt/homebrew/opt/yabai/share/yabai/examples/skhdrc):
+#
+#   [mode <] modifiers - key : shell command        run a command
+#   [mode <] modifiers - key ; mode                 switch to a mode
+#   :: name [@] [: command]                         declare a mode
+#
+#   modifiers  joined with +   e.g.  cmd + ctrl      (cmd alt ctrl shift fn,
+#                                                     l/r-prefixed variants, hyper, meh)
+#   key        a letter/digit, or a keyword: space tab return escape backspace
+#              delete left right up down f1..f20, or a hex keycode like 0x18
+#   -          separates modifiers from the key (required even with one modifier)
+#   @ on a mode = swallow EVERY keypress while in it, bound or not
+#   -> after the key = also pass the keypress through to the app
+#
+# An action is EITHER `: command` OR `; mode`, never both on one line.
+# Commands run via `$SHELL -c`, so `;` chains and `||` fallbacks work. Everything
+# after `:` up to end of line is the command, so comments go on their own line.
+#
+# Modifier choice: Cmd+Ctrl is what the cheapino WM layer sends (cheapino/README.md
+# section 6) and it has no macOS default except Cmd+Ctrl+Space (Character Viewer),
+# which we deliberately shadow, same as the old Hammerspoon config did.
+
+# --- Modes ------------------------------------------------------------------- #
+# A mode must be declared BEFORE any line that switches to it (`; window`), so
+# this lives up top. No `@`, so keys NOT bound in the mode still reach the app,
+# the same way the Hammerspoon modal only intercepted its own keys. Add `@`
+# after the name if you'd rather have every key swallowed while in the mode.
+:: window
+
+# ============================================================================ #
+# GLOBAL (default mode): the chords the keyboard's WM layer emits               #
+# ============================================================================ #
+
+# Focus the window in a direction. `window --focus west` fails (non-zero exit)
+# when nothing is to the west on THIS display, so `||` falls through to
+# `display --focus west`, which moves focus to the next display over instead.
+cmd + ctrl - h : yabai -m window --focus west  || yabai -m display --focus west
+cmd + ctrl - j : yabai -m window --focus south || yabai -m display --focus south
+cmd + ctrl - k : yabai -m window --focus north || yabai -m display --focus north
+cmd + ctrl - l : yabai -m window --focus east  || yabai -m display --focus east
+
+# Restart yabai, which re-runs yabairc from scratch (skhdrc reloads itself).
+cmd + ctrl - r : yabai --restart-service
+
+# Enter "window mode" (sticky; see below). `; window` = switch skhd into the
+# mode named `window` and stay there until something switches back to default.
+cmd + ctrl - space ; window
+
+# Zoom the focused window to fill the space (keeps its tile; press again to undo).
+cmd + ctrl - m : yabai -m window --toggle zoom-fullscreen
+
+# Float / unfloat the focused window. The `--grid` part only acts on floating
+# windows: grid 4:4 = divide the space into 4 rows x 4 cols; the window spans
+# cols 1-2 / rows 1-2 of it (start-x:start-y:width:height), i.e. centred, half size.
+cmd + ctrl - f : yabai -m window --toggle float --grid 4:4:1:1:2:2
+
+# Go to space N. With SIP on, `yabai -m space --focus` relies on a fake swipe
+# gesture that is unreliable here, so a helper focuses a window living on that
+# space instead, which makes macOS switch (see ../yabai/focus-space).
+cmd + ctrl - 1 : ~/.config/yabai/focus-space 1
+cmd + ctrl - 2 : ~/.config/yabai/focus-space 2
+cmd + ctrl - 3 : ~/.config/yabai/focus-space 3
+cmd + ctrl - 4 : ~/.config/yabai/focus-space 4
+cmd + ctrl - 5 : ~/.config/yabai/focus-space 5
+cmd + ctrl - 6 : ~/.config/yabai/focus-space 6
+
+# Send the focused window to space N and follow it. `window --space N` works
+# without SIP off; the trailing `--focus` (no argument = the window we just
+# moved) is what makes macOS switch to that space.
+cmd + ctrl + shift - 1 : yabai -m window --space 1 --focus
+cmd + ctrl + shift - 2 : yabai -m window --space 2 --focus
+cmd + ctrl + shift - 3 : yabai -m window --space 3 --focus
+cmd + ctrl + shift - 4 : yabai -m window --space 4 --focus
+cmd + ctrl + shift - 5 : yabai -m window --space 5 --focus
+cmd + ctrl + shift - 6 : yabai -m window --space 6 --focus
+
+# ============================================================================ #
+# WINDOW MODE: bare keys, sticky, Esc/q to leave (the old Hammerspoon modal)    #
+# ============================================================================ #
+
+# Leave the mode. `; default` switches back to skhd's built-in default mode.
+window < escape ; default
+window < q      ; default
+
+# Move (warp) the focused window: pull it out of the tree and re-insert it next
+# to the window in that direction. This is the bsp equivalent of "snap to the
+# left half" etc.
+window < h : yabai -m window --warp west
+window < j : yabai -m window --warp south
+window < k : yabai -m window --warp north
+window < l : yabai -m window --warp east
+
+# Swap the focused window with its neighbour in that direction (both keep their sizes).
+window < shift - h : yabai -m window --swap west
+window < shift - j : yabai -m window --swap south
+window < shift - k : yabai -m window --swap north
+window < shift - l : yabai -m window --swap east
+
+# Choose where the NEXT window will be inserted relative to the focused one
+# (shows the preview coloured by insert_feedback_color). Same key twice cancels.
+window < ctrl - h : yabai -m window --insert west
+window < ctrl - j : yabai -m window --insert south
+window < ctrl - k : yabai -m window --insert north
+window < ctrl - l : yabai -m window --insert east
+
+# Grow / shrink: nudge the split ratio of the focused window's parent node by
+# 5%. Positive = more room for the left/top child, negative = less.
+# `=` and `-` have no skhd keyword, so they're written as Apple keycodes:
+# 0x18 = kVK_ANSI_Equal, 0x1B = kVK_ANSI_Minus (find others with `skhd --observe`).
+window < 0x18 : yabai -m window --ratio rel:0.05
+window < 0x1B : yabai -m window --ratio rel:-0.05
+
+# Equalise all splits on the current space (manual version of auto_balance).
+window < 0 : yabai -m space --balance
+
+# Maximise (zoom-fullscreen) / zoom to the parent node only. Press again to undo.
+window < m : yabai -m window --toggle zoom-fullscreen
+window < p : yabai -m window --toggle zoom-parent
+
+# Float + centre (same as global Cmd+Ctrl+F); `c` re-centres an already-floating
+# window at half size.
+window < f : yabai -m window --toggle float --grid 4:4:1:1:2:2
+window < c : yabai -m window --grid 4:4:1:1:2:2
+
+# Quarters for FLOATING windows (grid is ignored on tiled ones): 2 rows x 2 cols,
+# then start-col:start-row:1 wide:1 tall.
+window < y : yabai -m window --grid 2:2:0:0:1:1
+window < u : yabai -m window --grid 2:2:1:0:1:1
+window < b : yabai -m window --grid 2:2:0:1:1:1
+window < n : yabai -m window --grid 2:2:1:1:1:1
+
+# Flip the focused window's split between left/right and top/bottom.
+window < s : yabai -m window --toggle split
+
+# Rotate the whole tree 90 degrees, or mirror it.
+window < r : yabai -m space --rotate 90
+window < x : yabai -m space --mirror x-axis
+window < v : yabai -m space --mirror y-axis
+
+# Send the window to the next display (wrapping to the first) and follow it.
+# `--focus` after `--display` focuses the window we just moved.
+window < tab         : yabai -m window --display next --focus || yabai -m window --display first --focus
+window < shift - tab : yabai -m window --display prev --focus || yabai -m window --display last  --focus
+
+# Cycle the layout of the current space: bsp (tile) -> stack -> float -> bsp.
+# `query --spaces --space` (no selector) = the focused space; `.type` is its layout.
+window < t : yabai -m space --layout "$(yabai -m query --spaces --space | jq -r 'if .type == "bsp" then "stack" elif .type == "stack" then "float" else "bsp" end')"
+
+# Send the window to space N and follow. A line can't both run a command and
+# switch mode, so `skhd -k escape` synthesises an Esc press, which hits the
+# `window < escape ; default` binding above and leaves window mode.
+window < 1 : yabai -m window --space 1 --focus; skhd -k escape
+window < 2 : yabai -m window --space 2 --focus; skhd -k escape
+window < 3 : yabai -m window --space 3 --focus; skhd -k escape
+window < 4 : yabai -m window --space 4 --focus; skhd -k escape
+window < 5 : yabai -m window --space 5 --focus; skhd -k escape
+window < 6 : yabai -m window --space 6 --focus; skhd -k escape

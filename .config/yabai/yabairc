@@ -1,0 +1,139 @@
+#!/usr/bin/env sh
+# yabairc — yabai tiling window manager config. Symlinked to ~/.config/yabai/yabairc
+# by GNU Stow (file must stay executable: yabai runs it as a shell script on start).
+#
+# This file is NOT a config format: it is a shell script that yabai executes once
+# at startup. Every line is a normal `yabai -m ...` message sent to the running
+# yabai instance, exactly as you could type it in a terminal. That means you can
+# test any line live by pasting it into a shell, and `yabai --restart-service`
+# (Cmd+Ctrl+R in skhdrc) re-runs the whole file.
+#
+# SIP is ON on this machine, so the scripting addition (SA) is not loaded. Every
+# setting below works without it. SA-only features are listed at the bottom,
+# commented out, so they're one uncomment away if upstream ever supports macOS 27.
+#
+# Reference: `man yabai` (sections "Config", "Window", "Space", "Rule").
+# Keybindings live in ../skhd/skhdrc.
+
+# --- Layout -------------------------------------------------------------------
+# bsp = binary space partitioning: every new window splits the focused window's
+# area in two, so the screen is always fully tiled. Alternatives: `stack` (all
+# windows on top of each other, one visible) and `float` (yabai does nothing,
+# like vanilla macOS). This is the default for every space; override per space
+# with `yabai -m config --space 3 layout float`.
+yabai -m config layout bsp
+
+# Where a NEW window lands when it splits the focused one. second_child = the new
+# window goes right/below (the "natural" reading order); first_child = left/above.
+yabai -m config window_placement second_child
+
+# Which window gets split by a new window: the focused one (`focused`), or the
+# first/last leaf of the tree. `focused` is what you expect from a tiling WM.
+yabai -m config window_insertion_point focused
+
+# auto = split along the longer side of the window (wide windows split
+# vertically into left/right, tall ones horizontally into top/bottom).
+# Fixed alternatives: `vertical` or `horizontal`.
+yabai -m config split_type auto
+
+# When a window is split, how much of the area the EXISTING window keeps.
+# 0.50 = equal halves.
+yabai -m config split_ratio 0.50
+
+# off = keep the ratios you set by hand (Cmd+Ctrl+Space then -/=). on = yabai
+# re-equalises the whole tree every time a window opens/closes, overriding your
+# manual resizes. `Space 0` in window mode balances on demand instead.
+yabai -m config auto_balance off
+
+# A zoomed window (window mode `m`) stays zoomed when other windows come and go.
+yabai -m config window_zoom_persist on
+
+# --- Padding and gaps (pixels) -------------------------------------------------
+# Space between the screen edge and the outermost windows, per side.
+yabai -m config top_padding 8
+yabai -m config bottom_padding 8
+yabai -m config left_padding 8
+yabai -m config right_padding 8
+# Space between adjacent tiled windows.
+yabai -m config window_gap 8
+
+# Reserve room at the top for SketchyBar when the rice is running (its bar is
+# 36px tall; see rice/.config/sketchybar/sketchybarrc). `all` = every display.
+# Without the bar, nothing is reserved. This is evaluated on every (re)start.
+if pgrep -xq sketchybar; then
+  yabai -m config external_bar all:36:0
+else
+  yabai -m config external_bar off:0:0
+fi
+
+# --- Focus behaviour ----------------------------------------------------------
+# off = the mouse pointer stays put when you focus a window by keyboard.
+# on = the pointer jumps to the centre of the newly focused window.
+yabai -m config mouse_follows_focus off
+
+# off = hovering the pointer over a window does NOT focus it (keyboard-driven).
+# autofocus = focus on hover without raising; autoraise = focus AND raise.
+yabai -m config focus_follows_mouse off
+
+# When you focus a window that lives on another space (which is how the
+# space-switching helper works without SA, see ./focus-space), macOS normally
+# plays its slide animation. on = skip it. The man page says to enable this
+# only when NOT using the scripting addition, which is our case.
+yabai -m config skip_window_focus_animation on
+
+# Which display a brand-new window is managed on. default = wherever macOS
+# created it; focused = the display that currently has focus; cursor = the
+# display under the pointer.
+yabai -m config window_origin_display default
+
+# How yabai numbers displays for `display --focus 1/2/..`. default = macOS's
+# own ordering; vertical/horizontal = sort by screen position instead.
+yabai -m config display_arrangement_order default
+
+# --- Mouse --------------------------------------------------------------------
+# Hold this modifier and drag with the mouse to move (button 1) or resize
+# (button 2) ANY window, tiled or floating, without touching the title bar.
+# fn is chosen because Cmd/Alt/Ctrl+drag already mean things in many apps.
+yabai -m config mouse_modifier fn
+yabai -m config mouse_action1 move
+yabai -m config mouse_action2 resize
+
+# What happens when you drag a tiled window and drop it onto the middle of
+# another tiled window: swap their positions, or `stack` them.
+yabai -m config mouse_drop_action swap
+
+# Colour (0xAARRGGBB) of the translucent preview drawn when you pick an
+# insertion direction (window mode: i then h/j/k/l) or drag a window.
+yabai -m config insert_feedback_color 0xffd75f5f
+
+# --- Rules: windows yabai should leave alone ----------------------------------
+# A rule matches by app name (POSIX extended regex, anchored with ^ $) and sets
+# properties on matching windows. manage=off = float it, never tile it. Rules
+# only apply to windows that appear AFTER the rule is added; `--apply` below
+# retro-fits them to windows already open when yabai (re)starts.
+#
+# Find an app's exact name with:  yabai -m query --windows | jq '.[].app'
+yabai -m rule --add app="^System Settings$" manage=off
+yabai -m rule --add app="^Calculator$" manage=off
+yabai -m rule --add app="^Archive Utility$" manage=off
+yabai -m rule --add app="^Activity Monitor$" manage=off
+yabai -m rule --add app="^Neovide$" manage=off # was floatApps in the old Hammerspoon config
+# Dialog-like windows (Open/Save panels, alerts) have these accessibility
+# roles/subroles; float them so they don't get crammed into a tile.
+yabai -m rule --add subrole="^AXDialog$" manage=off
+yabai -m rule --add subrole="^AXSystemDialog$" manage=off
+yabai -m rule --apply
+
+# --- Scripting-addition features (need SIP partially disabled; NOT loaded) ------
+# Left here as documentation only. See `man yabai`: every setting marked
+# "System Integrity Protection must be partially disabled".
+# yabai -m config window_shadow              on     # per-window shadows on/off
+# yabai -m config window_opacity             on     # dim unfocused windows ...
+# yabai -m config active_window_opacity      1.0
+# yabai -m config normal_window_opacity      0.90
+# yabai -m config window_animation_duration  0.15   # animate moves/resizes
+# yabai -m config menubar_opacity            1.0
+# Also SA-only: `space --focus/--create/--destroy/--move/--swap`, sticky windows,
+# window layers, picture-in-picture, scratchpads.
+
+echo "yabai configuration loaded.."

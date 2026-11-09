@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# focus-space N — switch to Mission Control space N WITHOUT the scripting addition.
+#
+# Why not `yabai -m space --focus N`? With SIP on, yabai (7.1.19+) implements it
+# by synthesising a trackpad swipe, and on this Mac (macOS 27.2) that silently
+# does nothing or lands on the wrong desktop. Focusing a WINDOW that lives on
+# space N is deterministic: macOS itself switches to the window's space
+# (yabairc sets skip_window_focus_animation on so it's instant). If the space
+# has no windows, fall back to macOS's own "Switch to Desktop N" shortcut,
+# Ctrl+N, which you must enable once in:
+#   System Settings > Keyboard > Keyboard Shortcuts... > Mission Control
+#
+# Requires Mission Control's "Automatically rearrange Spaces based on most
+# recent use" to be OFF (install.sh does this), otherwise desktop N is a
+# different desktop after every switch.
+#
+# Called from skhdrc as:  ~/.config/yabai/focus-space 3
+set -euo pipefail
+
+n="${1:?usage: focus-space <space index 1-9>}"
+
+# Ask yabai for every window on space N, keep the ones that are actually
+# visible (not minimized, app not hidden), and take the first one's id.
+# `// empty` makes jq print nothing (instead of "null") when the list is empty.
+id="$(yabai -m query --windows --space "$n" \
+      | jq -r 'map(select(."is-minimized" == false and ."is-hidden" == false))[0].id // empty')"
+
+if [[ -n "$id" ]]; then
+  exec yabai -m window --focus "$id"
+fi
+
+# Empty space: synthesize the Mission Control shortcut through skhd.
+exec skhd -k "ctrl - $n"

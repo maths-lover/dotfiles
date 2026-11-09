@@ -1,0 +1,68 @@
+/**
+ * @name rice ({{THEME}})
+ * @author rice.sh
+ * @version 1.0.0
+ * @description Generated from the active Ghostty theme by ~/.config/rice/rice.sh. Do not edit by hand.
+ */
+/* RICE-MANAGED */
+.theme-dark, .theme-light, .theme-darker, .theme-midnight, .visual-refresh, :root {
+  /* -- classic variables (still read by most of the client) -- */
+  --background-primary: {{BG}};
+  --background-secondary: {{BG_ALT}};
+  --background-secondary-alt: {{BG_ALT2}};
+  --background-tertiary: {{BG}};
+  --background-floating: {{BG_ALT}};
+  --background-accent: {{BORDER}};
+  --background-mobile-primary: {{BG}};
+  --background-mobile-secondary: {{BG_ALT}};
+  --background-modifier-hover: {{BG_ALT2}};
+  --background-modifier-active: {{BORDER}};
+  --background-modifier-selected: {{BORDER}};
+  --background-modifier-accent: {{BORDER}};
+  --background-message-hover: {{BG_ALT}};
+  --channeltextarea-background: {{BG_ALT}};
+  --deprecated-card-bg: {{BG_ALT}};
+  --scrollbar-thin-thumb: {{BORDER}};
+  --scrollbar-auto-thumb: {{BORDER}};
+  --scrollbar-auto-track: {{BG}};
+  --scrollbar-thin-track: transparent;
+  --text-normal: {{FG}};
+  --text-muted: {{FG_MUTED}};
+  --text-link: {{ACCENT}};
+  --header-primary: {{FG}};
+  --header-secondary: {{FG_DIM}};
+  --interactive-normal: {{FG_DIM}};
+  --interactive-hover: {{FG}};
+  --interactive-active: {{FG}};
+  --interactive-muted: {{FG_MUTED}};
+  --channels-default: {{FG_DIM}};
+  --brand-experiment: {{ACCENT}};
+  --brand-500: {{ACCENT}};
+  --brand-560: {{ACCENT}};
+  --brand-experiment-560: {{ACCENT}};
+  --control-brand-foreground: {{ACCENT}};
+  --mention-background: {{SEL_BG}};
+  --mention-foreground: {{FG}};
+  /* -- 2024 "visual refresh" variables -- */
+  --background-base-lowest: {{BG}};
+  --background-base-lower: {{BG}};
+  --background-base-low: {{BG_ALT}};
+  --background-surface-high: {{BG_ALT}};
+  --background-surface-higher: {{BG_ALT2}};
+  --background-surface-highest: {{BORDER}};
+  --background-mod-subtle: {{BG_ALT2}};
+  --background-mod-normal: {{BORDER}};
+  --background-mod-strong: {{BORDER}};
+  --bg-overlay-1: {{BG}};
+  --bg-overlay-2: {{BG_ALT}};
+  --bg-overlay-3: {{BG_ALT2}};
+  --bg-overlay-chat: {{BG}};
+  --bg-overlay-app-frame: {{BG}};
+  --border-subtle: {{BORDER}};
+  --border-faint: {{BG_ALT2}};
+  --text-default: {{FG}};
+  --text-primary: {{FG}};
+  --text-secondary: {{FG_DIM}};
+  --text-tertiary: {{FG_MUTED}};
+  --header-primary: {{FG}};
+}

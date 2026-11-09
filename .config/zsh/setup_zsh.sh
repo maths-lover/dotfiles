@@ -61,6 +61,7 @@ if [[ -f "$BREWFILE" ]]; then
   # Homebrew >= 6 requires third-party taps to be trusted before install;
   # the Brewfile pulls krunkit (podman libkrun provider) from this tap.
   brew trust libkrun/krun 2>/dev/null || true
+  brew trust asmvik/formulae 2>/dev/null || true   # yabai + skhd
   brew bundle --file "$BREWFILE"
   ok "Brewfile installed"
 else

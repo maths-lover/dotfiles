@@ -203,6 +203,14 @@ theme() {
     fi
   fi
   print -P "%F{green}+%f theme -> %B$cmd%b  %F{8}($name)$note%f"
+  # Desktop rice (bar, borders, wallpaper, browsers, Discord) follows the theme
+  # when installed: rice/.config/rice/rice.sh. Runs in the background; its log
+  # is in ~/.local/state/rice/apply.log.
+  if [[ -x $HOME/.config/rice/rice.sh ]]; then
+    mkdir -p "$HOME/.local/state/rice"
+    "$HOME/.config/rice/rice.sh" apply "$cmd" >"$HOME/.local/state/rice/apply.log" 2>&1 &!
+    print -P "  %F{8}rice: applying to desktop in the background%f"
+  fi
   if (( need_reload )); then
     if _theme_ghostty_reload; then print -P "  %F{8}ghostty reloaded%f"
     else

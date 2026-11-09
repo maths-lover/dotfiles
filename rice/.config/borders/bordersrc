@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# bordersrc - JankyBorders startup options (run by `borders` on launch).
+# Live colour changes come from `rice.sh apply` (it calls `borders active_color=...`).
+# Reference: https://github.com/FelixKratz/JankyBorders
+PALETTE="$HOME/.local/state/rice/palette.sh"
+[[ -f "$PALETTE" ]] && source "$PALETTE"
+options=(
+  style=round                                  # rounded corners, matching macOS windows
+  width=5.0                                    # border thickness in points
+  hidpi=on                                     # crisp on retina
+  active_color="${RICE_ACCENT_0X:-0xff58a6ff}" # focused window
+  inactive_color="${RICE_BORDER_0X:-0xff30363d}"
+  blacklist="Übersicht"                        # never outline desktop widgets
+)
+borders "${options[@]}"

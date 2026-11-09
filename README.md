@@ -16,12 +16,15 @@ dotfiles/
 |-- install.sh            one-shot bootstrap (brew -> stow -> setup)
 |-- .gitignore
 |-- pi/                   SEPARATE stow package: pi agent config (see below)
+|-- rice/                 SEPARATE stow package: desktop rice, opt-in (see below)
 |   `-- .pi/agent/        settings, agents, prompts, extensions, skills
 `-- .config/
     |-- Brewfile          every package / cask / font (declarative)
     |-- starship.toml     the prompt
     |-- ghostty/config    terminal emulator
     |-- nvim/             neovim config + docs
+    |-- yabai/            tiling window manager (yabairc + focus-space helper)
+    |-- skhd/             hotkeys that drive yabai
     `-- zsh/              the shell config + docs + installer
 ```
 
@@ -92,3 +95,66 @@ everything else works on Linux.
 - **neovim**: [`.config/nvim/docs/`](.config/nvim/docs/README.md) - getting started,
   architecture, keymaps, plugins, LSP & languages, completion, navigation, git,
   theme sync, Neovide, troubleshooting.
+- **yabai / skhd**: [`.config/yabai/yabairc`](.config/yabai/yabairc) and
+  [`.config/skhd/skhdrc`](.config/skhd/skhdrc) - the tiling window manager and its
+  hotkeys. Every line is commented in place; SIP stays enabled.
+- **rice**: [`rice/.config/rice/rice.sh`](rice/.config/rice/rice.sh) - the opt-in
+  desktop rice (SketchyBar, JankyBorders, generated wallpapers, Firefox/Chrome/
+  Discord themes, Übersicht widgets), all rendered from the active `theme`. See
+  [Desktop rice](#desktop-rice) below.
+
+## Desktop rice
+
+`rice/` is a second stand-alone stow package, like `pi/`, and is **never** part of
+the full install. It themes the whole desktop from the same `theme <name>` command
+that already drives the terminal, and it is built to be removed cleanly.
+
+```sh
+./install.sh rice                  # or: rice/.config/rice/rice.sh install
+~/.config/rice/rice.sh status      # incl. which wallpaper flavour each Space got
+~/.config/rice/rice.sh wallpapers  # render every flavour (smooth + pixel) and open them in Preview
+~/.config/rice/rice.sh style pixel # switch every Space to the pixel-art set (style smooth to go back)
+~/.config/rice/rice.sh uninstall   # restore every macOS setting, remove rendered files, unstow
+~/.config/rice/rice.sh purge       # uninstall + brew uninstall the rice packages + delete state
+```
+
+How it works: `theme <name>` writes the active Ghostty theme; `rice.sh apply`
+(hooked at the end of `theme()`) parses that theme file with `ricelib.py` into
+`~/.local/state/rice/palette.{sh,json,css}` and renders every surface from it:
+
+| Surface | Tool | Where it lands |
+|---------|------|----------------|
+| menu bar | SketchyBar (`rice/.config/sketchybar`) | native bar auto-hidden; yabai reserves 36px |
+| focused-window border | JankyBorders (`rice/.config/borders`) | live recolour on switch |
+| wallpaper | `wallpaper.py` (Pillow + numpy, via `uv run`) | a different flavour on **every Space** of every display, written into macOS's wallpaper store; `~/.local/state/rice/wallpapers/<theme>-<flavour>-WxH.png` |
+| macOS accent + dark/light | `defaults` / AppleScript | nearest Apple accent preset, highlight = exact accent |
+| Firefox | `templates/firefox-userChrome.css` | every profile's `chrome/userChrome.css` + `user.js` flag |
+| Discord | Vencord theme from `templates/vencord.theme.css` | `~/Library/Application Support/Vencord/themes/rice.theme.css` |
+| Chrome | `BrowserThemeColor` policy | frame colour; Chrome shows a "managed" badge |
+| widgets | Übersicht (`templates/ubersicht-*.jsx`) | clock + system stats on the desktop |
+
+**Wallpapers.** Five flavours of generated line art, all from the theme's colours:
+`ridges` (sine-sum mountains with meandering rivers), `contours` (a topographic map),
+`strands` (a flowing bundle of curves), `waves` (stacked rolling lines) and `peaks`
+(jagged silhouettes under a ringed moon), plus the same five scenes as retro pixel
+art (`pixel-ridges` ... `pixel-peaks`: a ~212-cell grid, a small palette from the
+theme, Bayer dithering, stars at night). Space 1 gets the first flavour, Space 2 the
+second, and so on, wrapping around. `rice.sh style pixel|smooth` switches the whole
+set and is remembered across theme changes; `rice.sh style ridges pixel-peaks` picks
+an explicit list; `RICE_WALLPAPER_FLAVOURS` in the environment overrides both. Each
+picture is rendered at the display's Retina size (the portrait 1080p panel gets its
+own composition), supersampled 1.5x and Lanczos-downscaled so edges are
+anti-aliased, with dithered gradients and a 1-LSB grain so dark skies never band;
+then cached per theme, flavour and size. macOS
+only lets scripts change the Space that is on screen, so `apply` writes the plan
+straight into `~/Library/Application Support/com.apple.wallpaper/Store/Index.plist`
+and restarts WallpaperAgent; new Spaces inherit their display's first flavour, and a
+`rice.sh apply` picks them up. If the displays are asleep when `apply` runs, the
+wallpaper step is skipped with a warning.
+
+`install` snapshots every setting it touches to `~/.local/state/rice/snapshot.json`
+first; `uninstall` restores from it (Dock, menu bar, accent, dark mode, Chrome
+policy, Vencord's enabled themes) and swaps every rice wallpaper in the store back
+for your previous one (aerials included; the untouched store is also kept as
+`~/.local/state/rice/wallpaper-store.pre-rice.plist`). Rendered files carry a
+`RICE-MANAGED` marker and only those are deleted.

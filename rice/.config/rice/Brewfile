@@ -1,0 +1,8 @@
+# rice Brewfile - everything the desktop rice needs, and NOTHING the base
+# dotfiles need. `rice.sh purge` uninstalls exactly this list.
+tap "FelixKratz/formulae"           # sketchybar + borders (trusted by rice.sh)
+brew "sketchybar"                   # scriptable menu bar replacement
+brew "borders"                      # JankyBorders: coloured outline on the focused window
+brew "wallpaper"                    # get/set the desktop picture per screen (works on macOS 14+)
+cask "ubersicht"                    # HTML/JS desktop widgets
+cask "font-sketchybar-app-font"     # app icon glyphs for the bar's front-app item

@@ -117,22 +117,26 @@ BOOT  RGBt  RGBm    ·     ·          ·     ·     ·     ·     ·
                               [C^SPC]
 ```
 
-`C^x` = **`Cmd+Ctrl+x`**. The layer only emits chords; what they do is up to
-the window manager's keybinding config (yabai/skhd, to be set up):
+`C^x` = **`Cmd+Ctrl+x`**, the modifier `.config/skhd/skhdrc` binds for yabai:
 
-| WM-layer key | Sends |
-|--------------|-------|
-| right-inner thumb | `Cmd+Ctrl+Space` |
-| `h` `j` `k` `l` | `Cmd+Ctrl+h/j/k/l` |
-| `R` (top row) | `Cmd+Ctrl+R` |
+| WM-layer key | Sends | skhd / yabai action |
+|--------------|-------|---------------------|
+| right-inner thumb | `Cmd+Ctrl+Space` | enter **window mode** (sticky skhd mode) |
+| `h` `j` `k` `l` | `Cmd+Ctrl+h/j/k/l` | **focus** window west/south/north/east (falls through to the next display) |
+| `R` (top row) | `Cmd+Ctrl+R` | **restart** yabai (re-runs `yabairc`) |
+
+See `.config/skhd/skhdrc` for the full map, including the window-mode keys.
 
 ---
 
-## 3. Driving the window manager from the board
+## 3. Driving yabai from the board
 
-Hold left-inner thumb (WM), tap `h/j/k/l` or `R`, or tap right-inner thumb for
-`Cmd+Ctrl+Space`. Bind those chords in the window manager config (e.g. skhd) to
-focus / reload / toggle whatever mode you like.
+1. **Direct focus** — hold left-inner thumb (WM), tap `h/j/k/l`.
+2. **Window mode** — hold left-inner thumb, tap right-inner thumb → sends
+   `Cmd+Ctrl+Space`, which puts skhd in its sticky `window` mode. Release
+   everything: bare keys now act (`h/j/k/l` warp, `Shift+hjkl` swap, `m`
+   zoom, `f` float, `0` balance, `Tab` next display, `1-6` send to space,
+   `q`/`Esc` exit). Digits live on the NUM layer: hold the NUM thumb and tap.
 
 Because the WM layer only emits these chords while its thumb is held, nothing
 here collides with:

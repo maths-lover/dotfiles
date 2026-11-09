@@ -13,6 +13,9 @@
 # ── pi agent is its own stow package (installed separately) ──
 ^/pi$
 
+# ── desktop rice is its own stow package (rice/.config/rice/rice.sh install) ──
+^/rice$
+
 # ── cheapino keyboard firmware source (never link into $HOME) ──
 ^/cheapino$
 ^/\.git$
