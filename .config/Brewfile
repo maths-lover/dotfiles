@@ -69,7 +69,8 @@ cask "font-geist-mono-nerd-font"
 cask "font-commit-mono-nerd-font"
 
 # Music player
-cask "foobar2000"
+# Download noctis app from their website, there is no brew package, this comment is to remind myself
+# https://noctisapp.cc/
 
 # -- Window manager (config in .config/yabai + .config/skhd) --------------------
 brew "yabai"               # bsp tiling window manager (runs with SIP on; no scripting addition)
