@@ -8,11 +8,12 @@
 #   rice.sh status      what is installed / running / applied (incl. wallpaper per Space)
 #   rice.sh wallpapers [smooth|pixel|all]   render the wallpaper flavours and open them in Preview
 #   rice.sh style [smooth|pixel|shuffle|shuffle-pixel|<flavours>]  pick the wallpaper set for every Space (and apply it)
+#   rice.sh noctis-plugin   build + install the Noctis plugin that re-reads the rice's Noctis theme live (needs the .NET SDK)
 #
 # Design: the active Ghostty theme (chosen with the zsh `theme` command) is the
 # single source of truth. ricelib.py turns it into palette.{sh,json,css} under
 # ~/.local/state/rice, and every surface (SketchyBar, borders, wallpaper,
-# Firefox, Discord/Vencord, Chrome, Übersicht, macOS accent) is rendered from
+# Firefox, Discord/Vencord, Chrome, Übersicht, Noctis, macOS accent) is rendered from
 # that. Nothing here edits the base dotfiles; `uninstall` restores every macOS
 # setting from the snapshot taken on `install`.
 set -euo pipefail
@@ -28,6 +29,9 @@ THEME_STATE="$HOME/.config/zsh/.active-theme"
 UBER_WIDGETS="$HOME/Library/Application Support/Übersicht/widgets"
 VENCORD="$HOME/Library/Application Support/Vencord"
 FIREFOX="$HOME/Library/Application Support/Firefox"
+NOCTIS="$HOME/Library/Application Support/Noctis"
+NOCTIS_PACK="$NOCTIS/plugins/rice.theme"          # content pack: the theme as JSON (see noctis_apply)
+NOCTIS_RELOADER="$NOCTIS/plugins/rice.reloader"   # dotnet plugin that re-reads the pack live (noctis/reloader)
 # Wallpaper flavours (see wallpaper.py), handed out by Space number: Space 1 gets the
 # first, Space 2 the second, ... wrapping around. Two ready-made sets: smooth line art
 # and the same scenes as pixel art. `rice.sh style pixel|smooth|<list>` records the
@@ -86,6 +90,43 @@ wallpapers_apply() {
 }
 
 # ----------------------------------------------------------------------------- apply
+# Noctis (music player): a *content pack* is a colour theme as plain JSON in Noctis's
+# plugins folder; it needs no approval and Noctis derives everything the theme leaves
+# out. Noctis only re-reads packs at startup, though, so the rice also ships a tiny
+# plugin (noctis/reloader, installed by `rice.sh noctis-plugin`) that re-reads the
+# pack the moment this function rewrites it. The first time the pack is created a
+# `select-once.txt` marker asks that plugin to pick the Rice theme in Settings.
+noctis_apply() {
+  [[ -d $NOCTIS ]] || return 0
+  local first=0; [[ -f $NOCTIS_PACK/plugin.json ]] || first=1
+  mkdir -p "$NOCTIS_PACK/themes"
+  # Render outside the pack, then rename into it: Noctis refuses a pack with a stray
+  # file in it, and the reloader should see one finished file, not a half-written one.
+  python3 -IB "$LIB" render "$TPL/noctis-theme.json" "$STATE/noctis-rice.json" "$STATE"
+  mv -f "$STATE/noctis-rice.json" "$NOCTIS_PACK/themes/rice.json"
+  cmp -s "$HERE/noctis/pack/plugin.json" "$NOCTIS_PACK/plugin.json" 2>/dev/null || cp -f "$HERE/noctis/pack/plugin.json" "$NOCTIS_PACK/plugin.json"
+  (( first )) && : > "$NOCTIS_PACK/select-once.txt"
+  if ! pgrep -xq Noctis; then info "noctis: Rice theme written (applies when Noctis starts)"
+  elif [[ -f $NOCTIS_RELOADER/plugin.json ]]; then info "noctis: Rice theme written (the reloader plugin applies it live)"
+  else info "noctis: Rice theme written; restart Noctis to see it, or 'rice.sh noctis-plugin' for live updates"; fi
+}
+
+# Build the reloader plugin against the installed Noctis.app and drop it into Noctis's
+# plugins folder. Noctis only discovers plugins at startup, and a dotnet plugin needs a
+# one-time approval under Settings > Plugins (it is code, unlike the pack).
+noctis_plugin() {
+  [[ -d /Applications/Noctis.app ]] || die "Noctis.app not found in /Applications"
+  have dotnet || die "needs the .NET SDK: brew install dotnet"
+  local src="$HERE/noctis/reloader" out="$STATE/noctis-reloader"
+  info "Building the Noctis reloader plugin..."
+  DOTNET_NOLOGO=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1 dotnet build "$src" -c Release -o "$out/bin" --artifacts-path "$out/artifacts" -nologo -v quiet
+  mkdir -p "$NOCTIS_RELOADER"
+  cp -f "$out/bin/Rice.NoctisReloader.dll" "$out/bin/Rice.NoctisReloader.deps.json" "$src/plugin.json" "$NOCTIS_RELOADER/"
+  info "noctis: reloader installed in $NOCTIS_RELOADER"
+  if pgrep -xq Noctis; then warn "restart Noctis, then approve 'Rice theme reloader' under Settings > Plugins (once)"
+  else info "approve 'Rice theme reloader' under Settings > Plugins when Noctis next starts (once)"; fi
+}
+
 apply() {
   local name=${1:-}
   [[ -n $name ]] || { [[ -f $THEME_STATE ]] && name=$(<"$THEME_STATE"); }
@@ -160,6 +201,8 @@ apply() {
     python3 -IB "$LIB" render "$TPL/ubersicht-clock.jsx" "$UBER_WIDGETS/rice-clock.jsx" "$STATE"
     python3 -IB "$LIB" render "$TPL/ubersicht-stats.jsx" "$UBER_WIDGETS/rice-stats.jsx" "$STATE"
   fi
+
+  noctis_apply
   info "done"
 }
 
@@ -201,6 +244,10 @@ install() {
   open -b tracesOf.Uebersicht 2>/dev/null || open "/Applications/Übersicht.app" 2>/dev/null || warn "Übersicht did not launch"
 
   have yabai && { info "yabai: reserving space for the bar..."; yabai --restart-service; }
+  if [[ -d /Applications/Noctis.app ]]; then
+    if have dotnet; then noctis_plugin || warn "noctis: plugin build failed; the theme still applies when Noctis restarts"
+    else warn "noctis: for live re-theming install the .NET SDK (brew install dotnet) and run 'rice.sh noctis-plugin'"; fi
+  fi
   apply
   cat <<MSG
 
@@ -225,6 +272,7 @@ remove_rendered() {
     done
   fi
   rm -f "$VENCORD/themes/rice.theme.css" "$UBER_WIDGETS"/rice-*.jsx
+  rm -rf "$NOCTIS_PACK" "$NOCTIS_RELOADER" "$STATE/noctis-reloader"   # Noctis falls back to its default theme by itself
 }
 
 uninstall() {
@@ -239,7 +287,7 @@ uninstall() {
     warn "no snapshot found; leaving macOS settings as they are"
   fi
   rm -rf "$STATE/wallpapers"
-  info "Removing rendered theme files (Firefox, Vencord, Übersicht)..."
+  info "Removing rendered theme files (Firefox, Vencord, Übersicht, Noctis)..."
   remove_rendered
   info "Unstowing rice configs..."
   stow -d "$DOT" -t "$HOME" -D rice 2>/dev/null || true
@@ -265,6 +313,7 @@ status() {
   printf 'ubersicht:  %s\n' "$(pgrep -fq 'bersicht.app/Contents/MacOS' && echo running || echo stopped)"
   printf 'stowed:     %s\n' "$([[ -L $HOME/.config/sketchybar ]] && echo yes || echo no)"
   printf 'style:      %s\n' "$(flavours_current)"
+  [[ -d $NOCTIS ]] && printf 'noctis:     theme %s, reloader %s\n' "$([[ -f $NOCTIS_PACK/themes/rice.json ]] && echo written || echo missing)" "$([[ -f $NOCTIS_RELOADER/plugin.json ]] && echo installed || echo missing)"
   if [[ -f $STATE/wallpapers/plan.txt ]]; then
     printf 'wallpapers:\n'
     awk '{ printf "  space %s on display %s: %s\n", $1, $2, $3 }' "$STATE/wallpapers/plan.txt"
@@ -328,5 +377,6 @@ case ${1:-} in
   status)    status ;;
   wallpapers) wallpapers "${2:-all}" ;;
   style)     shift; style "$@" ;;
-  *) sed -n '2,11p' "$0"; exit 1 ;;
+  noctis-plugin) noctis_plugin ;;
+  *) sed -n '2,12p' "$0"; exit 1 ;;
 esac

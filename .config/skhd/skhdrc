@@ -43,6 +43,18 @@ cmd + ctrl - j : yabai -m window --focus south || yabai -m display --focus south
 cmd + ctrl - k : yabai -m window --focus north || yabai -m display --focus north
 cmd + ctrl - l : yabai -m window --focus east  || yabai -m display --focus east
 
+# Reach a window that no direction points at, e.g. a FLOATING window covered by
+# a tile (float Notes, click back into Ghostty: Notes is now behind it).
+# Tab / Shift+Tab step through every window on this Space, floating ones
+# included; ` (grave, keycode 0x32, top-left of the keyboard) jumps straight to
+# a floating window and presses again cycle through them. Tab is only bound
+# inside window mode otherwise, and plain Ctrl+Tab/Ctrl+digits are left alone
+# (apps and Reef use them), so Cmd+Ctrl+Tab and Cmd+Ctrl+` are free.
+# See ../yabai/focus-cycle for why this is a script and not `--focus next`.
+cmd + ctrl - tab         : ~/.config/yabai/focus-cycle next
+cmd + ctrl + shift - tab : ~/.config/yabai/focus-cycle prev
+cmd + ctrl - 0x32        : ~/.config/yabai/focus-cycle float
+
 # Restart yabai, which re-runs yabairc from scratch (skhdrc reloads itself).
 cmd + ctrl - r : yabai --restart-service
 

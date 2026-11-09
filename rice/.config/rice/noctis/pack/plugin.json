@@ -1,0 +1,10 @@
+{
+  "id": "rice.theme",
+  "name": "Rice",
+  "version": "1.0.0",
+  "author": "rice",
+  "description": "The desktop rice's colours as a Noctis theme, re-rendered on every `theme <name>`.",
+  "type": "content",
+  "minAppVersion": "1.5.3",
+  "contents": { "themes": ["themes/rice.json"] }
+}

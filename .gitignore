@@ -36,3 +36,7 @@ pi/.pi/agent/**/*.log
 
 # python bytecode (py_compile checks)
 __pycache__/
+
+# dotnet build output (Noctis reloader plugin; built into ~/.local/state/rice)
+rice/**/bin/
+rice/**/obj/

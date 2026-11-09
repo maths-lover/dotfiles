@@ -23,7 +23,7 @@ dotfiles/
     |-- starship.toml     the prompt
     |-- ghostty/config    terminal emulator
     |-- nvim/             neovim config + docs
-    |-- yabai/            tiling window manager (yabairc + focus-space helper)
+    |-- yabai/            tiling window manager (yabairc + focus-space/focus-cycle helpers)
     |-- skhd/             hotkeys that drive yabai
     `-- zsh/              the shell config + docs + installer
 ```
@@ -99,11 +99,13 @@ everything else works on Linux.
   keys, window mode, the bar, themes, troubleshooting. Start here.
 - **yabai / skhd**: [`.config/yabai/yabairc`](.config/yabai/yabairc) and
   [`.config/skhd/skhdrc`](.config/skhd/skhdrc) - the tiling window manager and its
-  hotkeys. Every line is commented in place; SIP stays enabled. Two helper scripts
+  hotkeys. Every line is commented in place; SIP stays enabled. Helper scripts
   cover what yabai can't do alone without the scripting addition:
   `focus-space` (switch Spaces: yabai window focus, falling back to activating
-  the app) and `native-tab` (keep Ghostty's native tabs in one tile instead of
-  splitting it on every Cmd+T). `verify-managed` restarts yabai once if it
+  the app) `focus-cycle` (Cmd+Ctrl+Tab and Cmd+Ctrl+` reach floating windows hidden
+  behind tiles) and `native-tab` (keep Ghostty's native tabs in one tile instead of
+  splitting it on every Cmd+T), plus `focus-cycle` (Cmd+Ctrl+Tab / Cmd+Ctrl+`: reach
+  a floating window hidden behind a tile). `verify-managed` restarts yabai once if it
   dropped windows while starting, which is what used to make Space switching die
   until the next Cmd+Ctrl+R. Apps whose dialogs are full-size overlay windows
   (Noctis) get a `manage=off` rule for everything but their main window.
@@ -124,6 +126,7 @@ that already drives the terminal, and it is built to be removed cleanly.
 ~/.config/rice/rice.sh wallpapers  # render every flavour (smooth + pixel) and open them in Preview
 ~/.config/rice/rice.sh style pixel # switch every Space to the pixel-art set (style smooth to go back)
 ~/.config/rice/rice.sh style shuffle # deal the flavours out to the Spaces in a new random order
+~/.config/rice/rice.sh noctis-plugin # build + install the Noctis plugin that applies the theme live (needs `brew install dotnet`)
 ~/.config/rice/rice.sh uninstall   # restore every macOS setting, remove rendered files, unstow
 ~/.config/rice/rice.sh purge       # uninstall + brew uninstall the rice packages + delete state
 ```
@@ -139,9 +142,10 @@ How it works: `theme <name>` writes the active Ghostty theme; `rice.sh apply`
 | wallpaper | `wallpaper.py` (Pillow + numpy, via `uv run`) | a different flavour on **every Space** of every display, written into macOS's wallpaper store; `~/.local/state/rice/wallpapers/<theme>-<flavour>-WxH.png` |
 | macOS accent + dark/light | `defaults` / AppleScript | nearest Apple accent preset, highlight = exact accent |
 | Firefox | `templates/firefox-userChrome.css` | every profile's `chrome/userChrome.css` + `user.js` flag |
-| Discord | Vencord theme from `templates/vencord.theme.css` | `~/Library/Application Support/Vencord/themes/rice.theme.css` |
+| Discord | Vencord theme from `templates/vencord.theme.css`, built on the [midnight](https://github.com/refact0r/midnight-discord) theme and recoloured from the palette | `~/Library/Application Support/Vencord/themes/rice.theme.css` |
 | Chrome | `BrowserThemeColor` policy | frame colour; Chrome shows a "managed" badge |
 | widgets | Übersicht (`templates/ubersicht-*.jsx`) | clock + system stats on the desktop |
+| Noctis (music) | content pack from `templates/noctis-theme.json` + the `noctis/reloader` plugin | `~/Library/Application Support/Noctis/plugins/rice.theme`; the plugin makes Noctis re-read it live, otherwise at its next start |
 
 **Wallpapers.** Eleven flavours of generated line art, all from the theme's colours:
 `ridges` (sine-sum mountains in haze), `contours` (a topographic map), `strands` (a

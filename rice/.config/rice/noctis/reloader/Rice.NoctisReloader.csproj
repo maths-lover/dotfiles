@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Noctis plugin: re-reads the Rice content pack when rice.sh rewrites it (see
+    RiceReloaderPlugin.cs). Built and installed by `rice.sh noctis-plugin`. The plugin
+    kit (Noctis.Plugins.Abstractions) is not on nuget.org, so it is referenced straight
+    from the installed app bundle; Noctis supplies the real one at run time.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Rice.NoctisReloader</RootNamespace>
+    <AssemblyName>Rice.NoctisReloader</AssemblyName>
+    <Version>1.0.0</Version>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <NoctisApp Condition="'$(NoctisApp)' == ''">/Applications/Noctis.app/Contents/MacOS</NoctisApp>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Noctis.Plugins.Abstractions">
+      <HintPath>$(NoctisApp)/Noctis.Plugins.Abstractions.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

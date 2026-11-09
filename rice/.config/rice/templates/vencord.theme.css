@@ -1,68 +1,148 @@
 /**
  * @name rice ({{THEME}})
  * @author rice.sh
- * @version 1.0.0
- * @description Generated from the active Ghostty theme by ~/.config/rice/rice.sh. Do not edit by hand.
+ * @version 2.0.0
+ * @description midnight (refact0r) recoloured from the active Ghostty theme by ~/.config/rice/rice.sh. Do not edit by hand.
+ * @source https://github.com/refact0r/midnight-discord
  */
 /* RICE-MANAGED */
-.theme-dark, .theme-light, .theme-darker, .theme-midnight, .visual-refresh, :root {
-  /* -- classic variables (still read by most of the client) -- */
-  --background-primary: {{BG}};
-  --background-secondary: {{BG_ALT}};
-  --background-secondary-alt: {{BG_ALT2}};
-  --background-tertiary: {{BG}};
-  --background-floating: {{BG_ALT}};
-  --background-accent: {{BORDER}};
-  --background-mobile-primary: {{BG}};
-  --background-mobile-secondary: {{BG_ALT}};
-  --background-modifier-hover: {{BG_ALT2}};
-  --background-modifier-active: {{BORDER}};
-  --background-modifier-selected: {{BORDER}};
-  --background-modifier-accent: {{BORDER}};
-  --background-message-hover: {{BG_ALT}};
-  --channeltextarea-background: {{BG_ALT}};
-  --deprecated-card-bg: {{BG_ALT}};
-  --scrollbar-thin-thumb: {{BORDER}};
-  --scrollbar-auto-thumb: {{BORDER}};
-  --scrollbar-auto-track: {{BG}};
-  --scrollbar-thin-track: transparent;
-  --text-normal: {{FG}};
-  --text-muted: {{FG_MUTED}};
-  --text-link: {{ACCENT}};
-  --header-primary: {{FG}};
-  --header-secondary: {{FG_DIM}};
-  --interactive-normal: {{FG_DIM}};
-  --interactive-hover: {{FG}};
-  --interactive-active: {{FG}};
-  --interactive-muted: {{FG_MUTED}};
-  --channels-default: {{FG_DIM}};
-  --brand-experiment: {{ACCENT}};
-  --brand-500: {{ACCENT}};
-  --brand-560: {{ACCENT}};
-  --brand-experiment-560: {{ACCENT}};
-  --control-brand-foreground: {{ACCENT}};
-  --mention-background: {{SEL_BG}};
-  --mention-foreground: {{FG}};
-  /* -- 2024 "visual refresh" variables -- */
-  --background-base-lowest: {{BG}};
-  --background-base-lower: {{BG}};
-  --background-base-low: {{BG_ALT}};
-  --background-surface-high: {{BG_ALT}};
-  --background-surface-higher: {{BG_ALT2}};
-  --background-surface-highest: {{BORDER}};
-  --background-mod-subtle: {{BG_ALT2}};
-  --background-mod-normal: {{BORDER}};
-  --background-mod-strong: {{BORDER}};
-  --bg-overlay-1: {{BG}};
-  --bg-overlay-2: {{BG_ALT}};
-  --bg-overlay-3: {{BG_ALT2}};
-  --bg-overlay-chat: {{BG}};
-  --bg-overlay-app-frame: {{BG}};
-  --border-subtle: {{BORDER}};
-  --border-faint: {{BG_ALT2}};
-  --text-default: {{FG}};
-  --text-primary: {{FG}};
-  --text-secondary: {{FG_DIM}};
-  --text-tertiary: {{FG_MUTED}};
-  --header-primary: {{FG}};
+
+/* midnight's build CSS; everything below overrides its variables */
+@import url('https://refact0r.github.io/midnight-discord/build/midnight.css');
+
+body {
+    /* font options */
+    --font: 'figtree'; /* change to '' for default discord font */
+    --code-font: ''; /* change to '' for default discord font */
+    font-weight: 400; /* normal text font weight. DOES NOT AFFECT BOLD TEXT */
+
+    /* sizes */
+    --gap: 12px; /* spacing between panels */
+    --divider-thickness: 4px; /* thickness of unread messages divider and highlighted message borders */
+    --border-thickness: 1px; /* thickness of borders around main panels. DOES NOT AFFECT OTHER BORDERS */
+
+    /* animation/transition options */
+    --animations: on; /* off: disable animations/transitions, on: enable animations/transitions */
+    --list-item-transition: 0.2s ease; /* transition for list items */
+    --dms-icon-svg-transition: 0.4s ease; /* transition for the dms icon */
+    --border-hover-transition: 0.2s ease; /* transition for borders when hovered */
+
+    /* top bar options */
+    --top-bar-height: var(--gap); /* height of the top bar (discord default is 36px, old discord style is 24px, var(--gap) recommended if button position is set to titlebar) */
+    --top-bar-button-position: titlebar; /* off: default position, hide: hide buttons completely, titlebar: move inbox button to channel titlebar (will hide title) */
+    --top-bar-title-position: off; /* off: default centered position, hide: hide title completely, left: left align title (like old discord) */
+    --subtle-top-bar-title: off; /* off: default, on: hide the icon and use subtle text color (like old discord) */
+
+    /* window controls */
+    --custom-window-controls: on; /* off: default window controls, on: custom window controls */
+    --window-control-size: 14px; /* size of custom window controls */
+
+    /* dms button options */
+    --custom-dms-icon: custom; /* off: use default discord icon, hide: remove icon entirely, custom: use custom icon */
+    --dms-icon-svg-url: url('https://refact0r.github.io/midnight-discord/assets/Font_Awesome_5_solid_moon.svg'); /* icon svg url. MUST BE A SVG. */
+    --dms-icon-svg-size: 90%; /* size of the svg (css mask-size property) */
+    --dms-icon-color-before: var(--icon-subtle); /* normal icon color */
+    --dms-icon-color-after: var(--white); /* icon color when button is hovered/selected */
+    --custom-dms-background: off; /* off to disable, image to use a background image (must set url variable below), color to use a custom color/gradient */
+    --dms-background-image-url: url(''); /* url of the background image */
+    --dms-background-image-size: cover; /* size of the background image (css background-size property) */
+    --dms-background-color: linear-gradient(70deg, var(--blue-2), var(--purple-2), var(--red-2)); /* fixed color/gradient (css background property) */
+
+    /* background image options */
+    --background-image: off; /* off: no background image, on: enable background image (must set url variable below) */
+    --background-image-url: url(''); /* url of the background image */
+
+    /* transparency/blur options */
+    /* NOTE: TO USE TRANSPARENCY/BLUR, YOU MUST HAVE TRANSPARENT BG COLORS. FOR EXAMPLE: --bg-4: hsla(220, 15%, 10%, 0.7); */
+    --transparency-tweaks: off; /* off: no changes, on: remove some elements for better transparency */
+    --remove-bg-layer: off; /* off: no changes, on: remove the base --bg-3 layer for use with window transparency (WILL OVERRIDE BACKGROUND IMAGE) */
+    --panel-blur: off; /* off: no changes, on: blur the background of panels */
+    --blur-amount: 12px; /* amount of blur */
+    --bg-floating: var(--bg-3); /* set this to a more opaque color if floating panels look too transparent. only applies if panel blur is on  */
+
+    /* chatbar options */
+    --custom-chatbar: off; /* off: default chatbar, separated: chatbar separated from chat */
+    --chatbar-height: 47px; /* height of the chatbar (56px by default, 47px to align with user panel, 56px recommended for separated) */
+
+    /* other options */
+    --small-user-panel: on; /* off: default user panel, on: smaller user panel like in old discord */
+}
+
+/* colours: midnight's variables, filled from the rice palette */
+:root {
+    --colors: on;
+
+    /* text */
+    --text-0: {{BG}}; /* text on coloured elements */
+    --text-1: {{FG}};
+    --text-2: {{FG}};
+    --text-3: {{FG_DIM}};
+    --text-4: {{FG_MUTED}};
+    --text-5: color-mix(in srgb, {{FG_MUTED}} 60%, {{BG}});
+
+    /* backgrounds */
+    --bg-1: {{BORDER}};
+    --bg-2: {{BG_ALT2}};
+    --bg-3: {{BG_ALT}};
+    --bg-4: {{BG}};
+    --hover: rgba({{ACCENT_RGB}}, 0.08);
+    --active: rgba({{ACCENT_RGB}}, 0.16);
+    --active-2: rgba({{ACCENT_RGB}}, 0.24);
+    --message-hover: rgba({{FG_RGB}}, 0.04);
+
+    /* accent */
+    --accent-1: {{ACCENT}};
+    --accent-2: {{ACCENT}};
+    --accent-3: {{ACCENT}};
+    --accent-4: color-mix(in srgb, {{ACCENT}} 85%, {{BG}});
+    --accent-5: color-mix(in srgb, {{ACCENT}} 70%, {{BG}});
+    --accent-new: var(--accent-2);
+    --mention: linear-gradient(to right, rgba({{ACCENT_RGB}}, 0.14) 40%, transparent);
+    --mention-hover: linear-gradient(to right, rgba({{ACCENT_RGB}}, 0.08) 40%, transparent);
+    --reply: linear-gradient(to right, rgba({{FG_DIM_RGB}}, 0.14) 40%, transparent);
+    --reply-hover: linear-gradient(to right, rgba({{FG_DIM_RGB}}, 0.08) 40%, transparent);
+
+    /* status */
+    --online: {{C2}};
+    --dnd: {{C1}};
+    --idle: {{C3}};
+    --streaming: {{C5}};
+    --offline: {{FG_MUTED}};
+
+    /* borders */
+    --border-light: rgba({{BORDER_RGB}}, 0.6);
+    --border: {{BORDER}};
+    --border-hover: {{FG_MUTED}};
+    --button-border: rgba({{FG_RGB}}, 0.1);
+
+    /* base colours (1 = lightest .. 5 = darkest) from the ANSI palette */
+    --red-1: {{C9}};
+    --red-2: {{C1}};
+    --red-3: {{C1}};
+    --red-4: color-mix(in srgb, {{C1}} 85%, {{BG}});
+    --red-5: color-mix(in srgb, {{C1}} 70%, {{BG}});
+
+    --green-1: {{C10}};
+    --green-2: {{C2}};
+    --green-3: {{C2}};
+    --green-4: color-mix(in srgb, {{C2}} 85%, {{BG}});
+    --green-5: color-mix(in srgb, {{C2}} 70%, {{BG}});
+
+    --blue-1: {{C12}};
+    --blue-2: {{C4}};
+    --blue-3: {{C4}};
+    --blue-4: color-mix(in srgb, {{C4}} 85%, {{BG}});
+    --blue-5: color-mix(in srgb, {{C4}} 70%, {{BG}});
+
+    --yellow-1: {{C11}};
+    --yellow-2: {{C3}};
+    --yellow-3: {{C3}};
+    --yellow-4: color-mix(in srgb, {{C3}} 85%, {{BG}});
+    --yellow-5: color-mix(in srgb, {{C3}} 70%, {{BG}});
+
+    --purple-1: {{C13}};
+    --purple-2: {{C5}};
+    --purple-3: {{C5}};
+    --purple-4: color-mix(in srgb, {{C5}} 85%, {{BG}});
+    --purple-5: color-mix(in srgb, {{C5}} 70%, {{BG}});
 }

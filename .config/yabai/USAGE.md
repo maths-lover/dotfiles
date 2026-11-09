@@ -22,6 +22,8 @@ Everything here runs with SIP on. The modifier for every window-manager key is
 | Keys | Does |
 |------|------|
 | h / j / k / l | focus the window west / south / north / east, crossing to the other display at the edge |
+| Tab / Shift + Tab | focus the next / previous window on the Space, floating ones included |
+| ` (grave) | focus a floating window on the Space (press again to cycle through them) |
 | 1 … 6 | go to Space N |
 | Shift + 1 … 6 | send the focused window to Space N and follow it |
 | m | zoom the focused window to fill the Space (again to undo) |
@@ -85,13 +87,16 @@ theme preview dracula      # this terminal window only; `theme revert` undoes it
 ~/.config/rice/rice.sh style pixel  # pixel-art wallpapers (style smooth to go back)
 ~/.config/rice/rice.sh style shuffle # new random scene on every Space (shuffle-pixel too)
 ~/.config/rice/rice.sh wallpapers   # render every flavour and open them in Preview
+~/.config/rice/rice.sh noctis-plugin # Noctis follows the theme live (one-time build, needs `brew install dotnet`)
 ~/.config/rice/rice.sh uninstall    # restore every macOS setting the rice touched
 ```
 
 `theme <name>` is the only switch: the rice re-applies itself in the background
 afterwards (log: `~/.local/state/rice/apply.log`). Chrome and Discord need a
 restart to pick up new colours; Firefox is themed only when `rice.sh apply`
-runs from a real terminal.
+runs from a real terminal. Noctis gets the theme as a content pack named "Rice"
+(Settings > Appearance > Themes); with the reloader plugin installed and approved
+once under Settings > Plugins, it recolours the moment `theme` runs.
 
 ## 6. Working with each tool
 
@@ -120,7 +125,7 @@ line above and look at `app`, `title`, `role`, `subrole`. Rules match those with
 regexes; `title!=` / `app!=` invert a match. Rules only apply to windows that
 appear after they are added; `yabai -m rule --apply` retro-fits them.
 
-Helpers in `yabai/`: `focus-space` (Space switching), `native-tab` (tab
+Helpers in `yabai/`: `focus-space` (Space switching), `focus-cycle` (focus through floating windows), `native-tab` (tab
 stacking), `verify-managed` (startup self-check). Each has its reasoning in a
 header comment.
 
@@ -209,6 +214,17 @@ renders it to its destination, and it follows every theme. `rice.sh install`
 snapshots every macOS setting it changes; `uninstall` restores them, so it is
 safe to experiment.
 
+**Noctis.** `templates/noctis-theme.json` is a Noctis *content pack* theme: `base`,
+`accent` and the colour keys Noctis lets packs set (see its docs/PLUGINS.md,
+"Content packs"); anything left out Noctis derives itself. `apply` renders it into
+`~/Library/Application Support/Noctis/plugins/rice.theme/`. Noctis only re-reads
+packs when it starts, so `noctis/reloader` is a ~100-line Noctis plugin that
+watches that folder and asks Noctis to re-read the pack, which recolours live.
+`rice.sh noctis-plugin` builds it against the installed Noctis.app and installs it;
+restart Noctis once and approve "Rice theme reloader" under Settings > Plugins.
+Its log lines show in Noctis's plugin page. The first time the pack appears it
+also selects the Rice theme for you; after that your own pick in Settings wins.
+
 ### Übersicht (desktop widgets) — `rice/.config/rice/templates/ubersicht-*.jsx`
 
 Rendered to `~/Library/Application Support/Übersicht/widgets/` on apply.
@@ -219,10 +235,12 @@ Rendered to `~/Library/Application Support/Übersicht/widgets/` on apply.
 | Symptom | What is happening | Do |
 |---------|-------------------|----|
 | Cmd+Ctrl+N does nothing for one Space | yabai dropped a window at startup (`could not locate window` in `/tmp/skhd_<user>.err.log`) | `verify-managed` restarts yabai once automatically; otherwise Cmd+Ctrl+R |
+| A floating window disappeared behind a tile | h/j/k/l only look in a direction and a covered window has none | Cmd+Ctrl+` jumps to the floating window (again to cycle); Cmd+Ctrl+Tab steps through all windows |
 | Ghostty shrinks to half after Cmd+T | native tabs are separate windows | `native-tab` stacks them; check `~/.local/state/yabai/native-tab.log` |
 | A dialog is tiled and its content is off screen | the app draws dialogs as a full-size overlay window (Avalonia apps like Noctis) | add `yabai -m rule --add app="^App$" title!="^App$" manage=off` to `yabai/yabairc` |
 | Bar items stale or missing | plugin error | `sketchybar --reload`; errors in `/opt/homebrew/var/log/sketchybar/sketchybar.err.log` |
 | Wallpapers unchanged after `theme` | displays were asleep during apply | `~/.config/rice/rice.sh apply` |
+| Noctis kept its old colours | the reloader plugin is missing, not approved, or Noctis's internals changed | Settings > Plugins: approve "Rice theme reloader" and read its log; or restart Noctis, which re-reads the pack |
 | Everything stopped after a display sleep | yabai's queries return nothing while displays are off | wake the displays, then Cmd+Ctrl+R if needed |
 
 Logs: `/tmp/yabai_<user>.out.log`, `/tmp/skhd_<user>.err.log`,

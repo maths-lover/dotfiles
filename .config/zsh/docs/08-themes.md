@@ -29,6 +29,11 @@ theme "Rose Pine"   # any Ghostty theme name (quote spaces)
 
 Tab-completion is available for the aliases and sub-commands.
 
+**Auto-reload:** Ghostty does not watch its config, so `theme` sends the
+`reload_config` keybind (Cmd+Shift+,) through System Events. One-time setup:
+System Settings > Privacy & Security > Accessibility > enable Ghostty. Without
+it, `theme` prints a hint and you press Cmd+Shift+, yourself.
+
 ## Bundled aliases
 
 | Mode | Aliases |

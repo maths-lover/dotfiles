@@ -1,0 +1,13 @@
+{
+  "id": "rice.reloader",
+  "name": "Rice theme reloader",
+  "version": "1.0.0",
+  "author": "rice",
+  "description": "Re-reads the Rice colour pack whenever the desktop rice re-themes it, so Noctis follows `theme <name>` live.",
+  "type": "dotnet",
+  "entry": "Rice.NoctisReloader.dll",
+  "apiVersion": "1.1",
+  "minAppVersion": "1.5.3",
+  "platforms": ["macos", "linux", "windows"],
+  "homepage": "https://github.com/heartached/Noctis/blob/main/docs/PLUGINS.md"
+}

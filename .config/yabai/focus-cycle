@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# focus-cycle next|prev|float — focus windows on the current Space, FLOATING ones included.
+#
+# Why a helper? Cmd+Ctrl+H/J/K/L focus by direction, and a floating window
+# that has been covered by a tile (float Notes, click back into Ghostty) has
+# no direction: it is behind another window, so nothing points at it. And
+# `yabai -m window --focus next|prev` walks the tiling tree, which is not a
+# reliable way to reach a floating window. With SIP on `window --focus <id>`
+# still works for any window and raises it, so this builds the list itself:
+# every window on the Space that is not minimized or hidden and that yabai
+# tracks (has-ax-reference; ones it dropped at startup cannot be focused, see
+# ./verify-managed), sorted by id so the order is stable between presses.
+#
+#   next / prev  step through that list from the focused window, wrapping.
+#   float        step through the FLOATING windows only. If the focused window
+#                is not floating, jump to the newest floating one (highest id);
+#                if it is, go to the next floating one. Press again to cycle.
+#
+# Dry run (print the id instead of focusing): FOCUS_CYCLE_DRY=1 focus-cycle float
+#
+# Called from skhdrc as:  ~/.config/yabai/focus-cycle next
+set -uo pipefail
+
+mode="${1:?usage: focus-cycle next|prev|float}"
+
+case "$mode" in
+  next|prev) filter='.' ;;
+  float)     filter='select(."is-floating")' ;;
+  *) echo "focus-cycle: unknown mode '$mode'" >&2; exit 2 ;;
+esac
+
+windows="$(yabai -m query --windows --space 2>/dev/null)" || exit 1
+
+# Candidate ids, ascending, and the focused id (empty when none is on this Space).
+ids="$(jq -r "[.[] | select(.\"is-minimized\" == false and .\"is-hidden\" == false
+                            and .\"has-ax-reference\" == true) | $filter] | sort_by(.id) | .[].id" <<<"$windows")"
+cur="$(jq -r '.[] | select(."has-focus") | .id' <<<"$windows")"
+[[ -n "$ids" ]] || exit 1
+
+target="$(awk -v cur="$cur" -v mode="$mode" '
+  { id[NR] = $1; if ($1 == cur) pos = NR }
+  END {
+    n = NR
+    if (!pos) { print (mode == "prev" ? id[1] : id[n]); exit }   # focused one not in list
+    if (mode == "prev") print id[(pos - 2 + n) % n + 1]
+    else                print id[pos % n + 1]
+  }' <<<"$ids")"
+
+# float mode from a tiled window: the focused id is not in the list, so the
+# awk above already chose the newest floating window (highest id).
+# next/prev from a window outside the list: first/last, a sane starting point.
+if [[ -n "${FOCUS_CYCLE_DRY:-}" ]]; then echo "$target"; exit 0; fi
+yabai -m window --focus "$target"
