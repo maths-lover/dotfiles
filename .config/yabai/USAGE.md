@@ -24,6 +24,7 @@ Everything here runs with SIP on. The modifier for every window-manager key is
 | h / j / k / l | focus the window west / south / north / east, crossing to the other display at the edge |
 | Tab / Shift + Tab | focus the next / previous window on the Space, floating ones included |
 | ` (grave) | focus a floating window on the Space (press again to cycle through them) |
+| n / p | next / previous window in a stack (windows sharing one frame: Ghostty tabs, the portrait display's overflow) |
 | 1 … 6 | go to Space N |
 | Shift + 1 … 6 | send the focused window to Space N and follow it |
 | m | zoom the focused window to fill the Space (again to undo) |
@@ -45,6 +46,7 @@ Everything here runs with SIP on. The modifier for every window-manager key is
 | f | float + centre; c = centre a floating window |
 | y u b n | snap a floating window to a quarter (top-left, top-right, bottom-left, bottom-right) |
 | s | flip the split direction of the window's node |
+| e | eject the window from its stack into a tile of its own |
 | r | rotate the layout 90°; x / v mirror it |
 | t | cycle the Space layout bsp → stack → float |
 | Tab / Shift+Tab | move the window to the next / previous display |
@@ -132,8 +134,22 @@ regexes; `title!=` / `app!=` invert a match. Rules only apply to windows that
 appear after they are added; `yabai -m rule --apply` retro-fits them.
 
 Helpers in `yabai/`: `focus-space` (Space switching), `focus-cycle` (focus through floating windows), `native-tab` (tab
-stacking), `verify-managed` (startup self-check). Each has its reasoning in a
+stacking), `tall-display` (portrait-display rules), `verify-managed` (startup self-check). Each has its reasoning in a
 header comment.
+
+**The portrait display.** A display taller than it is wide only has room for a
+column, so `tall-display` applies two rules to every Space on it (checked by
+display shape at run time, so the 4K display is untouched and a rotated panel
+reverts): windows split into rows, one above the other (a / b / c top to
+bottom), never side by side; and there are at most three rows. A fourth window
+is stacked onto a row instead of opening a fourth row: it joins the row you were
+in when it opened, otherwise the row holding the fewest windows. Cmd+Ctrl+n / p
+walk the stack, window-mode `e` ejects a window from it. The cap runs when a
+window is created and after the keys that move a window between Spaces or
+displays (Cmd+Ctrl+Shift+N, window mode Tab / 1…6); a window dragged over with
+fn is not capped until the next window arrives. Change the limit with
+`YABAI_MAX_TILES` or `MAX_TILES` in the script; `TALL_DRY=1 tall-display cap focused`
+shows what it would do; it logs to `~/.local/state/yabai/tall-display.log`.
 
 ### skhd (hotkeys) — `skhd/skhdrc`
 
@@ -250,6 +266,7 @@ on the desktop, so you see them on an empty Space or around floating windows.
 | Cmd+Ctrl+N does nothing for one Space | yabai dropped a window at startup (`could not locate window` in `/tmp/skhd_<user>.err.log`) | `verify-managed` restarts yabai once automatically; otherwise Cmd+Ctrl+R |
 | A floating window disappeared behind a tile | h/j/k/l only look in a direction and a covered window has none | Cmd+Ctrl+` jumps to the floating window (again to cycle); Cmd+Ctrl+Tab steps through all windows |
 | Ghostty shrinks to half after Cmd+T | native tabs are separate windows | `native-tab` stacks them; check `~/.local/state/yabai/native-tab.log` |
+| A new window on the portrait display vanished | it became the fourth row and was stacked onto an existing one | Cmd+Ctrl+n cycles the stack; `~/.local/state/yabai/tall-display.log` says which row took it |
 | A dialog is tiled and its content is off screen | the app draws dialogs as a full-size overlay window (Avalonia apps like Noctis) | add `yabai -m rule --add app="^App$" title!="^App$" manage=off` to `yabai/yabairc` |
 | Bar items stale or missing | plugin error | `sketchybar --reload`; errors in `/opt/homebrew/var/log/sketchybar/sketchybar.err.log` |
 | Wallpapers unchanged after `theme` | displays were asleep during apply | `~/.config/rice/rice.sh apply` |

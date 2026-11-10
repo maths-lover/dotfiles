@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+# tall-display — layout rules for a portrait (taller than wide) display.
+#
+# A 1080x1920 panel has room for a column of windows and nothing else: a
+# side-by-side split leaves two 540px strips, and a fourth tile makes every
+# row too short to read. Two rules fix that, both applied only to displays
+# whose frame is taller than it is wide, so the 4K display keeps bsp as is:
+#
+#   splits   every Space on a tall display splits horizontally (one window
+#            above the other: a / b / c top to bottom), never side by side.
+#            Existing side-by-side nodes on those Spaces are flipped too.
+#            Run from yabairc at startup and from the display_added /
+#            display_removed / space_created signals.
+#
+#   cap      at most MAX_TILES rows. A window that would become row MAX+1 is
+#            stacked onto an existing row instead (a yabai stack = several
+#            windows in one frame, like tabs). It joins the row that was
+#            focused before it arrived when that row is on the same Space,
+#            otherwise the row holding the fewest windows (lowest row on a
+#            tie). Cmd+Ctrl+n / p walk a stack; window mode `e` ejects the
+#            focused window from its stack into a row of its own.
+#              cap created   from the window_created signal ($YABAI_WINDOW_ID);
+#                            waits a moment so native-tab (Ghostty tabs) can
+#                            claim the window first
+#              cap focused   after a key that moved the focused window
+#                            (Cmd+Ctrl+Shift+N, window mode Tab / 1..6)
+#
+# Override the row limit with YABAI_MAX_TILES in yabai's environment or by
+# editing MAX_TILES below. Dry run: TALL_DRY=1 prints what would happen.
+set -uo pipefail
+
+MAX_TILES="${YABAI_MAX_TILES:-3}"
+LOG="$HOME/.local/state/yabai/tall-display.log"; mkdir -p "${LOG%/*}"
+log() { printf '%s %s%s\n' "$(date +%T)" "${TALL_DRY:+(dry run) }" "$*" >> "$LOG"; }
+run() { if [[ -n ${TALL_DRY:-} ]]; then echo "would: yabai -m $*"; else yabai -m "$@" 2>>"$LOG"; fi; }
+q() { yabai -m query "$@" 2>/dev/null; }
+
+# tall_spaces: Space indices on every display taller than it is wide.
+tall_spaces() {
+  q --displays | jq -r '.[] | select(.frame.h > .frame.w) | .spaces[]'
+}
+
+splits() {
+  local sp
+  for sp in $(tall_spaces); do
+    run config --space "$sp" split_type horizontal
+    # Flip nodes that are already split side by side. Both children of a
+    # node report the node's split-type, so flip one, re-query, repeat.
+    local i w
+    for i in 1 2 3 4 5 6 7 8; do
+      w="$(q --windows --space "$sp" | jq -r '
+        [.[] | select(.["split-type"] == "vertical" and (.["is-floating"] | not)
+                      and (.["is-minimized"] | not))] | first // empty | .id')"
+      [[ -n $w ]] || break
+      run window "$w" --toggle split || break
+      log "flipped node of window $w on space $sp to rows"
+    done
+  done
+  # Wide displays go back to the global default so a monitor that was
+  # portrait and got rotated does not keep the rule.
+  for sp in $(q --displays | jq -r '.[] | select(.frame.h <= .frame.w) | .spaces[]'); do
+    run config --space "$sp" split_type auto
+  done
+}
+
+cap() {
+  local mode="${1:-created}" win recent
+  case "$mode" in
+    created)
+      win="${YABAI_WINDOW_ID:?cap created needs \$YABAI_WINDOW_ID (run it from a signal)}"
+      # The previously focused window is still what `recent` points at.
+      recent="$(q --windows --window recent | jq -r '.id // empty')"
+      sleep 0.3   # let native-tab stack a Ghostty tab onto its parent first
+      ;;
+    focused)
+      win="$(q --windows --window | jq -r '.id // empty')"
+      recent="$(q --windows --window recent | jq -r '.id // empty')"
+      ;;
+    *) echo "usage: tall-display cap created|focused" >&2; return 2 ;;
+  esac
+  [[ -n $win ]] || return 0
+
+  local info
+  info="$(q --windows --window "$win")" || return 0
+  # Only a tiled window that is not already in a stack can become a row.
+  jq -e '(.["is-floating"] | not) and (.["is-minimized"] | not) and .["stack-index"] == 0' \
+    <<<"$info" >/dev/null || return 0
+  local display space
+  display="$(jq -r .display <<<"$info")"; space="$(jq -r .space <<<"$info")"
+  q --displays --display "$display" | jq -e '.frame.h > .frame.w' >/dev/null || return 0
+  [[ "$(q --spaces --space "$space" | jq -r .type)" == bsp ]] || return 0
+
+  # Rows = tiled windows that head a frame (stack-index 0 = alone, 1 = first
+  # of a stack). A covered window still holds a leaf (its split-type names
+  # its node), so it counts; a window that is neither visible nor in the
+  # tree (Spotify keeps one such ghost around) is not a row and must not be
+  # a target, or the newcomer would vanish behind it.
+  local others rows
+  others="$(q --windows --space "$space" | jq -c --argjson win "$win" '
+    [.[] | select(.id != $win and (.["is-floating"] | not) and (.["is-minimized"] | not)
+                  and (.["is-visible"] or .["split-type"] != "none" or .["stack-index"] > 0))]')"
+  rows="$(jq '[.[] | select(.["stack-index"] <= 1)] | length' <<<"$others")"
+  (( rows >= MAX_TILES )) || return 0
+
+  # Target: the previously focused window if it is a row here, else the
+  # smallest stack (windows sharing a frame), lowest on screen on a tie.
+  local target
+  target="$(jq -r --argjson recent "${recent:-0}" '
+    if any(.[]; .id == $recent) then $recent
+    else group_by(.frame) | sort_by(length, -(.[0].frame.y)) | .[0][0].id end' <<<"$others")"
+  [[ -n $target && $target != null ]] || return 0
+  # `window A --stack B` pulls B onto A's node: the row stays, the newcomer
+  # leaves its own leaf.
+  if run window "$target" --stack "$win"; then
+    log "space $space already has $rows rows: stacked $win onto $target ($mode)"
+    run window --focus "$win"
+  else
+    log "stack of $win onto $target failed ($mode)"
+  fi
+}
+
+case "${1:-}" in
+  splits) splits ;;
+  cap)    shift; cap "$@" ;;
+  *) echo "usage: tall-display splits | cap created|focused" >&2; exit 2 ;;
+esac

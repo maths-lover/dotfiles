@@ -105,7 +105,8 @@ everything else works on Linux.
   the app) `focus-cycle` (Cmd+Ctrl+Tab and Cmd+Ctrl+` reach floating windows hidden
   behind tiles) and `native-tab` (keep Ghostty's native tabs in one tile instead of
   splitting it on every Cmd+T), plus `focus-cycle` (Cmd+Ctrl+Tab / Cmd+Ctrl+`: reach
-  a floating window hidden behind a tile). `verify-managed` restarts yabai once if it
+  a floating window hidden behind a tile), `tall-display` (a portrait display gets
+  rows only, at most three, further windows join a stack). `verify-managed` restarts yabai once if it
   dropped windows while starting, which is what used to make Space switching die
   until the next Cmd+Ctrl+R. Apps whose dialogs are full-size overlay windows
   (Noctis) get a `manage=off` rule for everything but their main window.

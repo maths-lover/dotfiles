@@ -55,6 +55,12 @@ cmd + ctrl - tab         : ~/.config/yabai/focus-cycle next
 cmd + ctrl + shift - tab : ~/.config/yabai/focus-cycle prev
 cmd + ctrl - 0x32        : ~/.config/yabai/focus-cycle float
 
+# Walk a stack (several windows sharing one frame, like tabs: Ghostty's
+# native tabs, and the portrait display's overflow windows, see
+# ../yabai/tall-display). `stack.next` fails on the last window, so wrap.
+cmd + ctrl - n : yabai -m window --focus stack.next || yabai -m window --focus stack.first
+cmd + ctrl - p : yabai -m window --focus stack.prev || yabai -m window --focus stack.last
+
 # Restart yabai, which re-runs yabairc from scratch (skhdrc reloads itself).
 cmd + ctrl - r : yabai --restart-service
 
@@ -89,12 +95,12 @@ cmd + ctrl - 6 : ~/.config/yabai/focus-space 6
 # Send the focused window to space N and follow it. `window --space N` works
 # without SIP off; the trailing `--focus` (no argument = the window we just
 # moved) is what makes macOS switch to that space.
-cmd + ctrl + shift - 1 : yabai -m window --space 1 --focus
-cmd + ctrl + shift - 2 : yabai -m window --space 2 --focus
-cmd + ctrl + shift - 3 : yabai -m window --space 3 --focus
-cmd + ctrl + shift - 4 : yabai -m window --space 4 --focus
-cmd + ctrl + shift - 5 : yabai -m window --space 5 --focus
-cmd + ctrl + shift - 6 : yabai -m window --space 6 --focus
+cmd + ctrl + shift - 1 : yabai -m window --space 1 --focus; ~/.config/yabai/tall-display cap focused
+cmd + ctrl + shift - 2 : yabai -m window --space 2 --focus; ~/.config/yabai/tall-display cap focused
+cmd + ctrl + shift - 3 : yabai -m window --space 3 --focus; ~/.config/yabai/tall-display cap focused
+cmd + ctrl + shift - 4 : yabai -m window --space 4 --focus; ~/.config/yabai/tall-display cap focused
+cmd + ctrl + shift - 5 : yabai -m window --space 5 --focus; ~/.config/yabai/tall-display cap focused
+cmd + ctrl + shift - 6 : yabai -m window --space 6 --focus; ~/.config/yabai/tall-display cap focused
 
 # ============================================================================ #
 # WINDOW MODE: bare keys, sticky, Esc/q to leave (the old Hammerspoon modal)    #
@@ -154,6 +160,12 @@ window < n : yabai -m window --grid 2:2:1:1:1:1
 # Flip the focused window's split between left/right and top/bottom.
 window < s : yabai -m window --toggle split
 
+# Eject the window from its stack into a tile of its own: floating it drops
+# it out of the stack node, unfloating re-inserts it as a new leaf next to
+# the focused tile. (On the portrait display the cap only acts on arriving
+# windows, so an ejected fourth row stays until something new opens.)
+window < e : yabai -m window --toggle float; yabai -m window --toggle float
+
 # Rotate the whole tree 90 degrees, or mirror it.
 window < r : yabai -m space --rotate 90
 window < x : yabai -m space --mirror x-axis
@@ -161,8 +173,10 @@ window < v : yabai -m space --mirror y-axis
 
 # Send the window to the next display (wrapping to the first) and follow it.
 # `--focus` after `--display` focuses the window we just moved.
-window < tab         : yabai -m window --display next --focus || yabai -m window --display first --focus
-window < shift - tab : yabai -m window --display prev --focus || yabai -m window --display last  --focus
+# `tall-display cap focused` afterwards: on the portrait display a fourth
+# window is stacked onto a row instead of opening a fourth row.
+window < tab         : (yabai -m window --display next --focus || yabai -m window --display first --focus); ~/.config/yabai/tall-display cap focused
+window < shift - tab : (yabai -m window --display prev --focus || yabai -m window --display last  --focus); ~/.config/yabai/tall-display cap focused
 
 # Cycle the layout of the current space: bsp (tile) -> stack -> float -> bsp.
 # `query --spaces --space` (no selector) = the focused space; `.type` is its layout.
@@ -171,9 +185,9 @@ window < t : yabai -m space --layout "$(yabai -m query --spaces --space | jq -r 
 # Send the window to space N and follow. A line can't both run a command and
 # switch mode, so `skhd -k escape` synthesises an Esc press, which hits the
 # `window < escape ; default` binding above and leaves window mode.
-window < 1 : yabai -m window --space 1 --focus; skhd -k escape
-window < 2 : yabai -m window --space 2 --focus; skhd -k escape
-window < 3 : yabai -m window --space 3 --focus; skhd -k escape
-window < 4 : yabai -m window --space 4 --focus; skhd -k escape
-window < 5 : yabai -m window --space 5 --focus; skhd -k escape
-window < 6 : yabai -m window --space 6 --focus; skhd -k escape
+window < 1 : yabai -m window --space 1 --focus; ~/.config/yabai/tall-display cap focused; skhd -k escape
+window < 2 : yabai -m window --space 2 --focus; ~/.config/yabai/tall-display cap focused; skhd -k escape
+window < 3 : yabai -m window --space 3 --focus; ~/.config/yabai/tall-display cap focused; skhd -k escape
+window < 4 : yabai -m window --space 4 --focus; ~/.config/yabai/tall-display cap focused; skhd -k escape
+window < 5 : yabai -m window --space 5 --focus; ~/.config/yabai/tall-display cap focused; skhd -k escape
+window < 6 : yabai -m window --space 6 --focus; ~/.config/yabai/tall-display cap focused; skhd -k escape
