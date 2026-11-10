@@ -9,7 +9,6 @@
 #   rice.sh wallpapers [smooth|pixel|all]   render the wallpaper flavours and open them in Preview
 #   rice.sh style [smooth|pixel|shuffle|shuffle-pixel|<flavours>]  pick the wallpaper set for every Space (and apply it)
 #   rice.sh noctis-plugin   build + install the Noctis plugin that re-reads the rice's Noctis theme live (needs the .NET SDK)
-#   rice.sh stack-overlay   build + start the tab strip drawn over yabai stacks (needs Xcode's swiftc)
 #
 # Design: the active Ghostty theme (chosen with the zsh `theme` command) is the
 # single source of truth. ricelib.py turns it into palette.{sh,json,css} under
@@ -128,20 +127,6 @@ noctis_plugin() {
   else info "approve 'Rice theme reloader' under Settings > Plugins when Noctis next starts (once)"; fi
 }
 
-# Build stack-overlay (tabs floated over yabai stacks, see stack-overlay/) into the
-# state dir and (re)start it. sketchybarrc also restarts it on every bar reload so
-# it picks up the palette; this is for a fresh install or a source change.
-stack_overlay() {
-  have swiftc || die "needs the Swift compiler: xcode-select --install"
-  mkdir -p "$STATE/bin"
-  info "Building stack-overlay..."
-  swiftc -O -swift-version 5 -suppress-warnings -o "$STATE/bin/stack-overlay" \
-    "$HERE/stack-overlay/stack-overlay.swift" -framework AppKit || die "stack-overlay build failed"
-  pkill -x stack-overlay 2>/dev/null || true
-  (nohup "$STATE/bin/stack-overlay" >>"$STATE/stack-overlay.log" 2>&1 &)
-  info "stack-overlay: running (tabs appear over stacked windows)"
-}
-
 apply() {
   local name=${1:-}
   [[ -n $name ]] || { [[ -f $THEME_STATE ]] && name=$(<"$THEME_STATE"); }
@@ -250,8 +235,6 @@ install() {
   curl -fsSL -o "$STATE/bin/icon_map.sh" https://github.com/kvndrsslr/sketchybar-app-font/releases/latest/download/icon_map.sh \
     && chmod +x "$STATE/bin/icon_map.sh" || warn "icon_map.sh download failed; the bar shows app names only"
 
-  if have swiftc; then stack_overlay; else warn "no swiftc: stack tabs skipped (xcode-select --install, then rice.sh stack-overlay)"; fi
-
   info "Starting sketchybar + borders..."
   brew services start sketchybar >/dev/null
   brew services start borders >/dev/null
@@ -291,8 +274,6 @@ remove_rendered() {
   fi
   rm -f "$VENCORD/themes/rice.theme.css" "$UBER_WIDGETS"/rice-*.jsx
   rm -rf "$NOCTIS_PACK" "$NOCTIS_RELOADER" "$STATE/noctis-reloader"   # Noctis falls back to its default theme by itself
-  pkill -x stack-overlay 2>/dev/null || true
-  rm -f "$STATE/bin/stack-overlay" "$STATE/stack-overlay.log"
 }
 
 uninstall() {
@@ -329,7 +310,7 @@ status() {
   printf 'theme:      %s\n' "$(cat "$THEME_STATE" 2>/dev/null || echo none)"
   printf 'applied:    %s\n' "$(jq -r .THEME "$STATE/palette.json" 2>/dev/null || echo never)"
   printf 'snapshot:   %s\n' "$([[ -f $SNAP ]] && echo "$SNAP" || echo none)"
-  for p in sketchybar borders stack-overlay; do printf '%-14s %s\n' "$p:" "$(pgrep -xq $p && echo running || echo stopped)"; done
+  for p in sketchybar borders; do printf '%-11s %s\n' "$p:" "$(pgrep -xq $p && echo running || echo stopped)"; done
   printf 'ubersicht:  %s\n' "$(pgrep -fq 'bersicht.app/Contents/MacOS' && echo running || echo stopped)"
   printf 'stowed:     %s\n' "$([[ -L $HOME/.config/sketchybar ]] && echo yes || echo no)"
   printf 'style:      %s\n' "$(flavours_current)"
@@ -398,6 +379,5 @@ case ${1:-} in
   wallpapers) wallpapers "${2:-all}" ;;
   style)     shift; style "$@" ;;
   noctis-plugin) noctis_plugin ;;
-  stack-overlay) stack_overlay ;;
-  *) sed -n '2,13p' "$0"; exit 1 ;;
+  *) sed -n '2,12p' "$0"; exit 1 ;;
 esac

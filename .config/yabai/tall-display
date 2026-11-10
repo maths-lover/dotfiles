@@ -33,8 +33,9 @@
 #              cap focused   after a key that moved the focused window
 #                            (Cmd+Ctrl+Shift+N, window mode Tab / 1..6)
 #
-# Cmd+Ctrl+n / p walk a stack; the rice draws tabs on a stacked row
-# (rice/.config/rice/stack-overlay). Override the row limit with
+# Cmd+Ctrl+n / p walk a stack; the bar shows a cue while a stacked window is
+# focused; window mode Alt+h/j/k/l stacks the focused window onto a
+# neighbour by hand and `e` ejects it. Override the row limit with
 # YABAI_MAX_TILES in yabai's environment or MAX_TILES below. TALL_DRY=1
 # prints what would happen instead of doing it.
 set -uo pipefail
@@ -44,7 +45,7 @@ LOG="$HOME/.local/state/yabai/tall-display.log"; mkdir -p "${LOG%/*}"
 log() { printf '%s %s%s\n' "$(date +%T)" "${TALL_DRY:+(dry run) }" "$*" >> "$LOG"; }
 run() { if [[ -n ${TALL_DRY:-} ]]; then echo "would: yabai -m $*"; else yabai -m "$@" 2>>"$LOG"; fi; }
 q() { yabai -m query "$@" 2>/dev/null; }
-notify_bar() { pgrep -xq sketchybar && sketchybar --trigger stack_change 2>/dev/null; pkill -USR1 -x stack-overlay 2>/dev/null; return 0; }
+notify_bar() { pgrep -xq sketchybar && sketchybar --trigger stack_change 2>/dev/null; return 0; }
 
 # Space indices on every display taller than it is wide.
 tall_spaces() { q --displays | jq -r '.[] | select(.frame.h > .frame.w) | .spaces[]'; }

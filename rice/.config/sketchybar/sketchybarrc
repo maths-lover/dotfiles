@@ -220,17 +220,6 @@ sketchybar --add bracket status cpu mem net disk volume battery clock \
                  background.corner_radius=8 background.height=26
 
 # Per-display layout: the portrait display gets a slim bar (plugins/layout.sh).
-# --- stack tabs over the windows ---------------------------------------------------
-# stack-overlay (rice/.config/rice/stack-overlay, built by rice.sh install) floats
-# a tab strip over every stacked row. It reads the palette at start, so it is
-# (re)started here: every `sketchybar --reload`, which rice.sh apply does on a
-# theme change, gives it the new colours.
-OVERLAY="$HOME/.local/state/rice/bin/stack-overlay"
-if [[ -x "$OVERLAY" ]]; then
-  pkill -x stack-overlay 2>/dev/null
-  (nohup "$OVERLAY" >>"$HOME/.local/state/rice/stack-overlay.log" 2>&1 &)
-fi
-
 sketchybar --add item layout_watcher left \
            --set layout_watcher drawing=off updates=on script="$PLUGIN_DIR/layout.sh" \
            --subscribe layout_watcher display_change

@@ -160,10 +160,16 @@ window < n : yabai -m window --grid 2:2:1:1:1:1
 # Flip the focused window's split between left/right and top/bottom.
 window < s : yabai -m window --toggle split
 
-# Eject the window from its stack into a tile of its own: floating it drops
-# it out of the stack node, unfloating re-inserts it as a new leaf next to
-# the focused tile. (On the portrait display the cap only acts on arriving
-# windows, so an ejected fourth row stays until something new opens.)
+# Stacks (several windows in one frame, like tabs). Alt + h/j/k/l puts the
+# focused window onto the stack of the neighbour in that direction (or starts
+# one with it); `e` ejects it into a tile of its own (floating drops it out
+# of the stack node, unfloating re-inserts it as a new leaf next to the
+# focused tile). Cmd+Ctrl+n / p walk a stack. On the portrait display the
+# three-row cap re-stacks an ejected window at the next window event.
+window < alt - h : yabai -m window west  --stack "$(yabai -m query --windows --window | jq .id)"
+window < alt - j : yabai -m window south --stack "$(yabai -m query --windows --window | jq .id)"
+window < alt - k : yabai -m window north --stack "$(yabai -m query --windows --window | jq .id)"
+window < alt - l : yabai -m window east  --stack "$(yabai -m query --windows --window | jq .id)"
 window < e : yabai -m window --toggle float; yabai -m window --toggle float
 
 # Rotate the whole tree 90 degrees, or mirror it.
