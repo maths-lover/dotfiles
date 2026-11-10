@@ -152,6 +152,12 @@ for ev in display_added display_removed display_resized display_moved space_crea
   yabai -m signal --add event="$ev" label="tall_splits_$ev" \
     action="$HOME/.config/yabai/tall-display splits"
 done
+# Rows share the height equally (bsp alone would give 1/2, 1/4, 1/4); re-even
+# when a row goes away.
+for ev in window_destroyed window_minimized window_deminimized; do
+  yabai -m signal --add event="$ev" label="tall_even_$ev" \
+    action="$HOME/.config/yabai/tall-display even"
+done
 "$HOME/.config/yabai/tall-display" splits
 
 # --- Scripting-addition features (need SIP partially disabled; NOT loaded) ------

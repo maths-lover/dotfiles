@@ -12,6 +12,11 @@
 #            Run from yabairc at startup and from the display_added /
 #            display_removed / space_created signals.
 #
+#   even     the rows share the height equally. bsp nests its splits, so three
+#            windows come out as 1/2, 1/4, 1/4; this sets each node's ratio so
+#            every row is 1/N. Runs after cap and from the window_destroyed /
+#            window_minimized / window_deminimized signals.
+#
 #   cap      at most MAX_TILES rows. A window that would become row MAX+1 is
 #            stacked onto an existing row instead (a yabai stack = several
 #            windows in one frame, like tabs). It joins the row that was
@@ -25,7 +30,7 @@
 #              cap focused   after a key that moved the focused window
 #                            (Cmd+Ctrl+Shift+N, window mode Tab / 1..6)
 #
-# Override the row limit with YABAI_MAX_TILES in yabai's environment or by
+# `splits` and `cap` end with `even`. Override the row limit with YABAI_MAX_TILES in yabai's environment or by
 # editing MAX_TILES below. Dry run: TALL_DRY=1 prints what would happen.
 set -uo pipefail
 
@@ -119,8 +124,40 @@ cap() {
   fi
 }
 
+# even: equal rows on every tall Space. A row is a tiled window heading a
+# frame (see cap). Each window's --ratio sets its PARENT node's ratio = the
+# share of the first (upper) child. With all splits horizontal and at most
+# three rows the tree shape follows from the middle row's split-child:
+#   ((A,B),C) when B is the lower child of its node, (A,(B,C)) when upper.
+# More rows are ambiguous from the outside, so they just get --balance.
+even() {
+  local sp rows n a b c bchild
+  for sp in $(tall_spaces); do
+    [[ "$(q --spaces --space "$sp" | jq -r .type)" == bsp ]] || continue
+    rows="$(q --windows --space "$sp" | jq -c '
+      [.[] | select((.["is-floating"] | not) and (.["is-minimized"] | not) and .["stack-index"] <= 1
+                    and (.["is-visible"] or .["split-type"] != "none"))]
+      | sort_by(.frame.y) | map({id, child: .["split-child"]})')"
+    n="$(jq length <<<"$rows")"
+    case "$n" in
+      0|1) ;;
+      2) run window "$(jq -r '.[0].id' <<<"$rows")" --ratio abs:0.5 ;;
+      3) a="$(jq -r '.[0].id' <<<"$rows")"; b="$(jq -r '.[1].id' <<<"$rows")"
+         c="$(jq -r '.[2].id' <<<"$rows")"; bchild="$(jq -r '.[1].child' <<<"$rows")"
+         if [[ $bchild == second_child ]]; then
+           run window "$a" --ratio abs:0.5; run window "$c" --ratio abs:0.6667
+         else
+           run window "$a" --ratio abs:0.3333; run window "$b" --ratio abs:0.5
+         fi ;;
+      *) run space "$sp" --balance ;;
+    esac
+    log "evened $n rows on space $sp"
+  done
+}
+
 case "${1:-}" in
-  splits) splits ;;
-  cap)    shift; cap "$@" ;;
-  *) echo "usage: tall-display splits | cap created|focused" >&2; exit 2 ;;
+  splits) splits; even ;;
+  even)   even ;;
+  cap)    shift; cap "$@"; even ;;
+  *) echo "usage: tall-display splits | even | cap created|focused" >&2; exit 2 ;;
 esac

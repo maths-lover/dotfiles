@@ -141,15 +141,17 @@ header comment.
 column, so `tall-display` applies two rules to every Space on it (checked by
 display shape at run time, so the 4K display is untouched and a rotated panel
 reverts): windows split into rows, one above the other (a / b / c top to
-bottom), never side by side; and there are at most three rows. A fourth window
+bottom), never side by side, and the rows always share the height equally (bsp
+alone would give 1/2, 1/4, 1/4); and there are at most three rows. A fourth window
 is stacked onto a row instead of opening a fourth row: it joins the row you were
 in when it opened, otherwise the row holding the fewest windows. Cmd+Ctrl+n / p
 walk the stack, window-mode `e` ejects a window from it. The cap runs when a
 window is created and after the keys that move a window between Spaces or
 displays (Cmd+Ctrl+Shift+N, window mode Tab / 1…6); a window dragged over with
 fn is not capped until the next window arrives. Change the limit with
-`YABAI_MAX_TILES` or `MAX_TILES` in the script; `TALL_DRY=1 tall-display cap focused`
-shows what it would do; it logs to `~/.local/state/yabai/tall-display.log`.
+`YABAI_MAX_TILES` or `MAX_TILES` in the script; `tall-display even` re-equalises
+the rows by hand; `TALL_DRY=1 tall-display cap focused` shows what it would do; it
+logs to `~/.local/state/yabai/tall-display.log`.
 
 ### skhd (hotkeys) — `skhd/skhdrc`
 
