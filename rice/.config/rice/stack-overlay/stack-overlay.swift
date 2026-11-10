@@ -3,10 +3,12 @@
 // A yabai stack puts several windows in one frame; only the top one is on
 // screen and nothing shows that others hide behind it (with SIP on, yabai
 // cannot draw, and JankyBorders only colours the focused border). This
-// program keeps one transparent, click-through panel per visible stack,
-// floating above the windows, and draws a tab strip in the top-right corner
-// of the frame: one tab per window (app icon + name), the window on top in
-// the theme's accent colour. Colours come from ~/.local/state/rice/palette.sh.
+// program keeps one transparent panel per visible stack, floating above the
+// windows, and draws a tab strip in the top-right corner of the frame: one tab
+// per window (app icon + name), the window on top in the theme's accent
+// colour. Clicking a tab focuses that window (`yabai -m window <id> --focus`);
+// the panel never takes focus itself. Colours come from
+// ~/.local/state/rice/palette.sh.
 //
 // It re-reads `yabai -m query --windows` when it receives SIGUSR1 (sent by
 // yabai signals from yabairc: `pkill -USR1 -x stack-overlay`) and every two
@@ -82,7 +84,7 @@ func queryWindows() -> [Win] {
 }
 
 // --- drawing -----------------------------------------------------------------------
-struct Tab { let name: String; let icon: NSImage?; let current: Bool }
+struct Tab { let id: Int; let name: String; let icon: NSImage?; let current: Bool }
 let stripH: CGFloat = 26, tabH: CGFloat = 20, pad: CGFloat = 3, gap: CGFloat = 3
 let iconS: CGFloat = 14, maxText: CGFloat = 110
 
@@ -90,6 +92,25 @@ final class StripView: NSView {
     var tabs: [Tab] = [] { didSet { needsDisplay = true } }
     var focused = false
     override var isFlipped: Bool { true }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    // Click a tab = focus that window. The panel is non-activating, so the
+    // click goes to yabai and the focus lands on the chosen window.
+    override func mouseDown(with event: NSEvent) {
+        let p = convert(event.locationInWindow, from: nil)
+        var x = pad
+        for t in tabs {
+            let w = StripView.tabWidth(t)
+            if p.x >= x && p.x < x + w {
+                let proc = Process()
+                proc.executableURL = URL(fileURLWithPath: yabaiPath)
+                proc.arguments = ["-m", "window", String(t.id), "--focus"]
+                proc.standardOutput = FileHandle.nullDevice; proc.standardError = FileHandle.nullDevice
+                try? proc.run()
+                return
+            }
+            x += w + gap
+        }
+    }
     static func textWidth(_ s: String) -> CGFloat {
         min(maxText, ceil((s as NSString).size(withAttributes: [.font: font]).width))
     }
@@ -126,11 +147,14 @@ final class StripView: NSView {
 
 final class StripPanel: NSPanel {
     let strip = StripView()
+    // Clicks must not move key/main status to this panel.
+    override var canBecomeKey: Bool { false }
+    override var canBecomeMain: Bool { false }
     init() {
         super.init(contentRect: NSRect(x: 0, y: 0, width: 10, height: stripH),
                    styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         isOpaque = false; backgroundColor = .clear; hasShadow = false
-        ignoresMouseEvents = true; hidesOnDeactivate = false; isReleasedWhenClosed = false
+        ignoresMouseEvents = false; hidesOnDeactivate = false; isReleasedWhenClosed = false
         level = .floating
         collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .fullScreenAuxiliary]
         contentView = strip
@@ -179,7 +203,7 @@ func refresh() {
         let top = sorted.min { (z[$0.id] ?? .max) < (z[$1.id] ?? .max) }
         let topId = (z[top?.id ?? -1] != nil ? top?.id : nil)
             ?? sorted.first { $0.hasFocus }?.id ?? sorted[0].id
-        let tabs = sorted.map { Tab(name: $0.app, icon: icon(for: $0.pid), current: $0.id == topId) }
+        let tabs = sorted.map { Tab(id: $0.id, name: $0.app, icon: icon(for: $0.pid), current: $0.id == topId) }
         let panel = panels[key] ?? { let p = StripPanel(); panels[key] = p; return p }()
         panel.strip.focused = sorted.contains { $0.hasFocus }
         panel.strip.tabs = tabs

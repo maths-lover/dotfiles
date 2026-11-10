@@ -73,8 +73,8 @@ Left to right, one bar per display:
   top-right corner of every stacked row, one tab per window (icon + name), the
   window on top in the accent colour. It is drawn by `stack-overlay`, a tiny
   Swift program the rice builds (`rice.sh stack-overlay`, needs Xcode's
-  `swiftc`) and restarts with the bar, so it follows the theme. It is
-  click-through: use Cmd+Ctrl+n / p or the bar cue to switch.
+  `swiftc`) and restarts with the bar, so it follows the theme. Click a tab to
+  bring that window to the front; Cmd+Ctrl+n / p do the same from the keyboard.
 - **Now playing** (centre): the track Noctis is playing, click to play/pause,
   hover for album, position and previous/next. Needs Noctis's Local API on:
   Noctis > Settings > Account & Devices > Local API.
@@ -159,8 +159,8 @@ change there (a window opening, closing or minimizing) stacks the extra rows
 back, the focused one first. Cmd+Ctrl+n / p
 walk the stack, window-mode `e` ejects a window from it. A stacked row shows a
 tab strip in its top-right corner, one tab per window with its icon and name, the
-one on top in the accent colour (`stack-overlay`, part of the rice; see section
-4). The bar also shows a stack cue next to the app name whenever the focused
+one on top in the accent colour; click a tab to switch (`stack-overlay`, part of
+the rice; see section 4). The bar also shows a stack cue next to the app name whenever the focused
 window has others behind it: "2/3" plus the hidden windows' names. The cap runs when a
 window is created and after the keys that move a window between Spaces or
 displays (Cmd+Ctrl+Shift+N, window mode Tab / 1…6). Change the limit with
