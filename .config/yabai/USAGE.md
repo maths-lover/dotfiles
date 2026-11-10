@@ -69,6 +69,12 @@ Left to right, one bar per display:
 - **Stack cue**: appears next to the front app only when the focused window has
   others stacked behind it (Ghostty tabs, the portrait display's overflow):
   "2/3" and the hidden windows' names. Click it for the next one in the stack.
+  The main cue is on the window itself: **stack tabs**, a small strip in the
+  top-right corner of every stacked row, one tab per window (icon + name), the
+  window on top in the accent colour. It is drawn by `stack-overlay`, a tiny
+  Swift program the rice builds (`rice.sh stack-overlay`, needs Xcode's
+  `swiftc`) and restarts with the bar, so it follows the theme. It is
+  click-through: use Cmd+Ctrl+n / p or the bar cue to switch.
 - **Now playing** (centre): the track Noctis is playing, click to play/pause,
   hover for album, position and previous/next. Needs Noctis's Local API on:
   Noctis > Settings > Account & Devices > Local API.
@@ -147,15 +153,19 @@ reverts): windows split into rows, one above the other (a / b / c top to
 bottom), never side by side, and the rows always share the height equally (bsp
 alone would give 1/2, 1/4, 1/4); and there are at most three rows. A fourth window
 is stacked onto a row instead of opening a fourth row: it joins the row you were
-in when it opened, otherwise the row holding the fewest windows. Cmd+Ctrl+n / p
-walk the stack, window-mode `e` ejects a window from it. The bar shows a stack
-cue next to the app name whenever the focused window has others behind it:
-"2/3" plus the hidden windows' names; clicking it goes to the next one. The cap runs when a
+in when it opened, otherwise the row holding the fewest windows. If a Space ends
+up over the limit anyway (a window dragged over with fn, or ejected), the next
+change there (a window opening, closing or minimizing) stacks the extra rows
+back, the focused one first. Cmd+Ctrl+n / p
+walk the stack, window-mode `e` ejects a window from it. A stacked row shows a
+tab strip in its top-right corner, one tab per window with its icon and name, the
+one on top in the accent colour (`stack-overlay`, part of the rice; see section
+4). The bar also shows a stack cue next to the app name whenever the focused
+window has others behind it: "2/3" plus the hidden windows' names. The cap runs when a
 window is created and after the keys that move a window between Spaces or
-displays (Cmd+Ctrl+Shift+N, window mode Tab / 1…6); a window dragged over with
-fn is not capped until the next window arrives. Change the limit with
-`YABAI_MAX_TILES` or `MAX_TILES` in the script; `tall-display even` re-equalises
-the rows by hand; `TALL_DRY=1 tall-display cap focused` shows what it would do; it
+displays (Cmd+Ctrl+Shift+N, window mode Tab / 1…6). Change the limit with
+`YABAI_MAX_TILES` or `MAX_TILES` in the script; `tall-display fit` re-applies the
+limit and equal heights by hand; `TALL_DRY=1 tall-display cap focused` shows what it would do; it
 logs to `~/.local/state/yabai/tall-display.log`.
 
 ### skhd (hotkeys) — `skhd/skhdrc`
@@ -273,7 +283,8 @@ on the desktop, so you see them on an empty Space or around floating windows.
 | Cmd+Ctrl+N does nothing for one Space | yabai dropped a window at startup (`could not locate window` in `/tmp/skhd_<user>.err.log`) | `verify-managed` restarts yabai once automatically; otherwise Cmd+Ctrl+R |
 | A floating window disappeared behind a tile | h/j/k/l only look in a direction and a covered window has none | Cmd+Ctrl+` jumps to the floating window (again to cycle); Cmd+Ctrl+Tab steps through all windows |
 | Ghostty shrinks to half after Cmd+T | native tabs are separate windows | `native-tab` stacks them; check `~/.local/state/yabai/native-tab.log` |
-| A new window on the portrait display vanished | it became the fourth row and was stacked onto an existing one | the bar's stack cue ("2/3 …") names it; Cmd+Ctrl+n cycles the stack; `~/.local/state/yabai/tall-display.log` says which row took it |
+| A new window on the portrait display vanished | it became the fourth row and was stacked onto an existing one | the row's tab strip and the bar's stack cue name it; Cmd+Ctrl+n cycles the stack; `~/.local/state/yabai/tall-display.log` says which row took it |
+| No tabs over a stacked window | `stack-overlay` not running or not built | `rice.sh stack-overlay` (needs `xcode-select --install`); `~/.local/state/rice/stack-overlay.log` |
 | A dialog is tiled and its content is off screen | the app draws dialogs as a full-size overlay window (Avalonia apps like Noctis) | add `yabai -m rule --add app="^App$" title!="^App$" manage=off` to `yabai/yabairc` |
 | Bar items stale or missing | plugin error | `sketchybar --reload`; errors in `/opt/homebrew/var/log/sketchybar/sketchybar.err.log` |
 | Wallpapers unchanged after `theme` | displays were asleep during apply | `~/.config/rice/rice.sh apply` |

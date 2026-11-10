@@ -128,6 +128,9 @@ yabai -m rule --add subrole="^AXSystemDialog$" manage=off
 # window; tiling it pushes the dialog box off screen. Leave every Noctis
 # window except the main one ("Noctis") alone. `title!=` inverts the match.
 yabai -m rule --add label=noctis_popups app="^Noctis$" title!="^Noctis$" manage=off
+# The rice's stack tabs are click-through panels floating over stacked
+# windows (rice/.config/rice/stack-overlay); never tile them.
+yabai -m rule --add label=stack_overlay app="^stack-overlay$" manage=off
 yabai -m rule --apply
 
 # --- Signals: scripts yabai runs on events --------------------------------------
@@ -160,11 +163,18 @@ for ev in window_destroyed window_minimized window_deminimized; do
 done
 "$HOME/.config/yabai/tall-display" splits
 
-# Tell the bar (rice) when the focused window or its stack may have changed,
-# so its stack cue ("2/3 + hidden windows") stays right. No bar = no-op.
+# Tell the rice when the focused window or a stack may have changed: the bar
+# refreshes its stack cue ("2/3 + hidden windows") and stack-overlay redraws
+# the tabs it floats over stacked windows (SIGUSR1). Both no-ops without the
+# rice. window_moved/resized fire a lot while dragging; pkill is cheap and the
+# overlay coalesces bursts.
 for ev in window_focused window_destroyed window_minimized window_deminimized space_changed display_changed; do
   yabai -m signal --add event="$ev" label="bar_stack_$ev" \
     action="pgrep -xq sketchybar && sketchybar --trigger stack_change"
+done
+for ev in window_focused window_created window_destroyed window_moved window_resized window_minimized \
+          window_deminimized space_changed display_changed application_hidden application_visible; do
+  yabai -m signal --add event="$ev" label="overlay_$ev" action="pkill -USR1 -x stack-overlay"
 done
 
 # --- Scripting-addition features (need SIP partially disabled; NOT loaded) ------

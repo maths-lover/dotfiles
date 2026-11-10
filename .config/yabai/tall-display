@@ -3,35 +3,40 @@
 #
 # A 1080x1920 panel has room for a column of windows and nothing else: a
 # side-by-side split leaves two 540px strips, and a fourth tile makes every
-# row too short to read. Two rules fix that, both applied only to displays
-# whose frame is taller than it is wide, so the 4K display keeps bsp as is:
+# row too short to read. The rules below apply only to displays whose frame
+# is taller than it is wide, checked at run time, so the 4K display keeps
+# plain bsp and a rotated panel reverts on its own.
 #
 #   splits   every Space on a tall display splits horizontally (one window
 #            above the other: a / b / c top to bottom), never side by side.
 #            Existing side-by-side nodes on those Spaces are flipped too.
 #            Run from yabairc at startup and from the display_added /
-#            display_removed / space_created signals.
+#            display_removed / display_resized / display_moved /
+#            space_created signals.
 #
-#   even     the rows share the height equally. bsp nests its splits, so three
-#            windows come out as 1/2, 1/4, 1/4; this sets each node's ratio so
-#            every row is 1/N. Runs after cap and from the window_destroyed /
-#            window_minimized / window_deminimized signals.
+#   fit      at most MAX_TILES rows, all the same height. A row = a tiled
+#            window heading a frame; a stack (several windows in one frame,
+#            like tabs) is one row. Rows beyond the limit are stacked onto
+#            the row with the fewest windows (lowest on screen on a tie); the
+#            focused window goes first, since it is the one that was just
+#            dragged in or ejected. Then every node's ratio is set so the rows
+#            share the height (bsp alone nests them: 1/2, 1/4, 1/4). Runs
+#            after cap and from the window_destroyed / window_minimized /
+#            window_deminimized signals.
 #
-#   cap      at most MAX_TILES rows. A window that would become row MAX+1 is
-#            stacked onto an existing row instead (a yabai stack = several
-#            windows in one frame, like tabs). It joins the row that was
-#            focused before it arrived when that row is on the same Space,
-#            otherwise the row holding the fewest windows (lowest row on a
-#            tie). Cmd+Ctrl+n / p walk a stack; window mode `e` ejects the
-#            focused window from its stack into a row of its own.
+#   cap      a window that would become row MAX+1 is stacked onto a row at
+#            once: the row that was focused before it arrived when that is
+#            on the same Space, otherwise as in fit. Then fit.
 #              cap created   from the window_created signal ($YABAI_WINDOW_ID);
 #                            waits a moment so native-tab (Ghostty tabs) can
 #                            claim the window first
 #              cap focused   after a key that moved the focused window
 #                            (Cmd+Ctrl+Shift+N, window mode Tab / 1..6)
 #
-# `splits` and `cap` end with `even`. Override the row limit with YABAI_MAX_TILES in yabai's environment or by
-# editing MAX_TILES below. Dry run: TALL_DRY=1 prints what would happen.
+# Cmd+Ctrl+n / p walk a stack; the rice draws tabs on a stacked row
+# (rice/.config/rice/stack-overlay). Override the row limit with
+# YABAI_MAX_TILES in yabai's environment or MAX_TILES below. TALL_DRY=1
+# prints what would happen instead of doing it.
 set -uo pipefail
 
 MAX_TILES="${YABAI_MAX_TILES:-3}"
@@ -39,19 +44,35 @@ LOG="$HOME/.local/state/yabai/tall-display.log"; mkdir -p "${LOG%/*}"
 log() { printf '%s %s%s\n' "$(date +%T)" "${TALL_DRY:+(dry run) }" "$*" >> "$LOG"; }
 run() { if [[ -n ${TALL_DRY:-} ]]; then echo "would: yabai -m $*"; else yabai -m "$@" 2>>"$LOG"; fi; }
 q() { yabai -m query "$@" 2>/dev/null; }
+notify_bar() { pgrep -xq sketchybar && sketchybar --trigger stack_change 2>/dev/null; pkill -USR1 -x stack-overlay 2>/dev/null; return 0; }
 
-# tall_spaces: Space indices on every display taller than it is wide.
-tall_spaces() {
-  q --displays | jq -r '.[] | select(.frame.h > .frame.w) | .spaces[]'
+# Space indices on every display taller than it is wide.
+tall_spaces() { q --displays | jq -r '.[] | select(.frame.h > .frame.w) | .spaces[]'; }
+
+# tiled <space> [exclude id]: the windows that take part in the Space's tree.
+# A covered window still holds a leaf (its split-type names its node), so it
+# counts; a window that is neither visible nor in the tree (Spotify keeps one
+# such ghost around) is left out, or a newcomer stacked onto it would vanish.
+tiled() {
+  q --windows --space "$1" | jq -c --argjson ex "${2:-0}" '
+    [.[] | select(.id != $ex and (.["is-floating"] | not) and (.["is-minimized"] | not)
+                  and (.["is-visible"] or .["split-type"] != "none" or .["stack-index"] > 0))]'
+}
+# rows <tiled json>: one entry per frame (stack-index 0 = alone, 1 = stack top).
+rows() { jq -c '[.[] | select(.["stack-index"] <= 1)] | sort_by(.frame.y)' <<<"$1"; }
+# target <tiled json> [preferred id]: the preferred window if it is in the
+# tree, else a window of the smallest stack (lowest on screen on a tie).
+target() {
+  jq -r --argjson pref "${2:-0}" '
+    if any(.[]; .id == $pref) then $pref
+    else group_by(.frame) | sort_by(length, -(.[0].frame.y)) | .[0][0].id end' <<<"$1"
 }
 
 splits() {
-  local sp
+  local sp i w
   for sp in $(tall_spaces); do
     run config --space "$sp" split_type horizontal
-    # Flip nodes that are already split side by side. Both children of a
-    # node report the node's split-type, so flip one, re-query, repeat.
-    local i w
+    # Both children of a node report the node's split-type: flip one, re-query.
     for i in 1 2 3 4 5 6 7 8; do
       w="$(q --windows --space "$sp" | jq -r '
         [.[] | select(.["split-type"] == "vertical" and (.["is-floating"] | not)
@@ -61,90 +82,39 @@ splits() {
       log "flipped node of window $w on space $sp to rows"
     done
   done
-  # Wide displays go back to the global default so a monitor that was
-  # portrait and got rotated does not keep the rule.
+  # Wide displays get the global default back (a panel that was rotated).
   for sp in $(q --displays | jq -r '.[] | select(.frame.h <= .frame.w) | .spaces[]'); do
     run config --space "$sp" split_type auto
   done
 }
 
-cap() {
-  local mode="${1:-created}" win recent
-  case "$mode" in
-    created)
-      win="${YABAI_WINDOW_ID:?cap created needs \$YABAI_WINDOW_ID (run it from a signal)}"
-      # The previously focused window is still what `recent` points at.
-      recent="$(q --windows --window recent | jq -r '.id // empty')"
-      sleep 0.3   # let native-tab stack a Ghostty tab onto its parent first
-      ;;
-    focused)
-      win="$(q --windows --window | jq -r '.id // empty')"
-      recent="$(q --windows --window recent | jq -r '.id // empty')"
-      ;;
-    *) echo "usage: tall-display cap created|focused" >&2; return 2 ;;
-  esac
-  [[ -n $win ]] || return 0
-
-  local info
-  info="$(q --windows --window "$win")" || return 0
-  # Only a tiled window that is not already in a stack can become a row.
-  jq -e '(.["is-floating"] | not) and (.["is-minimized"] | not) and .["stack-index"] == 0' \
-    <<<"$info" >/dev/null || return 0
-  local display space
-  display="$(jq -r .display <<<"$info")"; space="$(jq -r .space <<<"$info")"
-  q --displays --display "$display" | jq -e '.frame.h > .frame.w' >/dev/null || return 0
-  [[ "$(q --spaces --space "$space" | jq -r .type)" == bsp ]] || return 0
-
-  # Rows = tiled windows that head a frame (stack-index 0 = alone, 1 = first
-  # of a stack). A covered window still holds a leaf (its split-type names
-  # its node), so it counts; a window that is neither visible nor in the
-  # tree (Spotify keeps one such ghost around) is not a row and must not be
-  # a target, or the newcomer would vanish behind it.
-  local others rows
-  others="$(q --windows --space "$space" | jq -c --argjson win "$win" '
-    [.[] | select(.id != $win and (.["is-floating"] | not) and (.["is-minimized"] | not)
-                  and (.["is-visible"] or .["split-type"] != "none" or .["stack-index"] > 0))]')"
-  rows="$(jq '[.[] | select(.["stack-index"] <= 1)] | length' <<<"$others")"
-  (( rows >= MAX_TILES )) || return 0
-
-  # Target: the previously focused window if it is a row here, else the
-  # smallest stack (windows sharing a frame), lowest on screen on a tie.
-  local target
-  target="$(jq -r --argjson recent "${recent:-0}" '
-    if any(.[]; .id == $recent) then $recent
-    else group_by(.frame) | sort_by(length, -(.[0].frame.y)) | .[0][0].id end' <<<"$others")"
-  [[ -n $target && $target != null ]] || return 0
-  # `window A --stack B` pulls B onto A's node: the row stays, the newcomer
-  # leaves its own leaf.
-  if run window "$target" --stack "$win"; then
-    log "space $space already has $rows rows: stacked $win onto $target ($mode)"
-    run window --focus "$win"
-    pgrep -xq sketchybar && sketchybar --trigger stack_change 2>/dev/null   # bar's stack cue
-  else
-    log "stack of $win onto $target failed ($mode)"
-  fi
-}
-
-# even: equal rows on every tall Space. A row is a tiled window heading a
-# frame (see cap). Each window's --ratio sets its PARENT node's ratio = the
-# share of the first (upper) child. With all splits horizontal and at most
-# three rows the tree shape follows from the middle row's split-child:
-#   ((A,B),C) when B is the lower child of its node, (A,(B,C)) when upper.
-# More rows are ambiguous from the outside, so they just get --balance.
-even() {
-  local sp rows n a b c bchild
+fit() {
+  local sp all rs n focused victim tgt a b c bchild
   for sp in $(tall_spaces); do
     [[ "$(q --spaces --space "$sp" | jq -r .type)" == bsp ]] || continue
-    rows="$(q --windows --space "$sp" | jq -c '
-      [.[] | select((.["is-floating"] | not) and (.["is-minimized"] | not) and .["stack-index"] <= 1
-                    and (.["is-visible"] or .["split-type"] != "none"))]
-      | sort_by(.frame.y) | map({id, child: .["split-child"]})')"
-    n="$(jq length <<<"$rows")"
+    all="$(tiled "$sp")"; rs="$(rows "$all")"; n="$(jq length <<<"$rs")"
+    # Over the limit: demote rows until it fits.
+    while (( n > MAX_TILES )); do
+      focused="$(q --windows --window | jq -r '.id // 0')"
+      victim="$(jq -r --argjson f "$focused" '
+        (map(select(.["stack-index"] == 0)) | if any(.[]; .id == $f) then $f else (last // empty | .id) end) // (last | .id)' <<<"$rs")"
+      [[ -n $victim && $victim != null ]] || break
+      tgt="$(target "$(jq -c --argjson v "$victim" '[.[] | select(.id != $v)]' <<<"$all")")"
+      run window "$tgt" --stack "$victim" || break
+      log "space $sp had $n rows: stacked $victim onto $tgt (fit)"
+      [[ -n ${TALL_DRY:-} ]] && break
+      all="$(tiled "$sp")"; rs="$(rows "$all")"; n="$(jq length <<<"$rs")"
+    done
+    # Equal heights. A window's --ratio sets its PARENT node's ratio = the
+    # share of the first (upper) child. With all splits horizontal and at
+    # most three rows the tree follows from the middle row's split-child:
+    # ((A,B),C) when B is the lower child of its node, (A,(B,C)) when upper.
+    # More rows are ambiguous from the outside, so they just get --balance.
     case "$n" in
       0|1) ;;
-      2) run window "$(jq -r '.[0].id' <<<"$rows")" --ratio abs:0.5 ;;
-      3) a="$(jq -r '.[0].id' <<<"$rows")"; b="$(jq -r '.[1].id' <<<"$rows")"
-         c="$(jq -r '.[2].id' <<<"$rows")"; bchild="$(jq -r '.[1].child' <<<"$rows")"
+      2) run window "$(jq -r '.[0].id' <<<"$rs")" --ratio abs:0.5 ;;
+      3) a="$(jq -r '.[0].id' <<<"$rs")"; b="$(jq -r '.[1].id' <<<"$rs")"
+         c="$(jq -r '.[2].id' <<<"$rs")"; bchild="$(jq -r '.[1]["split-child"]' <<<"$rs")"
          if [[ $bchild == second_child ]]; then
            run window "$a" --ratio abs:0.5; run window "$c" --ratio abs:0.6667
          else
@@ -152,13 +122,49 @@ even() {
          fi ;;
       *) run space "$sp" --balance ;;
     esac
-    log "evened $n rows on space $sp"
+    log "fitted $n rows on space $sp"
   done
+  notify_bar
+}
+
+cap() {
+  local mode="${1:-created}" win recent info display space all n tgt
+  case "$mode" in
+    created)
+      win="${YABAI_WINDOW_ID:?cap created needs \$YABAI_WINDOW_ID (run it from a signal)}"
+      recent="$(q --windows --window recent | jq -r '.id // 0')"   # focus before the newcomer
+      sleep 0.3   # let native-tab stack a Ghostty tab onto its parent first
+      ;;
+    focused)
+      win="$(q --windows --window | jq -r '.id // empty')"
+      recent="$(q --windows --window recent | jq -r '.id // 0')"
+      ;;
+    *) echo "usage: tall-display cap created|focused" >&2; return 2 ;;
+  esac
+  [[ -n $win ]] || return 0
+  info="$(q --windows --window "$win")" || return 0
+  jq -e '(.["is-floating"] | not) and (.["is-minimized"] | not) and .["stack-index"] == 0' \
+    <<<"$info" >/dev/null || return 0
+  display="$(jq -r .display <<<"$info")"; space="$(jq -r .space <<<"$info")"
+  q --displays --display "$display" | jq -e '.frame.h > .frame.w' >/dev/null || return 0
+  [[ "$(q --spaces --space "$space" | jq -r .type)" == bsp ]] || return 0
+  all="$(tiled "$space" "$win")"; n="$(rows "$all" | jq length)"
+  (( n >= MAX_TILES )) || return 0
+  tgt="$(target "$all" "$recent")"
+  [[ -n $tgt && $tgt != null ]] || return 0
+  # `window A --stack B` pulls B onto A's node: the row stays, the newcomer
+  # leaves its own leaf.
+  if run window "$tgt" --stack "$win"; then
+    log "space $space already has $n rows: stacked $win onto $tgt ($mode)"
+    run window --focus "$win"
+  else
+    log "stack of $win onto $tgt failed ($mode)"
+  fi
 }
 
 case "${1:-}" in
-  splits) splits; even ;;
-  even)   even ;;
-  cap)    shift; cap "$@"; even ;;
-  *) echo "usage: tall-display splits | even | cap created|focused" >&2; exit 2 ;;
+  splits) splits; fit ;;
+  fit|even) fit ;;
+  cap)    shift; cap "$@"; fit ;;
+  *) echo "usage: tall-display splits | fit | cap created|focused" >&2; exit 2 ;;
 esac

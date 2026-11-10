@@ -128,6 +128,7 @@ that already drives the terminal, and it is built to be removed cleanly.
 ~/.config/rice/rice.sh style pixel # switch every Space to the pixel-art set (style smooth to go back)
 ~/.config/rice/rice.sh style shuffle # deal the flavours out to the Spaces in a new random order
 ~/.config/rice/rice.sh noctis-plugin # build + install the Noctis plugin that applies the theme live (needs `brew install dotnet`)
+~/.config/rice/rice.sh stack-overlay # build + start the tab strip drawn over yabai stacks (needs Xcode's swiftc)
 ~/.config/rice/rice.sh uninstall   # restore every macOS setting, remove rendered files, unstow
 ~/.config/rice/rice.sh purge       # uninstall + brew uninstall the rice packages + delete state
 ```
@@ -139,6 +140,7 @@ How it works: `theme <name>` writes the active Ghostty theme; `rice.sh apply`
 | Surface | Tool | Where it lands |
 |---------|------|----------------|
 | menu bar | SketchyBar (`rice/.config/sketchybar`) | native bar auto-hidden; yabai reserves 46px; shows a stack cue when windows hide behind the focused one |
+| stack tabs | `stack-overlay` (Swift, `rice/.config/rice/stack-overlay`) | a tab strip floated over every yabai stack, built with `swiftc` into `~/.local/state/rice/bin` |
 | focused-window border | JankyBorders (`rice/.config/borders`) | live recolour on switch |
 | wallpaper | `wallpaper.py` (Pillow + numpy, via `uv run`) | a different flavour on **every Space** of every display, written into macOS's wallpaper store; `~/.local/state/rice/wallpapers/<theme>-<flavour>-WxH.png` |
 | macOS accent + dark/light | `defaults` / AppleScript | nearest Apple accent preset, highlight = exact accent |

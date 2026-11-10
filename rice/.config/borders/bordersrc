@@ -10,6 +10,6 @@ options=(
   hidpi=on                                     # crisp on retina
   active_color="${RICE_ACCENT_0X:-0xff58a6ff}" # focused window
   inactive_color="${RICE_BORDER_0X:-0xff30363d}"
-  blacklist="Übersicht"                        # never outline desktop widgets
+  blacklist="Übersicht,stack-overlay"          # never outline desktop widgets or the stack tabs
 )
 borders "${options[@]}"
