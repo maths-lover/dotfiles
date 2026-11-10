@@ -74,6 +74,11 @@ cmd + ctrl - d : osascript -e 'tell application "System Events" to set autohide 
 # mode named `window` and stay there until something switches back to default.
 cmd + ctrl - space ; window
 
+# macOS's own emoji picker is Cmd+Ctrl+Space, which window mode took. Open it
+# through the front app's Edit > Emoji & Symbols menu item instead (the Globe
+# key also opens it when System Settings > Keyboard > "Press 🌐 key to" says so).
+cmd + ctrl - e : osascript -e 'tell application "System Events" to tell (first process whose frontmost is true) to click (first menu item of menu "Edit" of menu bar 1 whose name starts with "Emoji")'
+
 # Zoom the focused window to fill the space (keeps its tile; press again to undo).
 cmd + ctrl - m : yabai -m window --toggle zoom-fullscreen
 

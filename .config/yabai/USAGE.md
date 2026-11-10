@@ -29,6 +29,7 @@ Everything here runs with SIP on. The modifier for every window-manager key is
 | Shift + 1 … 6 | send the focused window to Space N and follow it |
 | m | zoom the focused window to fill the Space (again to undo) |
 | f | float / unfloat the window, centred at half size |
+| e | open the emoji & symbols picker (macOS's own Cmd+Ctrl+Space is taken by window mode; the Globe key works too) |
 | d | show / hide the Dock (it auto-hides; it also peeks out at the bottom edge) |
 | r | restart yabai (re-reads `yabai/yabairc`) |
 | Space | enter **window mode** |
@@ -53,6 +54,26 @@ Everything here runs with SIP on. The modifier for every window-manager key is
 | Tab / Shift+Tab | move the window to the next / previous display |
 | 1 … 6 | send the window to Space N and leave the mode |
 | Esc or q | leave the mode |
+
+### Floating windows
+
+- **Float / unfloat**: Cmd+Ctrl+f (or `f` in window mode). A tiled window comes
+  out of the layout centred at half the screen; a floating one goes back into the
+  tiling. In window mode, `c` re-centres a floating window and `y` `u` `b` `n`
+  snap it to a quarter of the screen.
+- **Move / resize by hand**: hold fn and drag with the left button to move, the
+  right button to resize. Works on tiled windows too (dropping one onto another
+  swaps them).
+- **Finding one that went behind the tiles**: Cmd+Ctrl+` (grave, above Tab) jumps
+  to a floating window on the Space and cycles through them on repeat;
+  Cmd+Ctrl+Tab / Shift+Tab walk every window, tiled and floating, in a fixed
+  order. h/j/k/l can't do it: they look in a direction, and a covered window has
+  none. Once focused, a floating window stays above the tiles until you focus a
+  tile again.
+- Windows without an accessibility handle (Bitwarden) are skipped by both keys,
+  since yabai cannot focus them; use the Space pill in the bar or Cmd+Tab.
+- On the portrait display, unfloating counts as a window arriving: with three
+  rows already there it joins a stack.
 
 Mouse: hold **fn** and drag with the left button to move any window, right
 button to resize. Dropping a tiled window on another swaps them.
