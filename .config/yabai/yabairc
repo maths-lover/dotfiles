@@ -160,6 +160,13 @@ for ev in window_destroyed window_minimized window_deminimized; do
 done
 "$HOME/.config/yabai/tall-display" splits
 
+# Tell the bar (rice) when the focused window or its stack may have changed,
+# so its stack cue ("2/3 + hidden windows") stays right. No bar = no-op.
+for ev in window_focused window_destroyed window_minimized window_deminimized space_changed display_changed; do
+  yabai -m signal --add event="$ev" label="bar_stack_$ev" \
+    action="pgrep -xq sketchybar && sketchybar --trigger stack_change"
+done
+
 # --- Scripting-addition features (need SIP partially disabled; NOT loaded) ------
 # Left here as documentation only. See `man yabai`: every setting marked
 # "System Integrity Protection must be partially disabled".

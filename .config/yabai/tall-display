@@ -119,6 +119,7 @@ cap() {
   if run window "$target" --stack "$win"; then
     log "space $space already has $rows rows: stacked $win onto $target ($mode)"
     run window --focus "$win"
+    pgrep -xq sketchybar && sketchybar --trigger stack_change 2>/dev/null   # bar's stack cue
   else
     log "stack of $win onto $target failed ($mode)"
   fi

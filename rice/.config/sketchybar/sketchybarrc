@@ -44,6 +44,9 @@ sketchybar --default icon.font="$FONT:Bold:14.0" icon.color="$RICE_FG_0X" \
 # --- events we raise ourselves --------------------------------------------------
 # mode_change: skhdrc triggers it when entering/leaving the sticky `window` mode.
 sketchybar --add event mode_change
+# stack_change: yabai signals (yabairc) and tall-display raise it when the
+# focused window or a stack changes.
+sketchybar --add event stack_change
 
 # --- left: logo = theme picker --------------------------------------------------
 # Shows the active theme's name; click for a menu of every theme alias (dark ones
@@ -87,6 +90,19 @@ for action in hide quit force; do
                    click_script="$PLUGIN_DIR/app_action.sh $action"
 done
 sketchybar --set front_app.force icon.color="$RICE_C1_0X"
+
+# --- left: stack cue ---------------------------------------------------------------
+# Shown only when the focused window has others stacked behind it (yabai stacks
+# share one frame, so nothing on screen says so): "2/3" + the hidden windows'
+# names. Click = next window in the stack. See plugins/stack.sh.
+sketchybar --add item stack left \
+           --set stack drawing=off updates=on icon="󰓩" icon.color="$RICE_C5_0X" \
+                 label.color="$RICE_FG_DIM_0X" label.font="$FONT:Medium:11.5" label.max_chars=36 \
+                 icon.padding_left=10 label.padding_right=10 \
+                 background.drawing=on background.color="$RICE_BG_ALT2_0X" \
+                 script="$PLUGIN_DIR/stack.sh" \
+                 click_script="yabai -m window --focus stack.next || yabai -m window --focus stack.first" \
+           --subscribe stack stack_change front_app_switched space_change
 
 # --- center: skhd mode badge ------------------------------------------------------
 sketchybar --add item mode center \

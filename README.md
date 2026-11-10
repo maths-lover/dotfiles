@@ -138,7 +138,7 @@ How it works: `theme <name>` writes the active Ghostty theme; `rice.sh apply`
 
 | Surface | Tool | Where it lands |
 |---------|------|----------------|
-| menu bar | SketchyBar (`rice/.config/sketchybar`) | native bar auto-hidden; yabai reserves 36px |
+| menu bar | SketchyBar (`rice/.config/sketchybar`) | native bar auto-hidden; yabai reserves 46px; shows a stack cue when windows hide behind the focused one |
 | focused-window border | JankyBorders (`rice/.config/borders`) | live recolour on switch |
 | wallpaper | `wallpaper.py` (Pillow + numpy, via `uv run`) | a different flavour on **every Space** of every display, written into macOS's wallpaper store; `~/.local/state/rice/wallpapers/<theme>-<flavour>-WxH.png` |
 | macOS accent + dark/light | `defaults` / AppleScript | nearest Apple accent preset, highlight = exact accent |
