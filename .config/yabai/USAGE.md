@@ -298,6 +298,7 @@ on the desktop, so you see them on an empty Space or around floating windows.
 | Symptom | What is happening | Do |
 |---------|-------------------|----|
 | Cmd+Ctrl+N does nothing for one Space | yabai dropped a window at startup (`could not locate window` in `/tmp/skhd_<user>.err.log`) | `verify-managed` restarts yabai once automatically; otherwise Cmd+Ctrl+R |
+| One app won't tile, zoom or float (Cmd+Ctrl+m / f do nothing on it) | yabai never got the window's accessibility handle: `yabai -m query --windows \| jq '.[] \| select(."has-ax-reference"==false)'` lists it. Chromium apps (ChatGPT/Codex, Electron) build that tree lazily, so even a restart can miss them | `verify-managed` wakes the app's accessibility tree and restarts yabai once; by hand: `osascript -e 'tell application "System Events" to tell process "ChatGPT" to get name of windows'` then Cmd+Ctrl+R. Bitwarden exposes no windows at all; leave it |
 | A floating window disappeared behind a tile | h/j/k/l only look in a direction and a covered window has none | Cmd+Ctrl+` jumps to the floating window (again to cycle); Cmd+Ctrl+Tab steps through all windows |
 | Ghostty shrinks to half after Cmd+T | native tabs are separate windows | `native-tab` stacks them; check `~/.local/state/yabai/native-tab.log` |
 | A new window on the portrait display vanished | it became the fourth row and was stacked onto an existing one | the bar's stack cue ("2/3 …") names it; Cmd+Ctrl+n cycles the stack; `~/.local/state/yabai/tall-display.log` says which row took it |

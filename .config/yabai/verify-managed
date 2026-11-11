@@ -12,10 +12,18 @@
 # yabai retries that case, so Space switching to such a window is dead until
 # the next restart. A second start a few seconds later almost always succeeds.
 #
+# Chromium-based apps are the stubborn case (the ChatGPT/Codex app, Electron):
+# they build their accessibility tree lazily, on the first request from an
+# assistive client, and hand yabai an incomplete window list until then, so a
+# plain restart fails the same way twice. Asking System Events for the app's
+# windows is such a request: it wakes the tree, and the restart after that
+# finds the window. (Bitwarden exposes no windows at all, awake or not; it is
+# reported and left alone.)
+#
 # yabairc runs this in the background at the end of startup. It waits for the
-# enumeration to settle, looks for windows without accessibility data, and
-# restarts yabai at most once per two minutes so a window that can never be
-# observed cannot cause a restart loop.
+# enumeration to settle, looks for windows without accessibility data, wakes
+# their apps' accessibility trees, and restarts yabai at most once per two
+# minutes so a window that can never be observed cannot cause a restart loop.
 set -uo pipefail
 
 STATE="$HOME/.local/state/yabai"
@@ -25,15 +33,28 @@ sleep 4
 # Untracked = no accessibility reference (query field has-ax-reference). Skip
 # apps that are hidden (Cmd+H): yabai cannot reach their windows at all while
 # hidden, and they are not what breaks Space switching.
-bad=""
+untracked() {
+  yabai -m query --windows 2>/dev/null \
+    | jq -r '.[] | select(."has-ax-reference" == false and ."is-minimized" == false and .frame.w > 100 and .frame.h > 100)
+             | "\(.id) \(.pid) \(.app)"'
+}
+bad=""; pids=""
 while read -r id pid app; do
   hidden="$(osascript -e "tell application \"System Events\" to get visible of (first process whose unix id is $pid)" 2>/dev/null)"
   [[ "$hidden" == "false" ]] && continue
-  bad="$bad $app:$id"
-done < <(yabai -m query --windows 2>/dev/null \
-  | jq -r '.[] | select(."has-ax-reference" == false and ."is-minimized" == false and .frame.w > 100 and .frame.h > 100)
-           | "\(.id) \(.pid) \(.app)"')
+  bad="$bad $app:$id"; pids="$pids $pid"
+done < <(untracked)
 [[ -z "$bad" ]] && exit 0
+
+# Wake each app's accessibility tree (see header), then give yabai a moment in
+# case the app now announces its windows on its own.
+for pid in $pids; do
+  osascript -e "tell application \"System Events\" to tell (first process whose unix id is $pid) to get {name, subrole} of windows" >/dev/null 2>&1
+done
+sleep 1
+bad=""
+while read -r id pid app; do bad="$bad $app:$id"; done < <(untracked)
+[[ -z "$bad" ]] && { echo "verify-managed: apps picked up after waking their accessibility trees" >&2; exit 0; }
 
 now=$(date +%s)
 last=$(cat "$STATE/verify-restart" 2>/dev/null || echo 0)
