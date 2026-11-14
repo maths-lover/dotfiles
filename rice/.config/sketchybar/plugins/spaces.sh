@@ -9,8 +9,14 @@
 # would add/remove the same items twice (harmless, but noisy in the log).
 LOCK="$HOME/.local/state/rice/spaces.lock"
 if ! mkdir "$LOCK" 2>/dev/null; then
-  # stale lock (a previous run died)? older than 10 s = take it over
-  if [[ -n $(find "$LOCK" -maxdepth 0 -mmin +0.17 2>/dev/null) ]]; then rmdir "$LOCK" 2>/dev/null; mkdir "$LOCK" 2>/dev/null || exit 0; else exit 0; fi
+  # Stale lock (a previous run died, or a reboot cut one short)? Older than
+  # 10 s = take it over. Compare mtimes with stat: `find -mmin` only takes
+  # whole minutes (and bfs, if it stands in for find, rejects fractions).
+  if (( $(date +%s) - $(stat -f %m "$LOCK" 2>/dev/null || echo 0) > 10 )); then
+    rmdir "$LOCK" 2>/dev/null; mkdir "$LOCK" 2>/dev/null || exit 0
+  else
+    exit 0
+  fi
 fi
 trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 ICON_MAP="$HOME/.local/state/rice/bin/icon_map.sh"

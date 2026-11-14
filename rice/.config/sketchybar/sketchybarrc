@@ -67,6 +67,7 @@ sketchybar --add item logo left \
 sketchybar --add item spaces_watcher left \
            --set spaces_watcher drawing=off updates=on script="$PLUGIN_DIR/spaces.sh" \
            --subscribe spaces_watcher space_change space_windows_change display_change front_app_switched
+rmdir "$HOME/.local/state/rice/spaces.lock" 2>/dev/null   # a reboot can leave the builder's lock behind
 "$PLUGIN_DIR/spaces.sh"
 
 # --- left: focused application --------------------------------------------------
