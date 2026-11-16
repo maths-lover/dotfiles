@@ -107,8 +107,9 @@ everything else works on Linux.
   splitting it on every Cmd+T), plus `focus-cycle` (Cmd+Ctrl+Tab / Cmd+Ctrl+`: reach
   a floating window hidden behind a tile), `tall-display` (a portrait display gets
   equal rows only, at most three, further windows join a stack). `verify-managed` restarts yabai once if it
-  dropped windows while starting, which is what used to make Space switching die
-  until the next Cmd+Ctrl+R. Apps whose dialogs are full-size overlay windows
+  dropped windows while starting, or an app's windows while that app launched
+  (Xcode loading a project), which used to leave them unmanaged until the next
+  Cmd+Ctrl+R. Apps whose dialogs are full-size overlay windows
   (Noctis) get a `manage=off` rule for everything but their main window.
 - **rice**: [`rice/.config/rice/rice.sh`](rice/.config/rice/rice.sh) - the opt-in
   desktop rice (SketchyBar, JankyBorders, generated wallpapers, Firefox/Chrome/

@@ -179,10 +179,13 @@ done
 # Also SA-only: `space --focus/--create/--destroy/--move/--swap`, sticky windows,
 # window layers, picture-in-picture, scratchpads.
 
-# yabai can lose windows while starting (apps that answer the accessibility
-# handshake too slowly are dropped for good). ./verify-managed checks a few
-# seconds after startup and restarts yabai once if that happened. Detached, so
-# this file finishes immediately.
+# yabai can lose windows while starting, and an app's windows while that app
+# launches (apps that answer the accessibility handshake too slowly are dropped
+# for good: Ghostty, Electron, Xcode loading a project). ./verify-managed checks
+# a few seconds after startup, and after every app launch, and restarts yabai
+# once if that happened. Detached, so this file and the signal finish at once.
 nohup "$HOME/.config/yabai/verify-managed" >> /tmp/yabai_verify_"$USER".log 2>&1 &
+yabai -m signal --add label=verify_launched event=application_launched \
+  action="nohup \"\$HOME/.config/yabai/verify-managed\" launched \"\$YABAI_PROCESS_ID\" >> /tmp/yabai_verify_\"\$USER\".log 2>&1 &"
 
 echo "yabai configuration loaded.."

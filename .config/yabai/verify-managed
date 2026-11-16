@@ -1,68 +1,133 @@
 #!/usr/bin/env bash
-# verify-managed — restart yabai once if it dropped windows while starting.
+# verify-managed — restart yabai once if it dropped an app's windows.
 #
-# When yabai starts it asks every running app for its windows through the
-# Accessibility API and registers observers on each. An app that is busy at
-# that moment (Ghostty rendering, Electron apps...) does not answer in time, and
-# yabai 7.1.25 then discards the window for good: it still shows up in
-# `yabai -m query --windows` (from the Core Graphics window list) but with no
-# accessibility reference (has-ax-reference false, empty role, lowercase process
-# name), and every `yabai -m window --focus <id>` answers "could not locate
-# window". Nothing in
-# yabai retries that case, so Space switching to such a window is dead until
-# the next restart. A second start a few seconds later almost always succeeds.
+#   verify-managed                 after yabai starts (run from yabairc)
+#   verify-managed launched <pid>  after an app launches (application_launched signal)
+#
+# yabai registers an app's windows through the Accessibility API: when it
+# starts it asks every running app, and when an app launches it asks that app
+# once it reports "finished launching". An app that is busy at that moment
+# (Ghostty rendering, Electron apps, Xcode still loading a project) does not
+# answer in time, and yabai 7.1.25 then discards the window for good: it still
+# shows up in `yabai -m query --windows` (from the Core Graphics window list)
+# but with no accessibility reference (has-ax-reference false, empty role), and
+# every `yabai -m window --focus <id>` answers "could not locate window".
+# Nothing in yabai retries that case (hiding and unhiding the app does not help
+# either), so the window stays unmanaged until the next restart, which almost
+# always succeeds because the app is idle by then.
 #
 # Chromium-based apps are the stubborn case (the ChatGPT/Codex app, Electron):
 # they build their accessibility tree lazily, on the first request from an
 # assistive client, and hand yabai an incomplete window list until then, so a
 # plain restart fails the same way twice. Asking System Events for the app's
 # windows is such a request: it wakes the tree, and the restart after that
-# finds the window. (Bitwarden exposes no windows at all, awake or not; it is
-# reported and left alone.)
+# finds the window.
 #
-# yabairc runs this in the background at the end of startup. It waits for the
-# enumeration to settle, looks for windows without accessibility data, wakes
-# their apps' accessibility trees, and restarts yabai at most once per two
-# minutes so a window that can never be observed cannot cause a restart loop.
+# Both modes look for windows without accessibility data, wake their apps'
+# accessibility trees, and restart yabai at most once per two minutes so a
+# window that can never be observed cannot cause a restart loop. Apps that
+# never expose windows (Bitwarden) and apps with a manage=off rule are ignored:
+# a restart would not help the former and is pointless for the latter.
 set -uo pipefail
 
 STATE="$HOME/.local/state/yabai"
 mkdir -p "$STATE"
-sleep 4
+SKIP_APPS='^(Bitwarden)$'
 
-# Untracked = no accessibility reference (query field has-ax-reference). Skip
-# apps that are hidden (Cmd+H): yabai cannot reach their windows at all while
-# hidden, and they are not what breaks Space switching.
-untracked() {
-  yabai -m query --windows 2>/dev/null \
-    | jq -r '.[] | select(."has-ax-reference" == false and ."is-minimized" == false and .frame.w > 100 and .frame.h > 100)
-             | "\(.id) \(.pid) \(.app)"'
+# Apps whose windows yabai is told not to manage (rule manage=off), as one
+# regex. Rule flags bit 0 = "manage" was set on the rule.
+unmanaged_apps() {
+  yabai -m rule --list 2>/dev/null \
+    | jq -r '.[] | select(.manage == false and .app != "" and .title == "" and .subrole == "") | .app' \
+    | paste -sd'|' - 
 }
-bad=""; pids=""
-while read -r id pid app; do
-  hidden="$(osascript -e "tell application \"System Events\" to get visible of (first process whose unix id is $pid)" 2>/dev/null)"
-  [[ "$hidden" == "false" ]] && continue
-  bad="$bad $app:$id"; pids="$pids $pid"
-done < <(untracked)
-[[ -z "$bad" ]] && exit 0
 
-# Wake each app's accessibility tree (see header), then give yabai a moment in
-# case the app now announces its windows on its own.
-for pid in $pids; do
-  osascript -e "tell application \"System Events\" to tell (first process whose unix id is $pid) to get {name, subrole} of windows" >/dev/null 2>&1
-done
-sleep 1
-bad=""
-while read -r id pid app; do bad="$bad $app:$id"; done < <(untracked)
-[[ -z "$bad" ]] && { echo "verify-managed: apps picked up after waking their accessibility trees" >&2; exit 0; }
+# Untracked = no accessibility reference (query field has-ax-reference), not
+# minimized, big enough to be a real window; optionally limited to one pid.
+# Prints "id pid app" per line.
+untracked() {
+  local pid="${1:-}" skip
+  skip="$(unmanaged_apps)"
+  yabai -m query --windows 2>/dev/null \
+    | jq -r --arg pid "$pid" --arg skip "${skip:-^$}" --arg skip2 "$SKIP_APPS" '
+        .[] | select(."has-ax-reference" == false and ."is-minimized" == false
+                     and .frame.w > 100 and .frame.h > 100
+                     and ($pid == "" or (.pid|tostring) == $pid)
+                     and (.app | test($skip) | not) and (.app | test($skip2) | not))
+            | "\(.id) \(.pid) \(.app)"'
+}
 
-now=$(date +%s)
-last=$(cat "$STATE/verify-restart" 2>/dev/null || echo 0)
-if (( now - last < 120 )); then
-  echo "verify-managed: windows still untracked after a retry, leaving yabai alone: $bad" >&2
-  exit 1
-fi
+# Drop apps that are hidden (Cmd+H): yabai cannot reach their windows at all
+# while hidden, and they are not what breaks Space switching.
+visible_untracked() {
+  local id pid app hidden
+  while read -r id pid app; do
+    hidden="$(osascript -e "tell application \"System Events\" to get visible of (first process whose unix id is $pid)" 2>/dev/null)"
+    [[ "$hidden" == "false" ]] && continue
+    printf '%s %s %s\n' "$id" "$pid" "$app"
+  done < <(untracked "$@")
+}
 
-echo "$now" > "$STATE/verify-restart"
-echo "verify-managed: yabai dropped $bad at startup, restarting it once" >&2
-exec yabai --restart-service
+# Wake the accessibility tree of every app in $1 (pids, space separated).
+wake() {
+  local pid
+  for pid in $1; do
+    osascript -e "tell application \"System Events\" to tell (first process whose unix id is $pid) to get {name, subrole} of windows" >/dev/null 2>&1
+  done
+}
+
+restart_once() {
+  local why="$1" now last
+  now=$(date +%s)
+  last=$(cat "$STATE/verify-restart" 2>/dev/null || echo 0)
+  if (( now - last < 120 )); then
+    echo "verify-managed: $why, but yabai was restarted <120 s ago; leaving it alone" >&2
+    exit 1
+  fi
+  echo "$now" > "$STATE/verify-restart"
+  echo "verify-managed: $why, restarting yabai once" >&2
+  exec yabai --restart-service
+}
+
+summarise() { awk '{ printf "%s%s:%s", sep, $3, $1; sep=" " }' ; }
+
+case "${1:-startup}" in
+  startup)
+    sleep 4
+    list="$(visible_untracked)"
+    [[ -z "$list" ]] && exit 0
+    wake "$(awk '{print $2}' <<<"$list" | sort -u | paste -sd' ' -)"
+    sleep 1
+    list="$(visible_untracked)"
+    [[ -z "$list" ]] && { echo "verify-managed: apps picked up after waking their accessibility trees" >&2; exit 0; }
+    restart_once "yabai dropped $(summarise <<<"$list") at startup"
+    ;;
+
+  launched)
+    pid="${2:?pid}"
+    # Give the app time to put up its first window (Xcode restoring a project
+    # takes a while) and yabai time to notice it. Poll instead of one long
+    # sleep so a quick app is checked quickly; give up quietly if the app
+    # never shows a window (menu-bar apps, helpers) or has quit.
+    for (( i = 0; i < 20; i++ )); do
+      sleep 3
+      kill -0 "$pid" 2>/dev/null || exit 0
+      n=$(yabai -m query --windows 2>/dev/null | jq --argjson pid "$pid" '[.[] | select(.pid == $pid and .frame.w > 100 and .frame.h > 100)] | length')
+      (( ${n:-0} > 0 )) && break
+    done
+    (( ${n:-0} > 0 )) || exit 0
+    sleep 3                                    # yabai's own observer may still be on its way
+    list="$(visible_untracked "$pid")"
+    [[ -z "$list" ]] && exit 0
+    wake "$pid"; sleep 2
+    list="$(visible_untracked "$pid")"
+    [[ -z "$list" ]] && { echo "verify-managed: $pid picked up after waking its accessibility tree" >&2; exit 0; }
+    # Still busy? One more chance before the restart.
+    sleep 5
+    list="$(visible_untracked "$pid")"
+    [[ -z "$list" ]] && exit 0
+    restart_once "yabai missed $(summarise <<<"$list") when it launched"
+    ;;
+
+  *) echo "usage: verify-managed [launched <pid>]" >&2; exit 2 ;;
+esac
