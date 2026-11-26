@@ -14,6 +14,8 @@
       per Space: "<space idx> <display idx> <flavour> <space uuid> <display uuid> <png>".
   ricelib.py wallpaper-store-restore
       Swap every rice wallpaper in the store back for the user's previous choice.
+  ricelib.py spaces
+      One line per desktop Space: "<space idx> <display idx> <space uuid> <display uuid> <px w> <px h> <on screen 1|0>".
 """
 import copy, datetime, json, os, plistlib, re, shutil, subprocess, sys, time
 
@@ -190,6 +192,65 @@ def snapshot_restore(path):
     sh("killall Dock")
     print("snapshot restored")
 
+# ----------------------------------------------------------------------------- spaces + displays
+# What yabai used to tell us: every Mission Control desktop with its UUID, the display
+# it lives on and that display's UUID and pixel size. The Space list comes from the
+# Dock's live preferences (`defaults export com.apple.spaces`: one Monitors[] entry per
+# display, in Mission Control order, "Main" standing for the main display; type 0 =
+# a desktop, 4 = a native-fullscreen app) and the displays from CoreGraphics via
+# ctypes. Space numbers count desktops across displays in that order, which is how
+# Mission Control (and Spaceman) number them.
+def _cg():
+    import ctypes, ctypes.util
+    cg = ctypes.cdll.LoadLibrary(ctypes.util.find_library("CoreGraphics"))
+    cf = ctypes.cdll.LoadLibrary(ctypes.util.find_library("CoreFoundation"))
+    cs_ = ctypes.cdll.LoadLibrary(ctypes.util.find_library("ColorSync"))   # home of CGDisplayCreateUUIDFromDisplayID
+    cg.CGMainDisplayID.restype = ctypes.c_uint32
+    cg.CGGetActiveDisplayList.argtypes = [ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_uint32)]
+    cs_.CGDisplayCreateUUIDFromDisplayID.argtypes = [ctypes.c_uint32]; cs_.CGDisplayCreateUUIDFromDisplayID.restype = ctypes.c_void_p
+    # CGDisplayPixelsWide/High return points on Retina displays; the display mode knows the real pixels.
+    cg.CGDisplayCopyDisplayMode.argtypes = [ctypes.c_uint32]; cg.CGDisplayCopyDisplayMode.restype = ctypes.c_void_p
+    cg.CGDisplayModeGetPixelWidth.argtypes = cg.CGDisplayModeGetPixelHeight.argtypes = [ctypes.c_void_p]
+    cg.CGDisplayModeGetPixelWidth.restype = cg.CGDisplayModeGetPixelHeight.restype = ctypes.c_size_t
+    cf.CFUUIDCreateString.argtypes = [ctypes.c_void_p, ctypes.c_void_p]; cf.CFUUIDCreateString.restype = ctypes.c_void_p
+    cf.CFStringGetCString.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_long, ctypes.c_uint32]
+    cf.CFRelease.argtypes = [ctypes.c_void_p]
+    n = ctypes.c_uint32(0); ids = (ctypes.c_uint32 * 16)()
+    cg.CGGetActiveDisplayList(16, ids, ctypes.byref(n))
+    out = []
+    for did in list(ids)[: n.value]:
+        u = cs_.CGDisplayCreateUUIDFromDisplayID(did)
+        if not u: continue
+        cs = cf.CFUUIDCreateString(None, u); buf = ctypes.create_string_buffer(64)
+        cf.CFStringGetCString(cs, buf, 64, 0x08000100); cf.CFRelease(cs); cf.CFRelease(u)
+        mode = cg.CGDisplayCopyDisplayMode(did)
+        w, h = cg.CGDisplayModeGetPixelWidth(mode), cg.CGDisplayModeGetPixelHeight(mode)
+        cf.CFRelease(mode)
+        out.append({"id": did, "uuid": buf.value.decode(), "main": did == cg.CGMainDisplayID(), "w": w, "h": h})
+    return out
+
+def spaces():
+    """Print one line per desktop Space:
+    <space idx> <display idx> <space uuid> <display uuid> <px w> <px h> <1 if it is the one on screen on its display, else 0>
+    Prints nothing (exit 1) when the display list is empty (displays asleep)."""
+    displays = _cg()
+    if not displays: sys.exit(1)
+    by_uuid = {d["uuid"]: i + 1 for i, d in enumerate(displays)}
+    main = next((i + 1 for i, d in enumerate(displays) if d["main"]), 1)
+    raw = subprocess.run(["defaults", "export", "com.apple.spaces", "-"], capture_output=True).stdout
+    monitors = plistlib.loads(raw).get("SpacesDisplayConfiguration", {}).get("Management Data", {}).get("Monitors", [])
+    sidx = 0
+    for m in monitors:
+        ident = m.get("Display Identifier", "Main")
+        didx = main if ident == "Main" else by_uuid.get(ident)
+        if didx is None: continue                       # a display that is not connected right now
+        d = displays[didx - 1]
+        current = m.get("Current Space", {}).get("uuid")
+        for sp in m.get("Spaces", []):
+            if sp.get("type", 0) != 0 or not sp.get("uuid"): continue
+            sidx += 1
+            print(sidx, didx, sp["uuid"], d["uuid"], d["w"], d["h"], int(sp["uuid"] == current))
+
 # ----------------------------------------------------------------------------- wallpaper store
 # macOS (Sonoma and later) keeps the wallpaper of every Space on every display in one
 # binary plist. NSWorkspace, AppleScript and the `wallpaper` CLI only ever change the
@@ -204,7 +265,7 @@ def snapshot_restore(path):
 #   SystemDefault                                   default for everything else
 # Every entry is {Type: individual, Desktop: {...}, Idle: {...}}: Desktop is the
 # wallpaper, Idle the screen saver. We only ever replace Desktop. Space and display
-# UUIDs are the ones `yabai -m query --spaces/--displays` report.
+# UUIDs are the ones spaces() above reports (the same ones yabai used to).
 STORE = os.path.expanduser("~/Library/Application Support/com.apple.wallpaper/Store/Index.plist")
 RICE_WP_DIR = os.path.expanduser("~/.local/state/rice/wallpapers")
 
@@ -347,5 +408,7 @@ if __name__ == "__main__":
         wallpaper_store_set(a[1], a[2], plan)
     elif cmd == "wallpaper-store-restore" and len(a) == 1:
         wallpaper_store_restore()
+    elif cmd == "spaces" and len(a) == 1:
+        spaces()
     else:
         sys.exit(__doc__)

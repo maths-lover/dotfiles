@@ -121,7 +121,7 @@ How it works: `theme <name>` writes the active Ghostty theme; `rice.sh apply`
 
 | Surface | Tool | Where it lands |
 |---------|------|----------------|
-| menu bar | SketchyBar (`rice/.config/sketchybar`) | native bar auto-hidden |
+| bar | SketchyBar (`rice/.config/sketchybar`) | a floating island along the bottom edge (no window manager reserves room, so it stays out of title bars); the native menu bar stays, Spaceman lives there; Space pills are native `space` items, click opens Mission Control |
 | focused-window border | JankyBorders (`rice/.config/borders`) | live recolour on switch |
 | wallpaper | `wallpaper.py` (Pillow + numpy, via `uv run`) | a different flavour on **every Space** of every display, written into macOS's wallpaper store; `~/.local/state/rice/wallpapers/<theme>-<flavour>-WxH.png` |
 | macOS accent + dark/light | `defaults` / AppleScript | nearest Apple accent preset, highlight = exact accent |

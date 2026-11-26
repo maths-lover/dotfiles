@@ -62,30 +62,26 @@ theme_file() { zsh -c 'source ~/.config/zsh/theme.zsh >/dev/null 2>&1; _theme_fi
 # reach Spaces that are not currently on screen; see the notes there).
 wallpapers_apply() {
   local name=$1
-  # While the displays are asleep (or the screen saver runs) macOS reports no active
-  # displays and yabai's queries come back truncated, so check them before trusting them.
-  local displays=""
-  if have uv && have yabai; then displays=$(yabai -m query --displays 2>/dev/null || true); fi
-  if [[ -n $displays ]] && jq -e 'length > 0' <<< "$displays" >/dev/null 2>&1; then
+  # `ricelib spaces` lists every desktop with its display and pixel size (Dock
+  # preferences + CoreGraphics). While the displays are asleep (or the screen saver
+  # runs) macOS reports no active displays and the list is empty: skip, don't guess.
+  have uv || return 0
+  local spaces
+  spaces=$(python3 -IB "$LIB" spaces 2>/dev/null || true)
+  if [[ -n $spaces ]]; then
     mkdir -p "$STATE/wallpapers"
-    local flavours plan=() sidx didx suuid duuid w h flav png
+    local flavours plan=() sidx didx suuid duuid w h cur flav png
     read -r -a flavours <<< "$(flavours_current)"
-    while read -r sidx didx suuid duuid w h; do
+    while read -r sidx didx suuid duuid w h cur; do
       flav=${flavours[$(( (sidx - 1) % ${#flavours[@]} ))]}
       png="$STATE/wallpapers/${name}-${flav}-${w}x${h}.png"
       [[ -f $png ]] || { info "rendering $flav wallpaper ${w}x${h} for $name..."; uv run --quiet "$HERE/wallpaper.py" "$STATE/palette.json" "$png" "$w" "$h" "$flav"; }
       plan+=("$sidx $didx $flav $suuid $duuid $png")
-    done < <(yabai -m query --spaces 2>/dev/null | jq -r --argjson d "$displays" \
-      '.[] as $s | ($d[] | select(.index == $s.display)) as $dd
-       | "\($s.index) \($dd.index) \($s.uuid) \($dd.uuid) \(($dd.frame.w*2)|floor) \(($dd.frame.h*2)|floor)"' 2>/dev/null)
-    if (( ${#plan[@]} )); then
-      printf '%s\n' "${plan[@]}" > "$STATE/wallpapers/plan.txt"      # what `status` shows
-      python3 -IB "$LIB" wallpaper-store "$STATE" "$RICE_BG" < "$STATE/wallpapers/plan.txt"
-    else
-      warn "wallpaper: could not list spaces (displays asleep?); run 'rice.sh apply' again later"
-    fi
-  elif have uv && have yabai; then
-    warn "wallpaper: yabai sees no active displays (asleep / screen saver?); skipped, run 'rice.sh apply' again later"
+    done <<< "$spaces"
+    printf '%s\n' "${plan[@]}" > "$STATE/wallpapers/plan.txt"      # what `status` shows
+    python3 -IB "$LIB" wallpaper-store "$STATE" "$RICE_BG" < "$STATE/wallpapers/plan.txt"
+  else
+    warn "wallpaper: no active displays (asleep / screen saver?); skipped, run 'rice.sh apply' again later"
   fi
 }
 
@@ -222,13 +218,13 @@ install() {
 
   info "Dock: auto-hide, peeks out when the pointer hits the screen edge..."
   defaults write com.apple.dock autohide -bool true
-  defaults write com.apple.dock autohide-delay -float 0.15       # seconds before it peeks out (Cmd+Ctrl+D toggles it)
+  defaults write com.apple.dock autohide-delay -float 0.15       # seconds before it peeks out
   defaults write com.apple.dock autohide-time-modifier -float 0  # no slide animation
   defaults write com.apple.dock show-recents -bool false
   killall Dock
 
-  info "Menu bar: auto-hide (SketchyBar takes its place)..."
-  osascript -e 'tell application "System Events" to tell dock preferences to set autohide menu bar to true' >/dev/null
+  info "Menu bar: keep it (SketchyBar sits along the bottom edge instead)..."
+  osascript -e 'tell application "System Events" to tell dock preferences to set autohide menu bar to false' >/dev/null
 
   info "App icon map for the bar..."
   mkdir -p "$STATE/bin"
@@ -244,7 +240,6 @@ install() {
   # The app name has an umlaut, and `open -a` is picky about its Unicode form; the bundle id is not.
   open -b tracesOf.Uebersicht 2>/dev/null || open "/Applications/Übersicht.app" 2>/dev/null || warn "Übersicht did not launch"
 
-  have yabai && { info "yabai: reserving space for the bar..."; yabai --restart-service; }
   if [[ -d /Applications/Noctis.app ]]; then
     if have dotnet; then noctis_plugin || warn "noctis: plugin build failed; the theme still applies when Noctis restarts"
     else warn "noctis: for live re-theming install the .NET SDK (brew install dotnet) and run 'rice.sh noctis-plugin'"; fi
@@ -292,7 +287,6 @@ uninstall() {
   remove_rendered
   info "Unstowing rice configs..."
   stow -d "$DOT" -t "$HOME" -D rice 2>/dev/null || true
-  have yabai && yabai --restart-service
   info "Rice uninstalled. Packages are still installed; 'rice.sh purge' removes them too."
 }
 
@@ -325,7 +319,7 @@ status() {
 # and open them in Preview, so you can pick/reorder RICE_WALLPAPER_FLAVOURS by eye.
 wallpapers() {
   [[ -f $STATE/palette.json ]] || die "nothing applied yet: run 'rice.sh apply' first"
-  have uv && have yabai || die "needs uv and yabai"
+  have uv || die "needs uv"
   local set=${1:-all} list name files=() flav w h png
   case $set in
     smooth) list=$FLAVOURS_SMOOTH ;;
@@ -341,7 +335,7 @@ wallpapers() {
       [[ -f $png ]] || { info "rendering $flav ${w}x${h} for $name..."; uv run --quiet "$HERE/wallpaper.py" "$STATE/palette.json" "$png" "$w" "$h" "$flav"; }
       files+=("$png")
     done
-  done < <(yabai -m query --displays | jq -r '.[] | "\((.frame.w*2)|floor) \((.frame.h*2)|floor)"')
+  done < <(python3 -IB "$LIB" spaces | awk '!seen[$2]++ {print $5, $6}')
   printf '%s\n' "${files[@]}"
   open -a Preview "${files[@]}"
 }

@@ -4,9 +4,10 @@
 # `rice.sh apply` regenerates from the Ghostty theme file on every `theme` switch.
 # Reference: https://felixkratz.github.io/SketchyBar/config/bar
 #
-# Layout (one bar per display, floating "island" style):
+# Layout (one bar per display, a floating "island" along the BOTTOM edge; the
+# native menu bar stays at the top, Spaceman and the app menus live there):
 #   left     theme  [1 ▢▢] [2 ▢] [3 ▢]  ▢ Front App     (theme picker, this display's Spaces, focused app)
-#   center  ♪ Title · Artist   WINDOW                   (Noctis now playing; badge while skhd is in window mode)
+#   center  ♪ Title · Artist                            (Noctis now playing)
 #   right   [cpu · mem · net · disk · volume · battery · clock]
 # Every item is a plugin in ./plugins; click behaviour is documented next to it.
 
@@ -23,8 +24,10 @@ export RICE_FG_0X RICE_FG_DIM_0X RICE_ACCENT_0X RICE_BG_ALT2_0X RICE_C1_0X RICE_
 
 # --- the bar itself ------------------------------------------------------------
 # A floating island: margin from the screen edges, rounded, slightly translucent
-# with blur. yabairc reserves 46px (6 offset + 34 bar + 6 gap) via external_bar.
-sketchybar --bar height=34 position=top sticky=on topmost=off \
+# with blur. Without a window manager nothing reserves room for it, so it sits at
+# the bottom, where it only ever overlaps the last few rows of a full-height window
+# (at the top it would cover title bars and tab strips, or fight the menu bar).
+sketchybar --bar height=34 position=bottom sticky=on topmost=off \
            margin=10 y_offset=6 corner_radius=10 \
            color="0xf0${RICE_BG_HEX}" border_width=1 border_color="$RICE_BORDER_0X" \
            blur_radius=24 shadow=on padding_left=6 padding_right=6
@@ -39,14 +42,7 @@ sketchybar --default icon.font="$FONT:Bold:14.0" icon.color="$RICE_FG_0X" \
            popup.background.color="$RICE_BG_0X" popup.background.border_width=1 \
            popup.background.border_color="$RICE_BORDER_0X" popup.background.corner_radius=9 \
            popup.background.shadow.drawing=on popup.blur_radius=24 popup.y_offset=4 \
-           updates=when_shown   # hidden items get no events; the watcher and mode badge opt back in
-
-# --- events we raise ourselves --------------------------------------------------
-# mode_change: skhdrc triggers it when entering/leaving the sticky `window` mode.
-sketchybar --add event mode_change
-# stack_change: yabai signals (yabairc) and tall-display raise it when the
-# focused window or a stack changes.
-sketchybar --add event stack_change
+           updates=when_shown   # hidden items get no events; the watchers opt back in
 
 # --- left: logo = theme picker --------------------------------------------------
 # Shows the active theme's name; click for a menu of every theme alias (dark ones
@@ -61,12 +57,12 @@ sketchybar --add item logo left \
 "$PLUGIN_DIR/theme_menu.sh"
 
 # --- left: Spaces, one pill per Space, shown only on the display they live on ----
-# plugins/spaces.sh creates the items from yabai's space list, fills each with the
-# icons of the apps on that Space (sketchybar-app-font), highlights the visible
-# Space of each display, and re-runs on every space / window / display change.
+# plugins/spaces.sh creates native `space` items from the Dock's desktop list, labels
+# each with the icons of the apps on that Space (sketchybar-app-font, from
+# space_windows_change events) and plugins/space.sh highlights the selected one.
 sketchybar --add item spaces_watcher left \
            --set spaces_watcher drawing=off updates=on script="$PLUGIN_DIR/spaces.sh" \
-           --subscribe spaces_watcher space_change space_windows_change display_change front_app_switched
+           --subscribe spaces_watcher space_change space_windows_change display_change
 rmdir "$HOME/.local/state/rice/spaces.lock" 2>/dev/null   # a reboot can leave the builder's lock behind
 "$PLUGIN_DIR/spaces.sh"
 
@@ -80,8 +76,7 @@ sketchybar --add item front_app left \
                  click_script="sketchybar --set front_app popup.drawing=toggle" \
            --subscribe front_app front_app_switched mouse.exited.global
 # Fill it right away instead of waiting for the next app switch.
-INFO="$(yabai -m query --windows --window 2>/dev/null | jq -r '.app // empty')"
-[[ -z $INFO ]] && INFO="$(lsappinfo info -only name "$(lsappinfo front)" 2>/dev/null | awk -F'"' 'NR==1{print $2}')"
+INFO="$(lsappinfo info -only name "$(lsappinfo front)" 2>/dev/null | awk -F'"' 'NR==1{print $2}')"
 INFO="$INFO" NAME=front_app "$PLUGIN_DIR/front_app.sh"
 for action in hide quit force; do
   case $action in hide) l="Hide" i="󰘓";; quit) l="Quit" i="󰅖";; force) l="Force quit" i="󰚌";; esac
@@ -91,27 +86,6 @@ for action in hide quit force; do
                    click_script="$PLUGIN_DIR/app_action.sh $action"
 done
 sketchybar --set front_app.force icon.color="$RICE_C1_0X"
-
-# --- left: stack cue ---------------------------------------------------------------
-# Shown only when the focused window has others stacked behind it (yabai stacks
-# share one frame, so nothing on screen says so): "2/3" + the hidden windows'
-# names. Click = next window in the stack. See plugins/stack.sh.
-sketchybar --add item stack left \
-           --set stack drawing=off updates=on icon="󰓩" icon.color="$RICE_C5_0X" \
-                 label.color="$RICE_FG_DIM_0X" label.font="$FONT:Medium:11.5" label.max_chars=36 \
-                 icon.padding_left=10 label.padding_right=10 \
-                 background.drawing=on background.color="$RICE_BG_ALT2_0X" \
-                 script="$PLUGIN_DIR/stack.sh" \
-                 click_script="yabai -m window --focus stack.next || yabai -m window --focus stack.first" \
-           --subscribe stack stack_change front_app_switched space_change
-
-# --- center: skhd mode badge ------------------------------------------------------
-sketchybar --add item mode center \
-           --set mode drawing=off updates=on icon="󰖲" icon.color="$RICE_BG_0X" label="WINDOW" \
-                 label.color="$RICE_BG_0X" label.font="$FONT:Bold:11.0" \
-                 background.drawing=on background.color="$RICE_ACCENT_0X" \
-                 script="$PLUGIN_DIR/mode.sh" \
-           --subscribe mode mode_change
 
 # --- center: now playing (Noctis Local API) ---------------------------------------
 # Hidden unless Noctis runs with its Local API on (Settings > Account & Devices >
