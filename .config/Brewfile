@@ -5,7 +5,6 @@
 # -- Taps ----------------------------------------------------------------------
 # (nerd-font and ghostty casks live in homebrew/cask, no extra tap needed)
 tap "libkrun/krun"         # krunkit for podman's libkrun provider (trusted in setup_zsh.sh)
-tap "asmvik/formulae"      # yabai + skhd (upstream tap; trusted in setup_zsh.sh)
 
 # -- Prompt --------------------------------------------------------------------
 brew "starship"            # cross-shell prompt
@@ -71,11 +70,6 @@ cask "font-commit-mono-nerd-font"
 # Music player
 # Download noctis app from their website, there is no brew package, this comment is to remind myself
 # https://noctisapp.cc/
-
-# -- Window manager (config in .config/yabai + .config/skhd) --------------------
-brew "yabai"               # bsp tiling window manager (runs with SIP on; no scripting addition)
-brew "skhd"                # hotkey daemon that drives yabai
-# jq (Dev extras) is required by .config/yabai/focus-space and the skhdrc layout toggle.
 
 # -- GUI Applications for Mac productivity in general --------------------------
 cask "iina"                    # modern media player (mpv core); config in .config/mpv

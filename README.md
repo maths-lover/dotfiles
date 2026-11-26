@@ -23,8 +23,6 @@ dotfiles/
     |-- starship.toml     the prompt
     |-- ghostty/config    terminal emulator
     |-- nvim/             neovim config + docs
-    |-- yabai/            tiling window manager (yabairc + focus-space/focus-cycle helpers)
-    |-- skhd/             hotkeys that drive yabai
     `-- zsh/              the shell config + docs + installer
 ```
 
@@ -95,22 +93,6 @@ everything else works on Linux.
 - **neovim**: [`.config/nvim/docs/`](.config/nvim/docs/README.md) - getting started,
   architecture, keymaps, plugins, LSP & languages, completion, navigation, git,
   theme sync, Neovide, troubleshooting.
-- **desktop usage guide**: [`.config/yabai/USAGE.md`](.config/yabai/USAGE.md) -
-  keys, window mode, the bar, themes, troubleshooting. Start here.
-- **yabai / skhd**: [`.config/yabai/yabairc`](.config/yabai/yabairc) and
-  [`.config/skhd/skhdrc`](.config/skhd/skhdrc) - the tiling window manager and its
-  hotkeys. Every line is commented in place; SIP stays enabled. Helper scripts
-  cover what yabai can't do alone without the scripting addition:
-  `focus-space` (switch Spaces: yabai window focus, falling back to activating
-  the app) `focus-cycle` (Cmd+Ctrl+Tab and Cmd+Ctrl+` reach floating windows hidden
-  behind tiles) and `native-tab` (keep Ghostty's native tabs in one tile instead of
-  splitting it on every Cmd+T), plus `focus-cycle` (Cmd+Ctrl+Tab / Cmd+Ctrl+`: reach
-  a floating window hidden behind a tile), `tall-display` (a portrait display gets
-  equal rows only, at most three, further windows join a stack). `verify-managed` restarts yabai once if it
-  dropped windows while starting, or an app's windows while that app launched
-  (Xcode loading a project), which used to leave them unmanaged until the next
-  Cmd+Ctrl+R. Apps whose dialogs are full-size overlay windows
-  (Noctis) get a `manage=off` rule for everything but their main window.
 - **rice**: [`rice/.config/rice/rice.sh`](rice/.config/rice/rice.sh) - the opt-in
   desktop rice (SketchyBar, JankyBorders, generated wallpapers, Firefox/Chrome/
   Discord themes, Übersicht widgets), all rendered from the active `theme`. See
@@ -139,7 +121,7 @@ How it works: `theme <name>` writes the active Ghostty theme; `rice.sh apply`
 
 | Surface | Tool | Where it lands |
 |---------|------|----------------|
-| menu bar | SketchyBar (`rice/.config/sketchybar`) | native bar auto-hidden; yabai reserves 46px; shows a stack cue when windows hide behind the focused one |
+| menu bar | SketchyBar (`rice/.config/sketchybar`) | native bar auto-hidden |
 | focused-window border | JankyBorders (`rice/.config/borders`) | live recolour on switch |
 | wallpaper | `wallpaper.py` (Pillow + numpy, via `uv run`) | a different flavour on **every Space** of every display, written into macOS's wallpaper store; `~/.local/state/rice/wallpapers/<theme>-<flavour>-WxH.png` |
 | macOS accent + dark/light | `defaults` / AppleScript | nearest Apple accent preset, highlight = exact accent |

@@ -5,7 +5,8 @@ Firmware + keymap for a **Cheapino v2** — an affordable 36-key split
 
 This layout is a [Miryoku](https://github.com/manna-harbour/miryoku)-style base
 with **home-row mods** and **thumb layer-taps**, plus a custom **WM layer** that
-emits `Cmd+Ctrl` chords for the window manager (yabai; config pending). Tuned for
+emits `Cmd+Ctrl` chords for a window manager (bind them in whichever one you
+run; no manager ships in this repo any more). Tuned for
 the vim / zellij workflow in this repo.
 
 - Source of truth: [`keymap.json`](keymap.json) (QMK Configurator / `qmk` format).
@@ -117,26 +118,24 @@ BOOT  RGBt  RGBm    ·     ·          ·     ·     ·     ·     ·
                               [C^SPC]
 ```
 
-`C^x` = **`Cmd+Ctrl+x`**, the modifier `.config/skhd/skhdrc` binds for yabai:
+`C^x` = **`Cmd+Ctrl+x`**. The board only sends the chord; what it does is up to
+the window manager's own key bindings (this repo used to ship a yabai + skhd
+config bound to these, since removed):
 
-| WM-layer key | Sends | skhd / yabai action |
-|--------------|-------|---------------------|
-| right-inner thumb | `Cmd+Ctrl+Space` | enter **window mode** (sticky skhd mode) |
-| `h` `j` `k` `l` | `Cmd+Ctrl+h/j/k/l` | **focus** window west/south/north/east (falls through to the next display) |
-| `R` (top row) | `Cmd+Ctrl+R` | **restart** yabai (re-runs `yabairc`) |
-
-See `.config/skhd/skhdrc` for the full map, including the window-mode keys.
+| WM-layer key | Sends | Suggested use |
+|--------------|-------|---------------|
+| right-inner thumb | `Cmd+Ctrl+Space` | a leader / mode key |
+| `h` `j` `k` `l` | `Cmd+Ctrl+h/j/k/l` | **focus** window west/south/north/east |
+| `R` (top row) | `Cmd+Ctrl+R` | **reload** the window manager |
 
 ---
 
-## 3. Driving yabai from the board
+## 3. Driving a window manager from the board
 
-1. **Direct focus** — hold left-inner thumb (WM), tap `h/j/k/l`.
-2. **Window mode** — hold left-inner thumb, tap right-inner thumb → sends
-   `Cmd+Ctrl+Space`, which puts skhd in its sticky `window` mode. Release
-   everything: bare keys now act (`h/j/k/l` warp, `Shift+hjkl` swap, `m`
-   zoom, `f` float, `0` balance, `Tab` next display, `1-6` send to space,
-   `q`/`Esc` exit). Digits live on the NUM layer: hold the NUM thumb and tap.
+1. **Direct chords** — hold left-inner thumb (WM), tap `h/j/k/l` or `R`.
+2. **Leader** — hold left-inner thumb, tap right-inner thumb → sends
+   `Cmd+Ctrl+Space`; bind it to a sticky mode in the manager if it has one.
+   Digits live on the NUM layer: hold the NUM thumb and tap.
 
 Because the WM layer only emits these chords while its thumb is held, nothing
 here collides with:

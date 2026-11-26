@@ -139,24 +139,4 @@ if [[ -d /Applications/IINA.app ]]; then
   mkdir -p "$HOME/.local/state/mpv/watch_later"
 fi
 
-# 8. yabai + skhd (window manager, from the Brewfile in step 5): install the
-#    launchd agents and start them. Idempotent: re-running restarts them with the
-#    current configs. Both need Accessibility (System Settings > Privacy &
-#    Security > Accessibility); macOS prompts on first start. SIP stays ON: the
-#    configs avoid every scripting-addition feature.
-if command -v yabai >/dev/null 2>&1; then
-  # Mission Control's "Automatically rearrange Spaces based on most recent use"
-  # renumbers desktops every time you switch, which makes "go to space 3" land
-  # somewhere different each press. Turn it off (restart the Dock only when the
-  # value actually changed, so re-runs don't flash the Dock).
-  if [[ "$(defaults read com.apple.dock mru-spaces 2>/dev/null || echo 1)" != "0" ]]; then
-    info "Disabling 'rearrange Spaces based on most recent use'..."
-    defaults write com.apple.dock mru-spaces -bool false
-    killall Dock
-  fi
-  info "Starting yabai + skhd services..."
-  yabai --start-service 2>/dev/null || yabai --restart-service
-  command -v skhd >/dev/null 2>&1 && { skhd --start-service 2>/dev/null || skhd --restart-service; }
-fi
-
 printf '\n%sDone.%s  Start a new shell:  exec zsh\n' "$bold" "$reset"
