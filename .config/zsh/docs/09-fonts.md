@@ -37,8 +37,10 @@ font — see the Maple section below (the current pick).
 ## Maple Mono (current font) — features & cursive italic
 
 Maple Mono NF is the active font, with a feature set generated at the
-[maple-font site](https://font.subf.dev) and mirrored into both `ghostty/config`
+[maple-font site](https://font.subf.dev) and mirrored into `ghostty/config`,
+`kitty/kitty.conf` (one `font_features` line per face, keyed by PostScript name)
 and `~/.config/neovide/config.toml` (identical lists — the source of truth).
+The `font` switcher rewrites the family lines in both terminal configs.
 Enabled:
 
 - **Tags:** `calt` renders `TODO: FIXME: NOTE: INFO: WARN: HACK: ERROR: DEBUG:

@@ -1,10 +1,11 @@
-# ~/.config/zsh/font.zsh - quick font switcher for Ghostty (try fonts fast).
+# ~/.config/zsh/font.zsh - quick font switcher for Ghostty + kitty (try fonts fast).
 #
-# Swaps the font-family lines in ghostty/config in place and remembers the
-# choice. Ghostty has no live-reload from the shell, so after `font <name>`
-# press ⌘⇧, in Ghostty (reload_config) to see it. Mirrors the `theme` switcher:
-# resolves the Stow symlink so it edits the real repo file. All fonts below are
-# Nerd Fonts (needed for the starship prompt glyphs).
+# Swaps the font-family lines in ghostty/config (and the font lines in
+# kitty/kitty.conf) in place and remembers the choice. Ghostty has no
+# live-reload from the shell, so after `font <name>` press ⌘⇧, in Ghostty
+# (reload_config) to see it; kitty is reloaded with SIGUSR1. Mirrors the `theme`
+# switcher: resolves the Stow symlink so it edits the real repo file. All fonts
+# below are Nerd Fonts (needed for the starship prompt glyphs).
 
 typeset -gA FONT_FAMILIES=(
   # -- Monaspace cuts (font-monaspice-nerd-font) --
@@ -23,6 +24,7 @@ typeset -gA FONT_FAMILIES=(
 typeset -ga FONT_ORDER=(neon argon xenon radon krypton jetbrains maple iosevka geist commit)
 
 _FONT_GCFG="$HOME/.config/ghostty/config"
+_FONT_KCFG="$HOME/.config/kitty/kitty.conf"
 _FONT_STATE="$HOME/.config/zsh/.active-font"
 
 font() {
@@ -62,9 +64,20 @@ font() {
     -e "s|^font-family-bold = .*|font-family-bold = \"$bold\"|" \
     -e "s|^font-family-bold-italic = .*|font-family-bold-italic = \"$ital\"|" \
     "$gcfg"
+  # kitty: family names only, it picks the faces (Maple's font_features lines stay).
+  local kcfg=${_FONT_KCFG:A}
+  if [[ -f $kcfg ]]; then
+    sed -i '' \
+      -e "s|^font_family .*|font_family      $fam|" \
+      -e "s|^bold_font .*|bold_font        $bold|" \
+      -e "s|^italic_font .*|italic_font      $ital|" \
+      -e "s|^bold_italic_font .*|bold_italic_font $ital|" \
+      "$kcfg"
+    pkill -USR1 -x kitty 2>/dev/null
+  fi
   print -r -- "$name" > "$_FONT_STATE"
   print -P "%F{green}+%f font -> %B$name%b  %F{8}($fam)%f"
-  print -P "  press %B\u2318\u21e7,%b in Ghostty to reload"
+  print -P "  press %B\u2318\u21e7,%b in Ghostty to reload%F{8}; kitty reloaded%f"
 }
 
 # Tab-completion: friendly names + sub-commands.

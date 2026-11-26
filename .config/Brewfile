@@ -56,6 +56,7 @@ brew "zsh-completions"
 
 # -- Terminal emulator + GUI editor --------------------------------------------
 cask "ghostty"
+cask "kitty"               # second terminal, configured to match Ghostty (.config/kitty)
 cask "neovide-app"             # GUI neovim front-end (for project work)
 
 # -- Fonts (already installed manually, listed for fresh-machine reproducibility)

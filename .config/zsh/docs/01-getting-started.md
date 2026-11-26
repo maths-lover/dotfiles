@@ -36,6 +36,7 @@ It backs up any existing `~/.zshenv` before writing, and is safe to re-run any t
 | any zsh file (`.zshrc`, `aliases.zsh`, …) | `exec zsh` (or the `reload` alias) |
 | `starship.toml` | next prompt (instant) |
 | `ghostty/config` | `Cmd+Shift+,` in Ghostty (or restart) |
+| `kitty/kitty.conf` | `Cmd+Shift+,` in kitty, or `pkill -USR1 -x kitty` (every window reloads) |
 
 ## Maintenance
 

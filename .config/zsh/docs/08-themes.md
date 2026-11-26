@@ -10,7 +10,10 @@ so changing the terminal's 16-color palette re-themes the whole stack at once. T
 
 1. Recolors the **current** window instantly via **OSC escape sequences**.
 2. Persists the choice to `~/.config/ghostty/config` so **new windows match**.
-3. Records the current theme in `~/.config/zsh/.active-theme`.
+3. Renders the same theme as kitty colours into `~/.config/kitty/theme.conf`
+   (included by `kitty.conf`, with the tab-bar colours and opacity) and reloads
+   every running kitty with `SIGUSR1`, so kitty follows without any setup.
+4. Records the current theme in `~/.config/zsh/.active-theme`.
 
 Theme definitions are read straight from Ghostty's bundled theme files, so any of
 its 200+ themes works.
@@ -56,8 +59,9 @@ Add your own alias by editing `THEME_ALIASES` in `theme.zsh`.
 
 ## Notes
 
-- Live switching recolors the **current** window only; other open windows update
-  when they next launch (they read the persisted Ghostty config).
+- Live switching recolors the **current** window only; other open Ghostty windows
+  update when they next launch (they read the persisted Ghostty config). kitty
+  windows all reload at once.
 - zellij renders its own UI, so OSC sequences never reach it directly; instead its custom theme in `config.kdl` maps colors to ANSI palette indices 0-15, so zellij follows the host palette (and this switcher) automatically.
 - starship can't follow light/dark with one fixed palette (light themes invert `bright-*` semantics), so it ships four palettes in `starship.toml`: generic `theme-dark`/`theme-light` (ANSI roles) plus `github-dark`/`github-light` (Primer hex tokens for panel/frame, accents stay on the theme's own slots). The `theme` command picks the right one on every switch; applies on the next prompt draw.
 
